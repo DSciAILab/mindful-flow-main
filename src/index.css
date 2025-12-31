@@ -1,0 +1,296 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=Rubik:wght@300;400;500;600;700&display=swap");
+
+@layer base {
+  :root {
+    /* Font family variable - can be changed via Settings */
+    --font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    
+    /* Warm, calming palette for ADHD-friendly design */
+    --background: 35 30% 98%;
+    --foreground: 25 20% 15%;
+
+    --card: 35 25% 97%;
+    --card-foreground: 25 20% 15%;
+
+    --popover: 35 30% 99%;
+    --popover-foreground: 25 20% 15%;
+
+    /* Warm amber primary - energizing but not overwhelming */
+    --primary: 32 85% 55%;
+    --primary-foreground: 35 30% 98%;
+    --primary-glow: 32 90% 65%;
+
+    /* Soft sage secondary - calming */
+    --secondary: 160 25% 92%;
+    --secondary-foreground: 160 30% 25%;
+
+    /* Muted warm tones */
+    --muted: 35 20% 94%;
+    --muted-foreground: 25 15% 45%;
+
+    /* Teal accent - focus and clarity */
+    --accent: 170 45% 45%;
+    --accent-foreground: 170 100% 98%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 35 20% 90%;
+    --input: 35 20% 90%;
+    --ring: 32 85% 55%;
+
+    --radius: 1rem;
+
+    /* Priority colors */
+    --priority-urgent: 0 75% 55%;
+    --priority-high: 32 85% 55%;
+    --priority-medium: 45 90% 55%;
+    --priority-low: 160 40% 50%;
+
+    /* Reward colors */
+    --reward-gold: 45 95% 58%;
+    --reward-bronze: 25 60% 50%;
+    --reward-silver: 220 10% 70%;
+
+    /* Status colors */
+    --status-active: 160 60% 45%;
+    --status-paused: 45 80% 55%;
+    --status-completed: 160 50% 50%;
+
+    /* Gradients */
+    --gradient-warm: linear-gradient(
+      135deg,
+      hsl(32, 85%, 55%) 0%,
+      hsl(45, 90%, 60%) 100%
+    );
+    --gradient-calm: linear-gradient(
+      135deg,
+      hsl(170, 45%, 45%) 0%,
+      hsl(160, 40%, 55%) 100%
+    );
+    --gradient-sunset: linear-gradient(
+      135deg,
+      hsl(32, 85%, 55%) 0%,
+      hsl(0, 72%, 55%) 100%
+    );
+    --gradient-glass: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(255, 255, 255, 0.7) 100%
+    );
+    --gradient-hero: linear-gradient(
+      180deg,
+      hsl(35, 30%, 98%) 0%,
+      hsl(35, 25%, 95%) 100%
+    );
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -4px hsl(25 20% 15% / 0.08);
+    --shadow-glow: 0 0 30px hsl(32 85% 55% / 0.25);
+    --shadow-card: 0 2px 12px -2px hsl(25 20% 15% / 0.06);
+
+    --sidebar-background: 35 25% 97%;
+    --sidebar-foreground: 25 20% 25%;
+    --sidebar-primary: 32 85% 55%;
+    --sidebar-primary-foreground: 35 30% 98%;
+    --sidebar-accent: 35 20% 94%;
+    --sidebar-accent-foreground: 25 20% 25%;
+    --sidebar-border: 35 20% 90%;
+    --sidebar-ring: 32 85% 55%;
+  }
+
+  .dark {
+    /* Coral Rose Theme - Deep black with coral accents */
+    --background: 0 0% 4%; /* #0A0A0A - True black */
+    --foreground: 0 0% 95%; /* #F2F2F2 */
+
+    --card: 0 0% 10%; /* #1A1A1A - Subtle dark gray */
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    /* Coral/Rose Primary */
+    --primary: 0 72% 63%; /* #F56565 - Coral */
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 0 72% 70%;
+
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 85%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 55%;
+
+    /* Teal accent for secondary actions */
+    --accent: 174 60% 50%; /* Teal for contrast */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Very subtle borders */
+    --border: 0 0% 18%;
+    --input: 0 0% 15%;
+    --ring: 0 72% 63%;
+
+    /* Priority colors - coordinated with coral */
+    --priority-urgent: 0 80% 60%; /* Bright coral */
+    --priority-high: 25 90% 55%; /* Orange */
+    --priority-medium: 45 90% 55%; /* Yellow */
+    --priority-low: 160 50% 50%; /* Teal */
+
+    /* Sidebar - slightly lighter for contrast */
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 0 72% 63%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 0 72% 63%;
+
+    /* Refined gradients */
+    --gradient-warm: linear-gradient(
+      135deg,
+      hsl(0, 72%, 63%) 0%,
+      hsl(25, 90%, 55%) 100%
+    );
+    --gradient-calm: linear-gradient(
+      135deg,
+      hsl(174, 60%, 50%) 0%,
+      hsl(160, 50%, 45%) 100%
+    );
+    --gradient-sunset: linear-gradient(
+      135deg,
+      hsl(0, 72%, 63%) 0%,
+      hsl(330, 70%, 50%) 100%
+    );
+    --gradient-glass: linear-gradient(
+      135deg,
+      rgba(26, 26, 26, 0.9) 0%,
+      rgba(26, 26, 26, 0.7) 100%
+    );
+    --gradient-hero: linear-gradient(
+      180deg,
+      hsl(0, 0%, 4%) 0%,
+      hsl(0, 0%, 8%) 100%
+    );
+
+    /* Softer shadows for dark mode */
+    --shadow-soft: 0 4px 20px -4px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 30px hsl(0 72% 63% / 0.25);
+    --shadow-card: 0 2px 12px -2px rgba(0, 0, 0, 0.4);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "ss01", "ss02", "cv01";
+  }
+
+  h1,
+  h2,
+  h3 {
+    /* Use same font as body - font can be customized via Settings */
+    font-family: inherit;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-soft;
+  }
+
+  .priority-urgent {
+    @apply bg-priority-urgent text-white;
+  }
+
+  .priority-high {
+    @apply bg-priority-high text-white;
+  }
+
+  .priority-medium {
+    @apply bg-priority-medium text-foreground;
+  }
+
+  .priority-low {
+    @apply bg-priority-low text-white;
+  }
+
+  .glow-effect {
+    @apply shadow-glow;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
+  }
+
+  .animate-bounce-gentle {
+    animation: bounce-gentle 2s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s linear infinite;
+    background-size: 200% 100%;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes bounce-gentle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
