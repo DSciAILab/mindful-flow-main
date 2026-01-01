@@ -43,8 +43,8 @@ const Auth = () => {
       passwordSchema.parse(password);
       if (isSignup && !displayName.trim()) {
         toast({
-          title: 'Nome obrigatório',
-          description: 'Por favor, insira seu nome de exibição.',
+          title: 'Como te chamamos?',
+          description: 'Por favor, nos diga como quer ser chamado.',
           variant: 'destructive',
         });
         return false;
@@ -239,13 +239,13 @@ const Auth = () => {
                 
                 <form onSubmit={handleSignup} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Nome</Label>
+                    <Label htmlFor="signup-name">Como quer ser chamado?</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         id="signup-name"
                         type="text"
-                        placeholder="Seu nome"
+                        placeholder="Ex: João, Mari, Dr. Silva..."
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
                         className="pl-10"

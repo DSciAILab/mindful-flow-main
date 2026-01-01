@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
 import { 
   RefreshCw, 
   Save, 
@@ -88,6 +89,8 @@ export function WheelOfLife({ onSave }: WheelOfLifeProps) {
   const [isChatLoading, setIsChatLoading] = useState(false);
   
   const svgRef = useRef<SVGSVGElement>(null);
+  
+  const { greetingName } = useProfile();
 
   const centerX = 150;
   const centerY = 150;
@@ -218,9 +221,10 @@ export function WheelOfLife({ onSave }: WheelOfLifeProps) {
 
   const startChat = (area: LifeArea) => {
     setChatArea(area);
+    const greeting = greetingName ? `Olá, ${greetingName}!` : 'Olá!';
     setChatMessages([{
       role: 'assistant',
-      content: `Olá! Vou te ajudar a refletir sobre sua área de ${area.name}. Seu score atual é ${area.score}/10. Como você se sente em relação a isso?`
+      content: `${greeting} Vou te ajudar a refletir sobre sua área de ${area.name}. Seu score atual é ${area.score}/10. Como você se sente em relação a isso?`
     }]);
     setShowChat(true);
     setShowChangelog(false);

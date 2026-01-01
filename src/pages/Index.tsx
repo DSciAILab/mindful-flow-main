@@ -31,6 +31,7 @@ import { useTaskSplitting } from "@/hooks/useTaskSplitting";
 import { useTasks } from "@/hooks/useTasks";
 import { useProjects } from "@/hooks/useProjects";
 import { useJournal } from "@/hooks/useJournal";
+import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
 import { 
   Sparkles, 
@@ -116,6 +117,8 @@ export default function Index() {
     updateEntry: updateJournalEntry,
     deleteEntry: deleteJournalEntry,
   } = useJournal();
+  
+  const { greetingName } = useProfile();
   
   const { stats, completeTask: addPointsForTask, addFocusTime } = useUserStats();
   const { toast } = useToast();
@@ -620,7 +623,10 @@ export default function Index() {
             <div className="mb-6 animate-fade-in">
               <h1 className="flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
                 <Sparkles className="h-8 w-8 text-primary" />
-                Olá! Vamos conquistar o dia?
+                {greetingName 
+                  ? `Olá, ${greetingName}! Vamos conquistar o dia?`
+                  : 'Olá! Vamos conquistar o dia?'
+                }
               </h1>
               <p className="text-muted-foreground">
                 {new Date().toLocaleDateString('pt-BR', { 
