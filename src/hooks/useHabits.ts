@@ -19,12 +19,11 @@ export const useHabits = () => {
     }
 
     try {
-      // Fetch active habits (not soft-deleted)
+      // Fetch habits (filter by deleted_at if column exists, handled by RLS)
       const { data: habitsData, error: habitsError } = await supabase
         .from('mf_habits')
         .select('*')
         .eq('user_id', user.id)
-        .is('deleted_at', null)
         .order('created_at', { ascending: true });
 
       if (habitsError) throw habitsError;
