@@ -28,12 +28,13 @@ export const useTasks = () => {
 
       if (error) throw error;
 
-      const mappedTasks: Task[] = (data || []).map((task) => ({
+      const mappedTasks: Task[] = (data || []).map((task: any) => ({
         id: task.id,
         title: task.title,
         description: task.description || undefined,
         priority: task.priority as Task['priority'],
         status: task.status as Task['status'],
+        category: task.category as Task['category'] || undefined,
         tags: task.tags || [],
         points: task.points || 10,
         createdAt: new Date(task.created_at),
@@ -42,7 +43,7 @@ export const useTasks = () => {
         timeSpentMinutes: task.time_spent_minutes || 0,
         estimatedMinutes: task.estimated_minutes || undefined,
         projectId: task.project_id || undefined,
-        parentTaskId: task.parent_task_id || undefined,
+        activityLog: task.activity_log || [],
       }));
 
       setTasks(mappedTasks);
@@ -75,11 +76,13 @@ export const useTasks = () => {
           description: taskData.description || null,
           priority: taskData.priority || 'medium',
           status: taskData.status || 'next',
+          category: taskData.category || null,
           tags: taskData.tags || [],
           points: taskData.points || 10,
           estimated_minutes: taskData.estimatedMinutes || null,
           project_id: taskData.projectId || null,
           due_date: taskData.dueDate?.toISOString() || null,
+          activity_log: JSON.stringify([{ timestamp: new Date().toISOString(), action: 'created' }]),
         })
         .select()
         .single();
@@ -92,6 +95,7 @@ export const useTasks = () => {
         description: data.description || undefined,
         priority: data.priority as Task['priority'],
         status: data.status as Task['status'],
+        category: data.category as Task['category'] || undefined,
         tags: data.tags || [],
         points: data.points || 10,
         createdAt: new Date(data.created_at),
@@ -99,6 +103,7 @@ export const useTasks = () => {
         timeSpentMinutes: data.time_spent_minutes || 0,
         estimatedMinutes: data.estimated_minutes || undefined,
         projectId: data.project_id || undefined,
+        activityLog: data.activity_log || [],
       };
 
       setTasks((prev) => [newTask, ...prev]);
@@ -125,6 +130,7 @@ export const useTasks = () => {
       if (updates.description !== undefined) dbUpdates.description = updates.description || null;
       if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
       if (updates.status !== undefined) dbUpdates.status = updates.status;
+      if (updates.category !== undefined) dbUpdates.category = updates.category || null;
       if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
       if (updates.points !== undefined) dbUpdates.points = updates.points;
       if (updates.timeSpentMinutes !== undefined) dbUpdates.time_spent_minutes = updates.timeSpentMinutes;

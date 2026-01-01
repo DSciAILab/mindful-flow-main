@@ -8,12 +8,21 @@ export type TaskStatus =
   | "someday"
   | "done";
 
+export type TaskCategory = "red" | "yellow" | "purple" | "green";
+
+export interface ActivityLogEntry {
+  timestamp: string;
+  action: string;
+  details?: string;
+}
+
 export interface Task {
   id: string;
   title: string;
   description?: string;
   priority: Priority;
   status: TaskStatus;
+  category?: TaskCategory;
   dueDate?: Date;
   projectId?: string;
   areaId?: string;
@@ -24,6 +33,8 @@ export interface Task {
   // Time tracking
   timeSpentMinutes: number;
   estimatedMinutes?: number;
+  // Activity log
+  activityLog?: ActivityLogEntry[];
 }
 
 export interface Project {
