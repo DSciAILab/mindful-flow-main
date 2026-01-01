@@ -600,21 +600,14 @@ export default function Index() {
             <div className="animate-fade-in">
               <h1 className="mb-2 flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
                 <BarChart3 className="h-8 w-8 text-primary" />
-                Relatórios
+                Estatísticas de Foco
               </h1>
               <p className="text-muted-foreground">
                 Acompanhe seu progresso e produtividade
               </p>
             </div>
             <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <DailyProgress stats={stats} dailyGoals={dailyGoals} />
-            </div>
-            <div className="animate-fade-in rounded-2xl border border-border/50 bg-card p-8 text-center shadow-card" style={{ animationDelay: '200ms' }}>
-              <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 font-semibold text-foreground">Mais relatórios em breve</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Gráficos e análises detalhadas estarão disponíveis em breve
-              </p>
+              <TimerDashboard />
             </div>
           </div>
         );
@@ -830,6 +823,26 @@ export default function Index() {
         isOpen={isProjectModalOpen}
         onClose={() => setIsProjectModalOpen(false)}
         onSave={addProject}
+      />
+
+      {/* FloatingCoach AI Assistant */}
+      <FloatingCoach />
+
+      {/* FocusMode Fullscreen */}
+      <FocusMode
+        isOpen={isFocusModeOpen}
+        onClose={() => setIsFocusModeOpen(false)}
+        formattedTime={timer.formattedTime}
+        progress={timer.progress}
+        isRunning={timer.isRunning}
+        isPaused={timer.isPaused}
+        type={timer.type}
+        sessionsCompleted={timer.sessionsCompleted}
+        selectedTask={selectedTask}
+        onStart={timer.start}
+        onPause={timer.pause}
+        onDone={handleTaskDone}
+        onBreak={timer.goToBreak}
       />
     </div>
   );

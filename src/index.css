@@ -8,7 +8,7 @@
   :root {
     /* Font family variable - can be changed via Settings */
     --font-family: "Plus Jakarta Sans", system-ui, sans-serif;
-    
+
     /* Warm, calming palette for ADHD-friendly design */
     --background: 35 30% 98%;
     --foreground: 25 20% 15%;
@@ -293,4 +293,36 @@
   100% {
     background-position: 200% 0;
   }
+}
+
+@keyframes blink-warn {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 20px hsl(45 90% 55% / 0.5);
+  }
+}
+
+@keyframes blink-danger {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.02);
+    box-shadow: 0 0 30px hsl(0 72% 55% / 0.6);
+  }
+}
+
+.blink-warn {
+  animation: blink-warn 1s ease-in-out infinite;
+}
+
+.blink-danger {
+  animation: blink-danger 0.5s ease-in-out infinite;
 }
