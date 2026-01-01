@@ -16,10 +16,12 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Habit } from "@/types";
 import { useHabits } from "@/hooks/useHabits";
+import { HabitCreateModal } from "./HabitCreateModal";
 
 export function HabitTracker() {
   const { habits, loading, toggleHabit, addHabit, deleteHabit } = useHabits();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
@@ -74,10 +76,7 @@ export function HabitTracker() {
           <Button variant="outline" size="icon" onClick={handleNextWeek}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button size="sm" onClick={() => {
-            const title = prompt("Nome do hábito:");
-            if (title) addHabit({ title });
-          }}>
+          <Button size="sm" onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Novo Hábito
           </Button>
