@@ -20,6 +20,8 @@ import {
 import { Save, X, Plus, Palette } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Habit } from "@/types";
+import { useProjects } from "@/hooks/useProjects";
+import { FolderKanban } from "lucide-react";
 
 interface HabitCreateModalProps {
   isOpen: boolean;
@@ -48,13 +50,16 @@ export function HabitCreateModal({ isOpen, onClose, onSave }: HabitCreateModalPr
   const [description, setDescription] = useState('');
   const [frequency, setFrequency] = useState<'daily' | 'weekly'>('daily');
   const [color, setColor] = useState('#3b82f6');
+  const [projectId, setProjectId] = useState<string | undefined>();
   const [isSaving, setIsSaving] = useState(false);
+  const { projects } = useProjects();
 
   const resetForm = () => {
     setTitle('');
     setDescription('');
     setFrequency('daily');
     setColor('#3b82f6');
+    setProjectId(undefined);
   };
 
   const handleClose = () => {
@@ -72,6 +77,7 @@ export function HabitCreateModal({ isOpen, onClose, onSave }: HabitCreateModalPr
       description: description.trim() || undefined,
       frequency,
       color,
+      projectId,
     });
 
     setIsSaving(false);
@@ -128,6 +134,30 @@ export function HabitCreateModal({ isOpen, onClose, onSave }: HabitCreateModalPr
                 {frequencyOptions.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Project Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="project" className="flex items-center gap-2">
+              <FolderKanban className="h-4 w-4" />
+              Projeto
+            </Label>
+            <Select value={projectId || "none"} onValueChange={(v) => setProjectId(v === "none" ? undefined : v)}>
+              <SelectTrigger id="project">
+                <SelectValue placeholder="Selecionar projeto..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum Projeto</SelectItem>
+                {projects.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+                      {p.name}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>

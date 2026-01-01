@@ -101,6 +101,13 @@ ADD COLUMN IF NOT EXISTS llm_provider TEXT DEFAULT 'lovable',
 ADD COLUMN IF NOT EXISTS llm_api_key TEXT DEFAULT NULL,
 ADD COLUMN IF NOT EXISTS llm_model TEXT DEFAULT 'gemini-2.5-flash';
 
-COMMENT ON COLUMN public.mf_profiles.llm_provider IS 'Selected LLM provider (lovable, openai, etc)';
-COMMENT ON COLUMN public.mf_profiles.llm_api_key IS 'API Key for external providers';
 COMMENT ON COLUMN public.mf_profiles.llm_model IS 'Selected model ID';
+
+-- =====================================================
+-- 9. ADD PROJECT RELATION TO HABITS
+-- =====================================================
+ALTER TABLE public.mf_habits
+ADD COLUMN IF NOT EXISTS project_id UUID REFERENCES public.mf_projects(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_mf_habits_project_id ON public.mf_habits(project_id);
+COMMENT ON COLUMN public.mf_habits.project_id IS 'Optional link to a project';

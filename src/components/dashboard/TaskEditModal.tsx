@@ -30,9 +30,10 @@ import {
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskAttachments } from "./TaskAttachments";
-import type { Task, Priority, TaskStatus } from "@/types";
+import type { Task, Priority, TaskStatus, TaskCategory } from "@/types";
 import { useProjects } from "@/hooks/useProjects";
 import { FolderKanban } from "lucide-react";
+import { TaskCategorySelector } from "./TaskCategoryBadge";
 
 interface TaskEditModalProps {
   task: Task | null;
@@ -62,6 +63,7 @@ export function TaskEditModal({ task, isOpen, onClose, onSave, onDelete }: TaskE
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
+  const [category, setCategory] = useState<TaskCategory | undefined>();
   const [status, setStatus] = useState<TaskStatus>('next');
   const [tagsInput, setTagsInput] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | undefined>();
@@ -84,6 +86,7 @@ export function TaskEditModal({ task, isOpen, onClose, onSave, onDelete }: TaskE
       setDescription(task.description || '');
       setPriority(task.priority);
       setStatus(task.status);
+      setCategory(task.category);
       setTagsInput(task.tags?.join(', ') || '');
       setEstimatedMinutes(task.estimatedMinutes);
       setProjectId(task.projectId);
@@ -99,12 +102,20 @@ export function TaskEditModal({ task, isOpen, onClose, onSave, onDelete }: TaskE
       .map(t => t.trim())
       .filter(t => t.length > 0);
 
+    // Auto-calculate priority based on category
+    let calculatedPriority: Priority = 'medium';
+    if (category === 'red') calculatedPriority = 'urgent';
+    else if (category === 'yellow') calculatedPriority = 'medium';
+    else if (category === 'purple') calculatedPriority = 'high';
+    else if (category === 'green') calculatedPriority = 'low';
+
     onSave({
       ...task,
       title: title.trim(),
       description: description.trim() || undefined,
-      priority,
+      priority: calculatedPriority,
       status,
+      category,
       tags,
       estimatedMinutes,
       projectId,
@@ -156,25 +167,8 @@ export function TaskEditModal({ task, isOpen, onClose, onSave, onDelete }: TaskE
           {/* Priority & Status */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Prioridade</Label>
-              <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {priorityOptions.map((opt) => {
-                    const Icon = opt.icon;
-                    return (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        <div className="flex items-center gap-2">
-                          <Icon className={cn("h-4 w-4", opt.color)} />
-                          {opt.label}
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
+              <Label>Categoria Visual (ADHD)</Label>
+              <TaskCategorySelector value={category} onChange={setCategory} />
             </div>
 
             <div className="space-y-2">

@@ -54,6 +54,7 @@ export const useHabits = () => {
           frequency: habit.frequency as Habit['frequency'],
           daysOfWeek: habit.days_of_week || [0, 1, 2, 3, 4, 5, 6],
           color: habit.color || '#3b82f6',
+          projectId: habit.project_id,
           createdAt: new Date(habit.created_at),
           completedDays,
         };
@@ -88,6 +89,7 @@ export const useHabits = () => {
           description: habitData.description || null,
           frequency: habitData.frequency || 'daily',
           color: habitData.color || '#3b82f6',
+          project_id: habitData.projectId || null,
         })
         .select()
         .single();
@@ -100,6 +102,7 @@ export const useHabits = () => {
         description: data.description || undefined,
         frequency: data.frequency as Habit['frequency'],
         color: data.color,
+        projectId: data.project_id,
         createdAt: new Date(data.created_at),
         completedDays: {},
       };

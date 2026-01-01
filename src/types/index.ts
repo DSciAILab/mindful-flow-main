@@ -117,6 +117,7 @@ export interface Habit {
   frequency: "daily" | "weekly";
   daysOfWeek?: number[]; // 0-6 for weekly habits
   color: string;
+  projectId?: string;
   createdAt: Date;
   completedDays: Record<string, boolean>; // date string "YYYY-MM-DD" -> completed
 }
