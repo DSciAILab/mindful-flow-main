@@ -184,22 +184,51 @@ export function HabitTracker() {
       </Card>
       
       {/* Performance Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-primary/10 to-transparent border-primary/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/20 text-primary">
-                <Trophy className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase">Meta Semanal</p>
-                <p className="text-xl font-bold">85% Concluído</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        {/* ... more stats cards could go here */}
-      </div>
+      {(() => {
+        // Calculate weekly completion: only count days up to today (not future)
+        const today = new Date();
+        const pastDays = weekDays.filter(day => day <= today);
+        
+        if (habits.length === 0 || pastDays.length === 0) {
+          return null;
+        }
+        
+        let totalExpected = habits.length * pastDays.length;
+        let totalCompleted = 0;
+        
+        habits.forEach(habit => {
+          pastDays.forEach(day => {
+            const dateStr = format(day, 'yyyy-MM-dd');
+            if (habit.completedDays[dateStr]) {
+              totalCompleted++;
+            }
+          });
+        });
+        
+        const percentage = totalExpected > 0 
+          ? Math.round((totalCompleted / totalExpected) * 100) 
+          : 0;
+        
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-gradient-to-br from-primary/10 to-transparent border-primary/20">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/20 text-primary">
+                    <Trophy className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase">Meta Semanal</p>
+                    <p className="text-xl font-bold">{percentage}% Concluído</p>
+                    <p className="text-[10px] text-muted-foreground">{totalCompleted}/{totalExpected} check-ins</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            {/* ... more stats cards could go here */}
+          </div>
+        );
+      })()}
 
       {/* Create Habit Modal */}
       <HabitCreateModal

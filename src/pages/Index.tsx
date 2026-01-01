@@ -19,6 +19,7 @@ import { FocusMode } from "@/components/dashboard/FocusMode";
 import { TimerDashboard } from "@/components/dashboard/TimerDashboard";
 import { QuoteDisplay } from "@/components/dashboard/QuoteDisplay";
 import { ProjectCreateModal } from "@/components/projects/ProjectCreateModal";
+import { ProjectList } from "@/components/projects/ProjectCard";
 import { WheelOfLife } from "@/components/planning/WheelOfLife";
 import { YearAtGlance } from "@/components/planning/YearAtGlance";
 import { MonthAtGlance } from "@/components/planning/MonthAtGlance";
@@ -51,7 +52,7 @@ import {
   Plus,
   Trash2
 } from "lucide-react";
-import type { Task, CaptureItem, JournalEntry } from "@/types";
+import type { Task, CaptureItem, JournalEntry, Project } from "@/types";
 
 const sampleInboxItems: CaptureItem[] = [
   {
@@ -112,10 +113,33 @@ export default function Index() {
   const {
     projects,
     addProject,
+    updateProject,
+    deleteProject,
     loading: projectsLoading
   } = useProjects();
   
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
+  
+  const handleEditProject = (project: Project) => {
+    setProjectToEdit(project);
+    setIsProjectModalOpen(true);
+  };
+  
+  const handleProjectModalClose = () => {
+    setIsProjectModalOpen(false);
+    setProjectToEdit(null);
+  };
+  
+  const handleSaveProject = async (projectData: Partial<Project>) => {
+    if (projectToEdit) {
+      await updateProject(projectToEdit.id, projectData);
+    } else {
+      await addProject(projectData);
+    }
+    handleProjectModalClose();
+  };
   
   const {
     entries: journalEntries,
@@ -364,8 +388,8 @@ export default function Index() {
                           {item.createdAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
-                      {!item.processed && (
-                        <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1">
+                        {!item.processed && (
                           <Button
                             size="sm"
                             variant="ghost"
@@ -374,17 +398,17 @@ export default function Index() {
                           >
                             <Sparkles className="h-4 w-4 text-primary" />
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDeleteInboxItem(item.id)}
-                            className="text-muted-foreground hover:text-destructive"
-                            title="Excluir"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteInboxItem(item.id)}
+                          className="text-muted-foreground hover:text-destructive"
+                          title="Excluir"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -436,21 +460,48 @@ export default function Index() {
             <div className="animate-fade-in">
               <h1 className="mb-2 flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
                 <FolderKanban className="h-8 w-8 text-primary" />
-                Projetos
+                Projetos & Tarefas
               </h1>
               <p className="text-muted-foreground">
-                Arraste tarefas entre colunas para mudar o status
+                Gerencie seus projetos e acompanhe o progresso das tarefas
               </p>
             </div>
-            <div className="flex items-center gap-4">
+            
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Seus Projetos</h2>
               <Button onClick={() => setIsProjectModalOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Novo Projeto
               </Button>
             </div>
+
             <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <KanbanBoard 
+              <ProjectList
+                projects={projects}
                 tasks={tasks}
+                selectedProjectId={selectedProjectId}
+                onSelectProject={setSelectedProjectId}
+                onEditProject={handleEditProject}
+                onDeleteProject={deleteProject}
+                onEditTask={(task) => {
+                  setEditingTask(task);
+                  setIsEditModalOpen(true);
+                }}
+              />
+            </div>
+
+            <div className="animate-fade-in space-y-4" style={{ animationDelay: '200ms' }}>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">
+                  {selectedProjectId 
+                    ? `Tarefas: ${projects.find(p => p.id === selectedProjectId)?.name}`
+                    : "Todas as Tarefas"
+                  }
+                </h2>
+              </div>
+              
+              <KanbanBoard 
+                tasks={selectedProjectId ? tasks.filter(t => t.projectId === selectedProjectId) : tasks}
                 onTaskMove={async (taskId, newStatus) => {
                   const success = await updateTask(taskId, { status: newStatus as Task['status'] });
                   if (success) {
@@ -666,6 +717,7 @@ export default function Index() {
                     items={inboxItems}
                     onViewAll={() => setActiveView('inbox')}
                     onProcess={(item) => setProcessingInboxItem(item)}
+                    onDelete={handleDeleteInboxItem}
                   />
                 </div>
               </div>
@@ -821,8 +873,9 @@ export default function Index() {
 
       <ProjectCreateModal
         isOpen={isProjectModalOpen}
-        onClose={() => setIsProjectModalOpen(false)}
-        onSave={addProject}
+        onClose={handleProjectModalClose}
+        onSave={handleSaveProject}
+        projectToEdit={projectToEdit}
       />
 
       {/* FloatingCoach AI Assistant */}

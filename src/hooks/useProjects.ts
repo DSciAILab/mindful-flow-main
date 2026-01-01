@@ -88,10 +88,80 @@ export const useProjects = () => {
     }
   };
 
+  const updateProject = async (projectId: string, updates: Partial<Project>): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('mf_projects')
+        .update({
+          name: updates.name,
+          description: updates.description,
+          color: updates.color,
+        })
+        .eq('id', projectId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setProjects(prev => prev.map(p => 
+        p.id === projectId ? { ...p, ...updates } : p
+      ));
+
+      toast({
+        title: 'Projeto atualizado',
+        description: 'As alterações foram salvas.',
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error updating project:', error);
+      toast({
+        title: 'Erro ao atualizar projeto',
+        description: 'Não foi possível salvar as alterações.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  const deleteProject = async (projectId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('mf_projects')
+        .delete()
+        .eq('id', projectId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setProjects(prev => prev.filter(p => p.id !== projectId));
+
+      toast({
+        title: 'Projeto excluído',
+        description: 'O projeto foi removido.',
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast({
+        title: 'Erro ao excluir projeto',
+        description: 'Não foi possível excluir o projeto.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   return {
     projects,
     loading,
     addProject,
+    updateProject,
+    deleteProject,
     refetch: fetchProjects,
   };
 };

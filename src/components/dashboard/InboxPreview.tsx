@@ -6,7 +6,8 @@ import {
   Mic, 
   Camera,
   Sparkles,
-  Clock
+  Clock,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CaptureItem } from "@/types";
@@ -15,6 +16,7 @@ interface InboxPreviewProps {
   items: CaptureItem[];
   onViewAll: () => void;
   onProcess: (item: CaptureItem) => void;
+  onDelete?: (id: string) => void;
 }
 
 const typeIcons: Record<string, React.ElementType> = {
@@ -25,7 +27,7 @@ const typeIcons: Record<string, React.ElementType> = {
   canvas: Type,
 };
 
-export function InboxPreview({ items, onViewAll, onProcess }: InboxPreviewProps) {
+export function InboxPreview({ items, onViewAll, onProcess, onDelete }: InboxPreviewProps) {
   const unprocessedCount = items.filter(i => !i.processed).length;
 
   return (
@@ -85,14 +87,26 @@ export function InboxPreview({ items, onViewAll, onProcess }: InboxPreviewProps)
               </div>
 
               {!item.processed && (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-                  onClick={() => onProcess(item)}
-                >
-                  <Sparkles className="h-4 w-4 text-primary" />
-                </Button>
+                <div className="flex flex-shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => onProcess(item)}
+                    title="Processar"
+                  >
+                    <Sparkles className="h-4 w-4 text-primary" />
+                  </Button>
+                  {onDelete && (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => onDelete(item.id)}
+                      title="Excluir"
+                    >
+                      <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           );

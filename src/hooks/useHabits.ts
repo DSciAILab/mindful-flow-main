@@ -175,11 +175,11 @@ export const useHabits = () => {
     if (!user) return false;
 
     try {
-      // Soft delete: set deleted_at timestamp
-      // Logs are preserved as historical data
+      // Delete habit (logs will be deleted by CASCADE or orphaned)
+      // Note: For soft delete with history preservation, run the migration first
       const { error } = await supabase
         .from('mf_habits')
-        .update({ deleted_at: new Date().toISOString() })
+        .delete()
         .eq('id', habitId)
         .eq('user_id', user.id);
 
@@ -189,16 +189,16 @@ export const useHabits = () => {
       setHabits(prev => prev.filter(h => h.id !== habitId));
       
       toast({
-        title: 'Hábito arquivado',
-        description: 'O histórico foi preservado.',
+        title: 'Hábito excluído',
+        description: 'O hábito foi removido.',
       });
 
       return true;
     } catch (error) {
       console.error('Error deleting habit:', error);
       toast({
-        title: 'Erro ao arquivar hábito',
-        description: 'Não foi possível arquivar o hábito.',
+        title: 'Erro ao excluir hábito',
+        description: 'Não foi possível excluir o hábito.',
         variant: 'destructive',
       });
       return false;
