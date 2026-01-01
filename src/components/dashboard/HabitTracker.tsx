@@ -200,6 +200,13 @@ export function HabitTracker() {
         </Card>
         {/* ... more stats cards could go here */}
       </div>
+
+      {/* Create Habit Modal */}
+      <HabitCreateModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSave={addHabit}
+      />
     </div>
   );
 }
