@@ -8,7 +8,8 @@ import {
   ChevronRight,
   Flame,
   Target,
-  Trophy
+  Trophy,
+  Archive
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -17,7 +18,7 @@ import type { Habit } from "@/types";
 import { useHabits } from "@/hooks/useHabits";
 
 export function HabitTracker() {
-  const { habits, loading, toggleHabit, addHabit } = useHabits();
+  const { habits, loading, toggleHabit, addHabit, deleteHabit } = useHabits();
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
@@ -138,6 +139,17 @@ export function HabitTracker() {
                           </p>
                         </div>
                       </div>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Arquivar "${habit.title}"? O histórico será preservado.`)) {
+                            deleteHabit(habit.id);
+                          }
+                        }}
+                        className="ml-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                        title="Arquivar hábito (histórico preservado)"
+                      >
+                        <Archive className="h-4 w-4" />
+                      </button>
                     </div>
 
                     <div className="flex gap-4">

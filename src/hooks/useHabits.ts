@@ -19,11 +19,12 @@ export const useHabits = () => {
     }
 
     try {
-      // Fetch habits
+      // Fetch active habits (not soft-deleted)
       const { data: habitsData, error: habitsError } = await supabase
         .from('mf_habits')
         .select('*')
         .eq('user_id', user.id)
+        .is('deleted_at', null)
         .order('created_at', { ascending: true });
 
       if (habitsError) throw habitsError;
@@ -171,11 +172,46 @@ export const useHabits = () => {
     }
   };
 
+  const deleteHabit = async (habitId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      // Soft delete: set deleted_at timestamp
+      // Logs are preserved as historical data
+      const { error } = await supabase
+        .from('mf_habits')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', habitId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setHabits(prev => prev.filter(h => h.id !== habitId));
+      
+      toast({
+        title: 'Hábito arquivado',
+        description: 'O histórico foi preservado.',
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting habit:', error);
+      toast({
+        title: 'Erro ao arquivar hábito',
+        description: 'Não foi possível arquivar o hábito.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   return {
     habits,
     loading,
     addHabit,
     toggleHabit,
+    deleteHabit,
     refetch: fetchHabits,
   };
 };
