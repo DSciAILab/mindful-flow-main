@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles
+ADD COLUMN xp_points INTEGER DEFAULT 0;

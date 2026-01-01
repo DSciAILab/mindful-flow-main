@@ -1,0 +1,7 @@
+{
+  "name": "NeuroFlow Life OS",
+  "description": "An ADHD-friendly Life OS combining Bullet Journaling, Wheel of Life, and AI coaching to turn big goals into small, executable steps.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

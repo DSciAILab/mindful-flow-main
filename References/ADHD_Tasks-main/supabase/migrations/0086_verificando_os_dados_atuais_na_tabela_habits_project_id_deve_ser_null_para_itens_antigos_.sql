@@ -1,0 +1,1 @@
+SELECT id, title, project_id, created_at FROM public.habits LIMIT 5;

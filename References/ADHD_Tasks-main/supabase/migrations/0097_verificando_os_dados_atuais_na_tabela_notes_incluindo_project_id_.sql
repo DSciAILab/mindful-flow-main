@@ -1,0 +1,1 @@
+SELECT id, content, project_id, created_at FROM public.notes LIMIT 10;

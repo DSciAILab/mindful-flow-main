@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FocusFlow Pro - TDAH Friendly (PWA)</title>
+  <meta name="theme-color" content="#667eea" />
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* === (o resto do CSS é igual à versão v3) === */
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --success-gradient: linear-gradient(135deg, #48bb78, #38a169);
+      --warning-gradient: linear-gradient(135deg, #ed8936, #dd6b20);
+      --info-gradient: linear-gradient(135deg, #4299e1, #3182ce);
+      --danger-gradient: linear-gradient(135deg, #f56565, #e53e3e);
+      --hyperfocus-gradient: linear-gradient(135deg, #dc2626, #b91c1c);
+      --celebration-gradient: linear-gradient(135deg, #ffd700, #ff6b6b, #4ecdc4, #45b7d1);
+      --bg-primary: #f8f9fa;
+      --bg-secondary: #ffffff;
+      --text-primary: #333333;
+      --text-secondary: #666666;
+      --border-color: #e2e8f0;
+      --shadow: 0 10px 30px rgba(0,0,0,0.1);
+      --shadow-hover: 0 15px 40px rgba(0,0,0,0.15);
+      --accent-color: #667eea;
+    }
+    [data-theme="dark"] {
+      --bg-primary: #1a202c;
+      --bg-secondary: #2d3748;
+      --text-primary: #f7fafc;
+      --text-secondary: #cbd5e0;
+      --border-color: #4a5568;
+      --shadow: 0 10px 30px rgba(0,0,0,0.3);
+      --shadow-hover: 0 15px 40px rgba(0,0,0,0.4);
+      --suggested-task-bg: linear-gradient(135deg, #3a475a, #4a5d7a);
+      --suggested-task-border: #6a7f9a;
+      --suggested-task-text: #f7fafc;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-primary);
+      min-height: 100vh;
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+      overflow-x: hidden;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; margin-bottom: 30px; position: relative; }
+    .theme-toggle {
+      position: absolute; top: 0; right: 0;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-color);
+      border-radius: 50%; width: 50px; height: 50px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 1.2em; transition: all 0.3s ease;
+    }
+    .theme-toggle:hover { transform: scale(1.1); }
+    .header h1 {
+      font-size: 2.5em; margin-bottom: 10px;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .gamification-bar { background: var(--bg-secondary); border-radius: 15px; padding: 20px; margin-bottom: 30px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .stat-item { text-align: center; padding: 15px; background: var(--bg-primary); border-radius: 10px; border: 1px solid var(--border-color); }
+    .stat-value { font-size: 1.8em; font-weight: bold; color: var(--accent-color); display: block; }
+    .stat-label { font-size: 0.8em; color: var(--text-secondary); margin-top: 5px; }
+    .level-progress { margin-top: 15px; }
+    .level-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .level-badge { background: var(--accent-color); color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9em; }
+    .xp-info { font-size: 0.9em; color: var(--text-secondary); }
+    .progress-bar-large { width: 100%; height: 12px; background: var(--border-color); border-radius: 6px; overflow: hidden; }
+    .progress-fill-large { height: 100%; background: var(--primary-gradient); transition: width 0.5s ease; border-radius: 6px; }
+    .focus-area { background: var(--bg-secondary); border-radius: 20px; padding: 40px; margin-bottom: 30px; box-shadow: var(--shadow); border: 1px solid var(--border-color); text-align: center; min-height: 400px; display: flex; flex-direction: column; justify-content: center; position: relative; }
+    .focus-area.active { background: var(--success-gradient); color: white; }
+    .focus-area.paused { background: var(--warning-gradient); color: white; }
+    .focus-area.break { background: var(--info-gradient); color: white; }
+    .focus-area.hyperfocus { background: var(--hyperfocus-gradient); color: white; }
+    .focus-area.celebration { background: var(--celebration-gradient); color: white; animation: celebrate 2s ease-in-out; }
+    @keyframes celebrate { 0%, 100% { transform: scale(1);} 50% { transform: scale(1.05);} }
+    .task-status-indicator { position: absolute; top: 20px; right: 20px; font-size: 2em; }
+    .current-task-title { font-size: 2.0em; font-weight: 700; margin-bottom: 10px; line-height: 1.2; }
+    .timer-display { font-size: 4em; font-weight: bold; margin: 20px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+    .progress-circle { width: 120px; height: 120px; margin: 20px auto; position: relative; }
+    .progress-circle svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .progress-circle-bg { fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 8; }
+    .progress-circle-fill { fill: none; stroke: rgba(255,255,255,0.8); stroke-width: 8; stroke-linecap: round; transition: stroke-dasharray 0.3s ease; }
+    .controls { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+    .btn { background: var(--accent-color); color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 1.05em; font-weight: 600; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+    .btn.primary { background: #48bb78; } .btn.primary:hover { background: #38a169; }
+    .btn.danger { background: #f56565; } .btn.danger:hover { background: #e53e3e; }
+    .btn.warning { background: #ed8936; } .btn.warning:hover { background: #dd6b20; }
+    .btn.secondary { background: #718096; } .btn.secondary:hover { background: #4a5568; }
+    .btn.hyper { background: #dc2626; } .btn.hyper:hover { background: #b91c1c; }
+    .tasks-area { background: var(--bg-secondary); border-radius: 15px; padding: 25px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
+    .tasks-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .tasks-title { font-size: 1.5em; font-weight: bold; color: var(--text-primary); }
+    .task-suggestions { margin-bottom: 20px; }
+    .suggestion-title { font-size: 1.1em; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .suggested-task { background: var(--suggested-task-bg, linear-gradient(135deg, #fef3c7, #fde68a)); border: 2px solid var(--suggested-task-border, #f59e0b); border-radius: 12px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 15px; }
+    .suggested-task:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(245,158,11,0.3); }
+    .suggested-task.canceled { opacity: 0.6; filter: grayscale(0.4); text-decoration: line-through; }
+    .task-emoji { font-size: 1.5em; }
+    .task-info { flex: 1; }
+    .task-name { font-weight: 600; margin-bottom: 5px; color: var(--suggested-task-text, var(--text-primary)); }
+    .task-meta { font-size: 0.9em; color: var(--suggested-task-text, var(--text-secondary)); }
+    .start-task-btn { background: #48bb78; color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: all 0.3s ease; }
+    .start-task-btn:hover { background: #38a169; transform: scale(1.05); }
+    .row-actions, .task-actions { display: flex; gap: 8px; }
+    .action-btn { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 6px 10px; border-radius: 10px; cursor: pointer; font-size: 0.85em; font-weight: 600; }
+    .action-btn:hover { background: var(--border-color); }
+    .simple-nav { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
+    .nav-btn { background: var(--bg-secondary); border: 2px solid var(--border-color); color: var(--text-secondary); padding: 10px 20px; border-radius: 25px; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: all 0.3s ease; }
+    .nav-btn:hover { background: var(--border-color); }
+    .nav-btn.active { background: var(--accent-color); color: white; border-color: var(--accent-color); }
+    .notification { position: fixed; top: 20px; right: 20px; background: #48bb78; color: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transform: translateX(400px); transition: transform 0.3s ease; z-index: 1001; max-width: 300px; display: flex; align-items: center; gap: 10px; }
+    .notification.show { transform: translateX(0); }
+    .notification.success { background: #48bb78; }
+    .notification.error { background: #f56565; }
+    .notification.warning { background: #ed8936; }
+    .notification.celebration { background: var(--celebration-gradient); animation: celebrate 1s ease-in-out; }
+    .achievement-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); background: var(--celebration-gradient); color: white; padding: 30px; border-radius: 20px; text-align: center; z-index: 1002; box-shadow: 0 20px 40px rgba(0,0,0,0.3); transition: transform 0.5s ease; }
+    .achievement-popup.show { transform: translate(-50%, -50%) scale(1); }
+    .achievement-icon { font-size: 3em; margin-bottom: 15px; display: block; }
+    .achievement-title { font-size: 1.5em; font-weight: bold; margin-bottom: 10px; }
+    .achievement-description { font-size: 1em; opacity: 0.9; }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+    .empty-state .emoji { font-size: 4em; margin-bottom: 20px; display: block; }
+    .empty-state h3 { font-size: 1.5em; margin-bottom: 10px; color: var(--text-primary); }
+    .empty-state p { font-size: 1em; line-height: 1.5; }
+    @media (max-width: 768px) {
+      .container { padding: 15px; }
+      .timer-display { font-size: 3em; }
+      .current-task-title { font-size: 1.6em; }
+      .controls { flex-direction: column; }
+      .btn { justify-content: center; min-width: auto; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .simple-nav { flex-wrap: wrap; }
+    }
+    .focus-mode { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-primary); z-index: 1000; display: none; align-items: center; justify-content: center; }
+    .focus-mode.active { display: flex; }
+    .focus-content { text-align: center; max-width: 600px; padding: 40px; }
+    .focus-content p { margin-bottom: 12px; }
+    .focus-content .btn { margin-top: 14px; }
+    .settings-section { background: var(--bg-secondary); border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
+    .settings-title { font-size: 1.3em; font-weight: bold; margin-bottom: 15px; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
+    .toggle-switch { position: relative; width: 50px; height: 25px; background: #ccc; border-radius: 25px; cursor: pointer; transition: background 0.3s ease; }
+    .toggle-switch.active { background: var(--accent-color); }
+    .toggle-switch::after { content: ''; position: absolute; width: 21px; height: 21px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: transform 0.3s ease; }
+    .toggle-switch.active::after { transform: translateX(25px); }
+    .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border-color); }
+    .setting-item:last-child { border-bottom: none; }
+    .setting-label { font-weight: 600; color: var(--text-primary); }
+    .setting-description { font-size: 0.9em; color: var(--text-secondary); margin-top: 5px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+      <h1>🧠 FocusFlow Pro</h1>
+      <p>Seu assistente pessoal para produtividade com TDAH</p>
+    </div>
+
+    <div class="gamification-bar">
+      <div class="stats-grid">
+        <div class="stat-item"><span class="stat-value" id="currentLevel">1</span><div class="stat-label">Nível</div></div>
+        <div class="stat-item"><span class="stat-value" id="totalXP">0</span><div class="stat-label">XP Total</div></div>
+        <div class="stat-item"><span class="stat-value" id="currentStreak">0</span><div class="stat-label">Sequência</div></div>
+        <div class="stat-item"><span class="stat-value" id="todayTasks">0</span><div class="stat-label">Hoje</div></div>
+        <div class="stat-item"><span class="stat-value" id="focusTime">0</span><div class="stat-label">Min Foco</div></div>
+      </div>
+      <div class="level-progress">
+        <div class="level-info">
+          <div class="level-badge">Nível <span id="levelNumber">1</span></div>
+          <div class="xp-info"><span id="currentXP">0</span> / <span id="nextLevelXP">100</span> XP</div>
+        </div>
+        <div class="progress-bar-large"><div class="progress-fill-large" id="levelProgress" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="simple-nav">
+      <button class="nav-btn active" onclick="switchView(event,'focus')">🎯 Foco</button>
+      <button class="nav-btn" onclick="switchView(event,'tasks')">📋 Tarefas</button>
+      <button class="nav-btn" onclick="switchView(event,'settings')">⚙️ Config</button>
+    </div>
+
+    <div id="focusView" class="view">
+      <div class="focus-area" id="focusArea">
+        <div class="task-status-indicator" id="statusIndicator">🎯</div>
+        <div id="noTaskState" class="empty-state">
+          <span class="emoji">🚀</span>
+          <h3>Pronto para começar?</h3>
+          <p>Escolha uma tarefa abaixo ou crie uma nova para começar sua sessão de foco!</p>
+        </div>
+        <div id="activeTaskState" style="display:none;">
+          <div class="current-task-title" id="currentTaskTitle">Minha Tarefa</div>
+          <div class="timer-display" id="timerDisplay">25:00</div>
+          <div class="progress-circle">
+            <svg>
+              <circle class="progress-circle-bg" cx="60" cy="60" r="52"></circle>
+              <circle class="progress-circle-fill" cx="60" cy="60" r="52" stroke-dasharray="327" stroke-dashoffset="327" id="progressCircle"></circle>
+            </svg>
+          </div>
+          <div class="controls" id="taskControls"></div>
+        </div>
+      </div>
+
+      <div class="tasks-area">
+        <div class="task-suggestions">
+          <div class="suggestion-title"><i class="fas fa-lightbulb"></i> Sugestões para você</div>
+          <div id="taskSuggestions"></div>
+        </div>
+        <button class="btn primary" onclick="showNewTaskForm()" style="width: 100%;"><i class="fas fa-plus"></i> Nova Tarefa</button>
+      </div>
+    </div>
+
+    <div id="tasksView" class="view" style="display:none;">
+      <div class="tasks-area">
+        <div class="tasks-header">
+          <div class="tasks-title">📋 Suas Tarefas</div>
+          <button class="btn primary" onclick="showNewTaskForm()"><i class="fas fa-plus"></i> Nova</button>
+        </div>
+        <div id="tasksList"></div>
+      </div>
+    </div>
+
+    <div id="settingsView" class="view" style="display:none;">
+      <div class="settings-section">
+        <div class="settings-title"><i class="fas fa-cog"></i> Configurações Básicas</div>
+        <div class="setting-item">
+          <div><div class="setting-label">Sons de notificação</div><div class="setting-description">Reproduzir sons ao completar tarefas</div></div>
+          <div class="toggle-switch" id="soundToggle" onclick="toggleSound()"></div>
+        </div>
+        <div class="setting-item">
+          <div><div class="setting-label">Modo escuro</div><div class="setting-description">Interface com cores escuras</div></div>
+          <div class="toggle-switch" id="darkModeToggle" onclick="toggleTheme()"></div>
+        </div>
+        <div class="setting-item">
+          <div><div class="setting-label">Notificações de pausa</div><div class="setting-description">Lembrar de fazer pausas regulares</div></div>
+          <div class="toggle-switch" id="breakRemindersToggle" onclick="toggleBreakReminders()"></div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title"><i class="fas fa-clock"></i> Tempos de Foco</div>
+        <div class="setting-item">
+          <div><div class="setting-label">Sessão de foco</div><div class="setting-description">Duração padrão em minutos</div></div>
+          <input type="number" id="focusDuration" value="25" min="5" max="60" style="width:80px; padding:8px; border-radius:8px; border:1px solid var(--border-color);" />
+        </div>
+        <div class="setting-item">
+          <div><div class="setting-label">Pausa curta</div><div class="setting-description">Duração da pausa em minutos</div></div>
+          <input type="number" id="breakDuration" value="5" min="1" max="30" style="width:80px; padding:8px; border-radius:8px; border:1px solid var(--border-color);" />
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title"><i class="fas fa-download"></i> Backup de Dados</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn secondary" onclick="exportData()"><i class="fas fa-download"></i> Exportar</button>
+          <button class="btn secondary" onclick="importData()"><i class="fas fa-upload"></i> Importar</button>
+          <button class="btn danger" onclick="clearAllData()"><i class="fas fa-trash"></i> Limpar Tudo</button>
+        </div>
+        <input type="file" id="importFile" style="display:none;" accept=".json" onchange="handleFileImport(event)" />
+      </div>
+    </div>
+  </div>
+
+  <div id="notification" class="notification"><i class="fas fa-check-circle"></i><span id="notificationText">Mensagem</span></div>
+  <div id="achievementPopup" class="achievement-popup">
+    <span class="achievement-icon" id="achievementIcon">🏆</span>
+    <div class="achievement-title" id="achievementTitle">Conquista Desbloqueada!</div>
+    <div class="achievement-description" id="achievementDescription">Você completou sua primeira tarefa!</div>
+  </div>
+  <div id="focusMode" class="focus-mode">
+    <div class="focus-content">
+      <h2>Modo Foco Ativo</h2>
+      <h3 id="focusModeTitle" style="margin-top:8px; font-weight:600;">Tarefa atual</h3>
+      <div class="timer-display" id="focusModeTimer">25:00</div>
+      <p>Concentre-se na sua tarefa atual</p>
+      <button class="btn secondary" onclick="exitFocusMode()">Sair do Modo Foco</button>
+    </div>
+  </div>
+
+  <script>
+    // === JS da versão v3 (com edições/cancelamento/exclusão + timer sincronizado) ===
+    let appState = {
+      currentTask: null,
+      isRunning: false,
+      isPaused: false,
+      timeLeft: 25 * 60,
+      tasks: [],
+      stats: { level: 1, xp: 0, streak: 0, todayTasks: 0, focusTime: 0 },
+      settings: { soundEnabled: true, darkMode: false, breakReminders: true, focusDuration: 25, breakDuration: 5 },
+      timer: null,
+      currentView: 'focus',
+      unlockedAchievements: []
+    };
+    const levels = [
+      { level: 1, xpRequired: 0 }, { level: 2, xpRequired: 100 }, { level: 3, xpRequired: 250 }, { level: 4, xpRequired: 500 },
+      { level: 5, xpRequired: 1000 }, { level: 6, xpRequired: 2000 }, { level: 7, xpRequired: 4000 }, { level: 8, xpRequired: 8000 },
+      { level: 9, xpRequired: 16000 }, { level: 10, xpRequired: 32000 }
+    ];
+    const achievements = [
+      { id: 'first_task', name: 'Primeiro Passo', description: 'Complete sua primeira tarefa!', icon: '🎯', xp: 50 },
+      { id: 'streak_3', name: 'Consistente', description: '3 dias consecutivos!', icon: '🔥', xp: 100 },
+      { id: 'streak_7', name: 'Dedicado', description: '7 dias consecutivos!', icon: '⭐', xp: 200 },
+      { id: 'level_5', name: 'Experiente', description: 'Alcançou o nível 5!', icon: '🏆', xp: 300 },
+      { id: 'focus_master', name: 'Mestre do Foco', description: '10 horas de foco total!', icon: '🧠', xp: 500 }
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      const r = 52; const circumference = 2 * Math.PI * r;
+      const circle = document.getElementById('progressCircle');
+      if (circle) { circle.setAttribute('stroke-dasharray', circumference); circle.style.strokeDashoffset = circumference; }
+      applySettings();
+      updateUI();
+      setInterval(updateClock, 1000);
+      setTimeout(() => { if (appState.tasks.length === 0) { addSampleTasks(); updateUI(); } }, 500);
+
+      // Registro do Service Worker (PWA)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(console.error);
+      }
+    });
+
+    function saveData() { localStorage.setItem('focusflow-improved', JSON.stringify(appState)); }
+    function loadData() {
+      const saved = localStorage.getItem('focusflow-improved');
+      if (!saved) return;
+      try {
+        const data = JSON.parse(saved);
+        appState = { ...appState, ...data, stats: { ...appState.stats, ...(data.stats||{}) }, settings: { ...appState.settings, ...(data.settings||{}) }, unlockedAchievements: data.unlockedAchievements || [] };
+      } catch(e){ console.warn('Falha ao carregar dados:', e); }
+    }
+
+    function applySettings() {
+      if (appState.settings.darkMode) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.querySelector('#themeToggle i').className = 'fas fa-sun';
+        document.getElementById('darkModeToggle').classList.add('active');
+      }
+      document.getElementById('soundToggle').classList.toggle('active', appState.settings.soundEnabled);
+      document.getElementById('breakRemindersToggle').classList.toggle('active', appState.settings.breakReminders);
+      document.getElementById('focusDuration').value = appState.settings.focusDuration;
+      document.getElementById('breakDuration').value = appState.settings.breakDuration;
+    }
+
+    function switchView(ev, view) {
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      if (ev && ev.currentTarget) ev.currentTarget.classList.add('active');
+      document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+      document.getElementById(view + 'View').style.display = 'block';
+      appState.currentView = view;
+      if (view === 'tasks') updateTasksList();
+    }
+
+    function addXP(amount, reason = '') {
+      appState.stats.xp += amount;
+      const newLevel = calculateLevel(appState.stats.xp);
+      if (newLevel > appState.stats.level) {
+        appState.stats.level = newLevel;
+        showAchievement('🎉', 'Nível ' + newLevel + '!', 'Você subiu de nível!');
+        playSound('levelUp');
+      }
+      updateGamificationBar();
+      saveData();
+      if (reason) showNotification(`+${amount} XP - ${reason}`, 'success');
+    }
+    function calculateLevel(xp) { for (let i = levels.length - 1; i >= 0; i--) { if (xp >= levels[i].xpRequired) return levels[i].level; } return 1; }
+    function updateGamificationBar() {
+      const currentLevel = appState.stats.level; const currentXP = appState.stats.xp;
+      let nextLevelXP = levels[levels.length - 1].xpRequired;
+      for (let i = 0; i < levels.length; i++) { if (levels[i].level > currentLevel) { nextLevelXP = levels[i].xpRequired; break; } }
+      const currentLevelXP = (levels.find(l => l.level === currentLevel) || { xpRequired: 0 }).xpRequired;
+      const progressXP = Math.max(0, currentXP - currentLevelXP);
+      const neededXP = Math.max(1, nextLevelXP - currentLevelXP);
+      const progressPercent = Math.min(100, (progressXP / neededXP) * 100);
+      document.getElementById('currentLevel').textContent = currentLevel;
+      document.getElementById('totalXP').textContent = currentXP;
+      document.getElementById('currentStreak').textContent = appState.stats.streak;
+      document.getElementById('todayTasks').textContent = appState.stats.todayTasks;
+      document.getElementById('focusTime').textContent = Math.floor(appState.stats.focusTime / 60);
+      document.getElementById('levelNumber').textContent = currentLevel;
+      document.getElementById('currentXP').textContent = progressXP;
+      document.getElementById('nextLevelXP').textContent = neededXP;
+      document.getElementById('levelProgress').style.width = progressPercent + '%';
+    }
+
+    function startTask() {
+      if (!appState.currentTask) { showNotification('Selecione uma tarefa primeiro!', 'warning'); return; }
+      appState.isRunning = true; appState.isPaused = false;
+      document.getElementById('focusArea').classList.add('active');
+      document.getElementById('statusIndicator').textContent = '🔥';
+      clearInterval(appState.timer);
+      appState.timer = setInterval(updateTimer, 1000);
+      playSound('start'); showNotification('Sessão de foco iniciada!', 'success');
+      updateControls();
+    }
+    function pauseTask() {
+      appState.isRunning = false; appState.isPaused = true;
+      const area = document.getElementById('focusArea');
+      area.classList.remove('active'); area.classList.add('paused');
+      document.getElementById('statusIndicator').textContent = '⏸️';
+      clearInterval(appState.timer);
+      playSound('pause'); showNotification('Sessão pausada', 'warning');
+      updateControls();
+    }
+    function stopTask() {
+      appState.isRunning = false; appState.isPaused = false;
+      appState.timeLeft = appState.settings.focusDuration * 60;
+      const area = document.getElementById('focusArea');
+      area.classList.remove('active', 'paused');
+      document.getElementById('statusIndicator').textContent = '🎯';
+      clearInterval(appState.timer);
+      updateTimer(); updateControls();
+      showNotification('Sessão interrompida', 'error');
+    }
+    function completeTask() {
+      if (!appState.currentTask) return;
+      appState.currentTask.completed = true;
+      appState.currentTask.completedAt = new Date().toISOString();
+      const xpGained = calculateTaskXP(appState.currentTask);
+      addXP(xpGained, 'Tarefa concluída');
+      appState.stats.todayTasks++;
+      appState.stats.focusTime += (appState.settings.focusDuration * 60 - appState.timeLeft);
+      checkAchievements();
+      const area = document.getElementById('focusArea');
+      area.classList.add('celebration'); setTimeout(() => area.classList.remove('celebration'), 2000);
+      playSound('complete'); showAchievement('🎉', 'Tarefa Concluída!', appState.currentTask.title);
+      appState.currentTask = null; appState.timeLeft = appState.settings.focusDuration * 60; saveData();
+      updateUI();
+    }
+    function calculateTaskXP(task) {
+      let baseXP = 50; if (task.priority === 'high') baseXP += 20; else if (task.priority === 'medium') baseXP += 10;
+      if (task.energy === 'high') baseXP += 15; else if (task.energy === 'medium') baseXP += 10; return baseXP;
+    }
+    function updateTimer() {
+      if (!appState.isRunning) {
+        const totalTime = appState.settings.focusDuration * 60;
+        const minutes = Math.floor(appState.timeLeft / 60);
+        const seconds = appState.timeLeft % 60;
+        document.getElementById('timerDisplay').textContent = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+        const circumference = 2 * Math.PI * 52; const progress = (totalTime - appState.timeLeft) / totalTime; const offset = circumference - (progress * circumference);
+        const circle = document.getElementById('progressCircle'); if (circle) circle.style.strokeDashoffset = offset; return;
+      }
+      if (appState.timeLeft <= 0) { completeTask(); return; }
+      appState.timeLeft--;
+      const minutes = Math.floor(appState.timeLeft / 60), seconds = appState.timeLeft % 60;
+      document.getElementById('timerDisplay').textContent = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+      const totalTime = appState.settings.focusDuration * 60; const progress = (totalTime - appState.timeLeft) / totalTime; const circumference = 2 * Math.PI * 52; const offset = circumference - (progress * circumference);
+      document.getElementById('progressCircle').style.strokeDashoffset = offset;
+      const fmTimer = document.getElementById('focusModeTimer'); if (document.getElementById('focusMode').classList.contains('active') && fmTimer) fmTimer.textContent = document.getElementById('timerDisplay').textContent;
+      if (appState.timeLeft === 300) showNotification('5 minutos restantes!', 'warning');
+      else if (appState.timeLeft === 60) showNotification('1 minuto restante!', 'warning');
+    }
+    function updateControls() {
+      const controls = document.getElementById('taskControls');
+      const editBtn = (appState.currentTask
+        ? `<button class="btn" onclick="editTask('${appState.currentTask.id}')"><i class='fas fa-pen'></i> Editar</button>`
+        : '');
+      const cancelBtn = (appState.currentTask
+        ? `<button class="btn danger" onclick="cancelCurrentTask()"><i class='fas fa-ban'></i> Cancelar</button>`
+        : '');
+      if (appState.isRunning) {
+        controls.innerHTML = `
+          <button class="btn warning" onclick="pauseTask()"><i class='fas fa-pause'></i> Pausar</button>
+          <button class="btn danger" onclick="stopTask()"><i class='fas fa-stop'></i> Parar</button>
+          <button class="btn secondary" onclick="enterFocusMode()"><i class='fas fa-expand'></i> Modo Foco</button>
+          ${editBtn}${cancelBtn}`;
+      } else if (appState.isPaused) {
+        controls.innerHTML = `
+          <button class="btn primary" onclick="startTask()"><i class='fas fa-play'></i> Continuar</button>
+          <button class="btn danger" onclick="stopTask()"><i class='fas fa-stop'></i> Parar</button>
+          ${editBtn}${cancelBtn}`;
+      } else {
+        controls.innerHTML = `
+          <button class="btn primary" onclick="startTask()"><i class='fas fa-play'></i> Iniciar</button>
+          <button class="btn secondary" onclick="selectRandomTask()"><i class='fas fa-random'></i> Surpresa</button>
+          ${editBtn}${cancelBtn}`;
+      }
+    }
+
+    // ---- Tasks ----
+    function editTask(taskId) {
+      const task = appState.tasks.find(t => String(t.id) === String(taskId));
+      if (!task) return;
+      const newTitle = prompt('Editar título da tarefa:', task.title);
+      if (newTitle === null) return;
+      if (newTitle.trim()) task.title = newTitle.trim();
+      const pr = prompt('Prioridade (low, medium, high):', task.priority || 'medium');
+      if (pr && ['low','medium','high'].includes(pr)) task.priority = pr;
+      const en = prompt('Energia (low, medium, high):', task.energy || 'medium');
+      if (en && ['low','medium','high'].includes(en)) task.energy = en;
+      saveData(); updateUI(); showNotification('Tarefa atualizada!', 'success');
+    }
+    function cancelTask(taskId) {
+      const task = appState.tasks.find(t => String(t.id) === String(taskId));
+      if (!task || task.canceled || task.completed) return;
+      if (!confirm('Cancelar esta tarefa?')) return;
+      task.canceled = true;
+      if (appState.currentTask && String(appState.currentTask.id) === String(taskId)) {
+        appState.isRunning = false; appState.isPaused = false; clearInterval(appState.timer);
+        appState.currentTask = null; appState.timeLeft = appState.settings.focusDuration * 60;
+      }
+      saveData(); updateUI(); showNotification('Tarefa cancelada.', 'warning');
+    }
+    function cancelCurrentTask() { if (!appState.currentTask) return; cancelTask(appState.currentTask.id); }
+    function deleteTask(taskId) {
+      const task = appState.tasks.find(t => String(t.id) === String(taskId));
+      if (!task) return;
+      if (!confirm('Excluir definitivamente esta tarefa?')) return;
+      if (appState.currentTask && String(appState.currentTask.id) === String(taskId)) {
+        appState.isRunning = false; appState.isPaused = false; clearInterval(appState.timer);
+        appState.currentTask = null; appState.timeLeft = appState.settings.focusDuration * 60;
+      }
+      appState.tasks = appState.tasks.filter(t => String(t.id) !== String(taskId));
+      saveData(); updateUI(); showNotification('Tarefa excluída.', 'error');
+    }
+    function selectTask(taskId) {
+      const task = appState.tasks.find(t => String(t.id) === String(taskId));
+      if (!task || task.completed || task.canceled) return;
+      appState.currentTask = task; appState.timeLeft = appState.settings.focusDuration * 60;
+      document.getElementById('currentTaskTitle').textContent = task.title;
+      document.getElementById('noTaskState').style.display = 'none';
+      document.getElementById('activeTaskState').style.display = 'block';
+      updateTimer(); updateControls();
+      showNotification(`Tarefa selecionada: ${task.title}`, 'success');
+      const fm = document.getElementById('focusModeTitle'); if (fm) fm.textContent = task.title;
+    }
+    function selectTaskAndStart(taskId) { selectTask(taskId); startTask(); }
+    function selectRandomTask() {
+      const available = appState.tasks.filter(t => !t.completed && !t.canceled);
+      if (!available.length) { showNotification('Nenhuma tarefa disponível!', 'warning'); return; }
+      const randomTask = available[Math.floor(Math.random() * available.length)];
+      selectTaskAndStart(randomTask.id);
+    }
+    function createTask(title, priority = 'medium', energy = 'medium') {
+      const task = { id: Date.now() + Math.random(), title, priority, energy, created: new Date().toISOString(), completed: false, canceled: false, completedAt: null };
+      appState.tasks.unshift(task); saveData(); updateTaskSuggestions(); updateTasksList(); return task;
+    }
+    function updateTaskSuggestions() {
+      const container = document.getElementById('taskSuggestions');
+      const available = appState.tasks.filter(t => !t.completed && !t.canceled).slice(0, 3);
+      if (!available.length) {
+        container.innerHTML = `<div class="empty-state"><span class="emoji">📝</span><h3>Nenhuma tarefa pendente</h3><p>Crie uma nova tarefa para começar!</p></div>`; return;
+      }
+      container.innerHTML = available.map(task => `
+        <div class="suggested-task" onclick="selectTaskAndStart('${task.id}')">
+          <div class="task-emoji">${getPriorityEmoji(task.priority)}</div>
+          <div class="task-info">
+            <div class="task-name">${task.title}</div>
+            <div class="task-meta">${getEnergyText(task.energy)} • ${getPriorityText(task.priority)}</div>
+          </div>
+          <button class="start-task-btn" onclick="event.stopPropagation(); selectTaskAndStart('${task.id}')">Iniciar</button>
+        </div>`).join('');
+    }
+    function updateTasksList() {
+      const container = document.getElementById('tasksList');
+      const allTasks = appState.tasks;
+      if (!allTasks.length) {
+        container.innerHTML = `<div class="empty-state"><span class="emoji">📋</span><h3>Nenhuma tarefa criada</h3><p>Crie sua primeira tarefa para começar!</p></div>`; return;
+      }
+      container.innerHTML = allTasks.map(task => {
+        const statusMeta = task.canceled ? ' • Cancelada' : (task.completed ? ` • Concluída em ${new Date(task.completedAt).toLocaleDateString()}` : '');
+        const classes = `suggested-task ${task.completed ? 'completed' : ''} ${task.canceled ? 'canceled' : ''}`;
+        const actions = (task.completed || task.canceled)
+          ? `<button class="action-btn" onclick="event.stopPropagation(); deleteTask('${task.id}')">Excluir</button>`
+          : `<button class="action-btn" onclick="event.stopPropagation(); editTask('${task.id}')">Editar</button>
+             <button class="action-btn" onclick="event.stopPropagation(); cancelTask('${task.id}')">Cancelar</button>
+             <button class="action-btn" onclick="event.stopPropagation(); deleteTask('${task.id}')">Excluir</button>`;
+        const clickable = (!task.completed && !task.canceled) ? `onclick="selectTaskAndStart('${task.id}')"` : '';
+        return `
+          <div class="${classes}" ${clickable}>
+            <div class="task-emoji">${task.canceled ? '🚫' : (task.completed ? '✅' : getPriorityEmoji(task.priority))}</div>
+            <div class="task-info">
+              <div class="task-name" style="${(task.completed || task.canceled) ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${task.title}</div>
+              <div class="task-meta">${getEnergyText(task.energy)} • ${getPriorityText(task.priority)}${statusMeta}</div>
+            </div>
+            <div class="task-actions">${actions}</div>
+          </div>`;
+      }).join('');
+    }
+
+    function getPriorityEmoji(p) { return ({ high: '🔴', medium: '🟡', low: '🟢' }[p]) || '🟡'; }
+    function getPriorityText(p) { return ({ high: 'Alta prioridade', medium: 'Prioridade média', low: 'Baixa prioridade' }[p]) || 'Prioridade média'; }
+    function getEnergyText(e) { return ({ high: 'Alta energia', medium: 'Energia média', low: 'Baixa energia' }[e]) || 'Energia média'; }
+
+    function playSound(type) {
+      if (!appState.settings.soundEnabled) return;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext; if (!AudioCtx) return;
+      const audioContext = new AudioCtx();
+      const oscillator = audioContext.createOscillator(); const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+      let frequency = 600, duration = 0.2;
+      if (type === 'start') { frequency = 800; duration = 0.2; }
+      else if (type === 'pause') { frequency = 400; duration = 0.3; }
+      else if (type === 'complete') { frequency = 1000; duration = 0.5; }
+      else if (type === 'levelUp') { frequency = 1200; duration = 0.8; }
+      oscillator.frequency.value = frequency; oscillator.type = 'sine';
+      const now = audioContext.currentTime; gainNode.gain.setValueAtTime(0.3, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
+      oscillator.start(now); oscillator.stop(now + duration);
+    }
+
+    function showNotification(message, type = 'success') {
+      const notification = document.getElementById('notification'); const text = document.getElementById('notificationText');
+      text.textContent = message; notification.className = `notification show ${type}`;
+      const icon = notification.querySelector('i');
+      icon.className = ({ success: 'fas fa-check-circle', error: 'fas fa-exclamation-circle', warning: 'fas fa-exclamation-triangle' }[type]) || 'fas fa-info-circle';
+      setTimeout(() => notification.classList.remove('show'), 3000);
+    }
+    function showAchievement(icon, title, description) {
+      const popup = document.getElementById('achievementPopup');
+      document.getElementById('achievementIcon').textContent = icon;
+      document.getElementById('achievementTitle').textContent = title;
+      document.getElementById('achievementDescription').textContent = description;
+      popup.classList.add('show'); setTimeout(() => popup.classList.remove('show'), 3000);
+    }
+    function checkAchievements() {
+      if (appState.stats.todayTasks === 1) unlockAchievement('first_task');
+      if (appState.stats.streak === 3) unlockAchievement('streak_3'); else if (appState.stats.streak === 7) unlockAchievement('streak_7');
+      if (appState.stats.level === 5) unlockAchievement('level_5');
+      if (appState.stats.focusTime >= 36000) unlockAchievement('focus_master');
+    }
+    function unlockAchievement(id) {
+      const a = achievements.find(x => x.id === id); if (!a) return;
+      if (appState.unlockedAchievements.includes(id)) return;
+      appState.unlockedAchievements.push(id); addXP(a.xp, a.name); showAchievement(a.icon, a.name, a.description); saveData();
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      appState.settings.darkMode = next === 'dark';
+      const themeIcon = document.querySelector('#themeToggle i'); themeIcon.className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+      document.getElementById('darkModeToggle').classList.toggle('active', appState.settings.darkMode);
+      saveData();
+    }
+    function toggleSound() { appState.settings.soundEnabled = !appState.settings.soundEnabled; document.getElementById('soundToggle').classList.toggle('active', appState.settings.soundEnabled); saveData(); if (appState.settings.soundEnabled) playSound('start'); }
+    function toggleBreakReminders() { appState.settings.breakReminders = !appState.settings.breakReminders; document.getElementById('breakRemindersToggle').classList.toggle('active', appState.settings.breakReminders); saveData(); }
+
+    function enterFocusMode() {
+      document.getElementById('focusMode').classList.add('active');
+      document.getElementById('focusModeTimer').textContent = document.getElementById('timerDisplay').textContent;
+      const title = appState.currentTask ? appState.currentTask.title : 'Sem tarefa ativa';
+      const el = document.getElementById('focusModeTitle'); if (el) el.textContent = title;
+    }
+    function exitFocusMode() { document.getElementById('focusMode').classList.remove('active'); }
+
+    function showNewTaskForm() {
+      const title = prompt('Digite o título da tarefa:');
+      if (title && title.trim()) {
+        const priority = confirm('Esta tarefa é de alta prioridade?') ? 'high' : 'medium';
+        const energy = confirm('Esta tarefa requer muita energia?') ? 'high' : 'medium';
+        createTask(title.trim(), priority, energy); showNotification('Tarefa criada com sucesso!', 'success');
+      }
+    }
+
+    function exportData() {
+      const data = JSON.stringify(appState, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'focusflow-backup.json'; a.click();
+      URL.revokeObjectURL(url); showNotification('Dados exportados com sucesso!', 'success');
+    }
+    function importData() { document.getElementById('importFile').click(); }
+    function handleFileImport(event) {
+      const file = event.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try { const data = JSON.parse(e.target.result); if (confirm('Isso substituirá todos os dados atuais. Continuar?')) { appState = { ...appState, ...data }; saveData(); updateUI(); showNotification('Dados importados com sucesso!', 'success'); } }
+        catch { showNotification('Erro ao importar arquivo!', 'error'); }
+      };
+      reader.readAsText(file);
+    }
+    function clearAllData() {
+      if (!confirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita!')) return;
+      appState = { currentTask: null, isRunning: false, isPaused: false, timeLeft: 25 * 60, tasks: [], stats: { level: 1, xp: 0, streak: 0, todayTasks: 0, focusTime: 0 }, settings: { soundEnabled: true, darkMode: false, breakReminders: true, focusDuration: 25, breakDuration: 5 }, timer: null, currentView: 'focus', unlockedAchievements: [] };
+      saveData(); updateUI(); showNotification('Todos os dados foram limpos!', 'success');
+    }
+
+    function updateClock() { /* opcional */ }
+
+    function updateUI() {
+      updateGamificationBar(); updateTaskSuggestions(); updateTasksList(); updateControls();
+      if (appState.currentTask) {
+        document.getElementById('currentTaskTitle').textContent = appState.currentTask.title;
+        document.getElementById('noTaskState').style.display = 'none';
+        document.getElementById('activeTaskState').style.display = 'block';
+        const fm = document.getElementById('focusModeTitle'); if (fm) fm.textContent = appState.currentTask.title;
+      } else {
+        document.getElementById('noTaskState').style.display = 'block';
+        document.getElementById('activeTaskState').style.display = 'none';
+        const fm = document.getElementById('focusModeTitle'); if (fm) fm.textContent = 'Sem tarefa ativa';
+      }
+      updateTimer();
+    }
+
+    function addSampleTasks() {
+      createTask('Revisar emails importantes', 'medium', 'low');
+      createTask('Preparar apresentação do projeto', 'high', 'high');
+      createTask('Organizar mesa de trabalho', 'low', 'low');
+      createTask('Estudar novo framework', 'medium', 'medium');
+      createTask('Fazer exercícios de respiração', 'low', 'low');
+    }
+  </script>
+</body>
+</html>

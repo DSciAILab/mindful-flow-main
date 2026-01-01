@@ -1,0 +1,8 @@
+Erro na API da Deepgram: {
+  status: 401,
+  statusText: "Unauthorized",
+  headers: {
+    "www-authenticate": "Token"
+  },
+  body: "Invalid API key"
+}

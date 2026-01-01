@@ -1,0 +1,1 @@
+SELECT id, name, description, woop_wish, woop_outcome, woop_obstacle, woop_plan, smart_specific, smart_measurable, smart_achievable, smart_relevant, smart_time_bound, created_at, updated_at FROM public.projects;

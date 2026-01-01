@@ -1,0 +1,1 @@
+SELECT id, name, created_at FROM public.projects LIMIT 5;

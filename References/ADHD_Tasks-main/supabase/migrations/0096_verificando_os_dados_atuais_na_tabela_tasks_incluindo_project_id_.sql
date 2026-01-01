@@ -1,0 +1,1 @@
+SELECT id, title, project_id, status, created_at FROM public.tasks LIMIT 10;

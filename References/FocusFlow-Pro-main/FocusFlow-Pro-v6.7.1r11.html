@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>FocusFlow Pro — v6.7.1r10</title>
+  <meta name="theme-color" content="#667eea" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root{
+      --bg1:#f6f7fb; --bg2:#ffffff; --text1:#0f172a; --text2:#475569; --border:#e5e7eb;
+      --accent:#667eea; --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444; --muted:#6b7280;
+      --chip:#eef2f7; --chipb:#dbe3ee; --ring:rgba(102,126,234,.18);
+      /* Pausa (tema claro) – gradiente mais escuro */
+      --breakbg: linear-gradient(180deg,#166534 0%,#14532d 100%);
+      --breaktext:#ffffff;
+    }
+    [data-theme="dark"]{
+      --bg1:#0b1220; --bg2:#0f172a; --text1:#f8fafc; --text2:#cbd5e1; --border:#1e293b;
+      --accent:#7c7fff; --chip:#0c1222; --chipb:#1c2540; --ring:rgba(124,127,255,.22);
+      /* Pausa (tema escuro) – gradiente mais escuro */
+      --breakbg: linear-gradient(180deg,#0f3a2f 0%, #0b2a22 100%);
+      --breaktext:#ffffff;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Arial; background:var(--bg1); color:var(--text1)}
+    .container{max-width:1100px; margin:0 auto; padding:16px}
+    .header{position:relative; text-align:center; margin-bottom:10px}
+    h1{margin:0; font-size:2.2rem; background:linear-gradient(135deg,#667eea,#764ba2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text}
+    .theme-toggle{position:absolute; right:0; top:0; width:44px; height:44px; border-radius:50%; border:2px solid var(--border); background:var(--bg2); display:flex; align-items:center; justify-content:center; cursor:pointer}
+    .subtitle{color:var(--text2); margin-top:6px}
+    .nav{display:flex; gap:10px; justify-content:center; margin:12px 0 16px}
+    .nav .btn{border:2px solid var(--border); background:var(--bg2); color:var(--text2); border-radius:999px; padding:10px 16px; font-weight:800; cursor:pointer}
+    .nav .btn.active{background:var(--accent); color:#fff; border-color:transparent}
+
+    .card{background:var(--bg2); border:1px solid var(--border); border-radius:18px; box-shadow:0 8px 24px rgba(0,0,0,.06)}
+    .focus-card{padding:20px; text-align:center; position:relative}
+    .focus-card.break-bg{ background:var(--breakbg) !important; color:var(--breaktext) !important; box-shadow:0 8px 28px rgba(34,197,94,.35); border-color:transparent }
+    .status-emoji{position:absolute; right:14px; top:12px; font-size:1.6rem}
+
+    /* ⏰ Relógio atual no topo do card de foco */
+    .now-clock{
+      position:absolute;
+      left:14px;
+      top:12px;
+      font-weight:900;
+      color:var(--text2);
+      font-variant-numeric: tabular-nums;
+      line-height:1.05;
+      text-align:left;
+    }
+    .focus-card.break-bg .now-clock{ color:#e5e7eb; }
+
+    /* Citações em destaque */
+    .quote{min-height:46px; margin:8px 0 18px}
+    .quote .qt{display:block; text-align:center; color:var(--text1); font-weight:900; font-size:1.25rem; letter-spacing:.2px}
+    .quote .qa{display:block; text-align:center; color:var(--text2); opacity:.95; font-weight:800; font-size:1rem; margin-top:2px}
+    .focus-card.break-bg .quote .qt{ color:#ffffff !important; text-shadow:0 2px 12px rgba(0,0,0,.35) }
+    .focus-card.break-bg .quote .qa{ color:#e5e7eb !important }
+
+    .focus-title{font-size:2.4rem; font-weight:900; margin:4px 0 6px; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap}
+    .type-dot{width:22px; height:22px; border-radius:50%; display:inline-block; box-shadow:0 0 0 3px rgba(255,255,255,.25)}
+    .focus-sub{color:var(--text2); font-weight:800; margin:4px 0 8px; display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap}
+
+    .focus-timer-wrap{display:flex; align-items:center; justify-content:center; gap:10px; margin-top:10px}
+    .timer-plus{font-size:5.6rem; font-weight:900; display:none}
+    .focus-timer{font-size:5.6rem; font-weight:900; margin:6px 0; line-height:1}
+    .progress{width:140px; height:140px; margin:6px auto}
+    .break-msg{display:none; margin:14px auto 0; font-weight:900; color:var(--breaktext); background:rgba(0,0,0,.14); padding:10px 14px; border-radius:12px; max-width:720px}
+
+    .controls{display:flex; flex-wrap:wrap; gap:10px; justify-content:center}
+    .btn{border:none; border-radius:999px; padding:12px 18px; font-weight:800; cursor:pointer; color:#fff; display:inline-flex; align-items:center; gap:8px}
+    .ok{background:var(--ok)} .warn{background:var(--warn)} .danger{background:var(--danger)} .muted{background:var(--muted)}
+
+    .section{margin-top:12px}
+    .tasks-wrapper .header-row{display:flex; align-items:center; justify-content:space-between; padding:14px 16px}
+    .title{font-size:1.3rem; font-weight:900}
+    .new-btn{background:var(--ok); color:#fff; border:none; padding:10px 16px; border-radius:999px; font-weight:800; cursor:pointer}
+    .list{padding:10px 14px 16px}
+
+    .task-card{border:1.5px solid var(--border); border-radius:14px; margin-bottom:12px; overflow:hidden; background:var(--bg2); box-shadow:0 6px 18px rgba(0,0,0,.06)}
+    .task-card.live{ background:linear-gradient(180deg, color-mix(in oklab, #22c55e 18%, var(--bg2)), var(--bg2)); box-shadow:0 8px 22px rgba(34,197,94,.28) }
+    .task-card.selected{ background:linear-gradient(180deg, color-mix(in oklab, var(--accent) 22%, var(--bg2)), var(--bg2)); }
+    .task-head{display:grid; grid-template-columns:28px 1fr auto; gap:12px; align-items:center; padding:12px}
+    .dot{width:18px; height:18px; border-radius:50%}
+    .task-title{font-weight:900; font-size:1.05rem; line-height:1.25; word-break:break-word; display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .title-right{display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+    .chip{background:var(--chip); border:1px solid var(--chipb); color:var(--text1); padding:4px 8px; border-radius:999px; font-size:.75rem; font-weight:800}
+    .actions{display:flex; flex-wrap:wrap; gap:8px; margin:10px 12px 12px}
+    .a-btn{border:1.5px solid var(--border); background:var(--bg2); color:var(--text1); border-radius:12px; padding:8px 12px; font-weight:800; cursor:pointer}
+
+    /* Focus Mode overlay — layout original (full-bleed) */
+    .focus-mode{position:fixed; inset:0; background:var(--bg1); z-index:100; display:none; align-items:center; justify-content:center; padding:0}
+    .focus-mode.active{display:flex}
+    .focus-mode.break-bg{ background:var(--breakbg) !important; color:var(--breaktext) !important; }
+    .focus-mode-inner{max-width:1000px; padding:0 24px; text-align:center; background:transparent; border:none; border-radius:0; box-shadow:none}
+    .overlay-quote{min-height:46px; margin:0 0 22px}
+    .overlay-quote .qt{display:block; text-align:center; color:var(--text1); font-weight:900; font-size:1.35rem}
+    .overlay-quote .qa{display:block; text-align:center; color:var(--text2); opacity:.95; font-weight:800; font-size:1.02rem; margin-top:2px}
+    .focus-mode.break-bg .overlay-quote .qt{ color:#ffffff !important; text-shadow:0 2px 12px rgba(0,0,0,.35) }
+    .focus-mode.break-bg .overlay-quote .qa{ color:#e5e7eb !important }
+
+    /* Inputs */
+    .row{display:grid; gap:8px; margin-bottom:10px}
+    .input{width:100%; padding:10px 12px; border:1.8px solid var(--border); border-radius:12px; background:var(--bg2); color:var(--text1); font-weight:700; box-shadow:0 0 0 0 var(--ring); transition:box-shadow .2s}
+    .input:focus{outline:none; box-shadow:0 0 0 6px var(--ring)}
+    label{font-weight:900; color:var(--text1); margin-bottom:4px; display:block}
+    input[type="range"]{accent-color: var(--accent)}
+
+    /* Blinks */
+    @keyframes blinkWarn{ 0%,100%{ transform:none } 50%{ transform:scale(1.01) } }
+    @keyframes blinkDanger{ 0%,100%{ transform:none } 50%{ transform:scale(1.015) } }
+    .blink-warn{ animation: blinkWarn .9s ease-in-out infinite; background:linear-gradient(180deg, rgba(245,158,11,.48), rgba(245,158,11,.18)) !important; box-shadow: inset 0 0 0 100vmax rgba(245,158,11,.16), 0 12px 28px rgba(245,158,11,.58) !important; }
+    .blink-danger{ animation: blinkDanger .6s ease-in-out infinite; background:linear-gradient(180deg, rgba(239,68,68,.56), rgba(239,68,68,.26)) !important; box-shadow: inset 0 0 0 100vmax rgba(239,68,68,.18), 0 14px 32px rgba(239,68,68,.62) !important; }
+
+    /* === Quote color controls (r8) === */
+    .quote-color-section{margin-top:18px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--bg2)}
+    .quote-color-section h4{margin:0 0 8px 0;font-size:1rem}
+    .quote-color-options{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .quote-color-options label{display:flex;align-items:center;gap:6px;background:var(--bg1);border:1px solid var(--border);padding:6px 10px;border-radius:999px;cursor:pointer}
+    .quote-color-options input[type="color"]{width:34px;height:24px;border-radius:6px;border:1px solid var(--border);background:transparent;padding:0}
+    .force-quote-color .quote .qt,
+    .force-quote-color .overlay-quote .qt{ color: var(--quoteColorForce) !important }
+    .force-quote-color.break-auto .quote .qt,
+    .force-quote-color.break-auto .overlay-quote .qt{ color:#ffffff !important }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <button class="theme-toggle" id="themeBtn"><i class="fas fa-moon"></i></button>
+      <h1>🧠 FocusFlow Pro</h1>
+      <div class="subtitle">Pomodoro com pausa contabilizada, citações e tipos de tarefas ✨</div>
+    </div>
+
+    <div class="nav">
+      <button class="btn muted active" data-view="focus">🎯 Foco</button>
+      <button class="btn muted" data-view="tasks">📋 Tarefas</button>
+      <button class="btn muted" data-view="settings">⚙️ Config</button>
+    </div>
+
+    <!-- FOCUS -->
+    <div id="focusView" class="view active">
+      <div class="card focus-card" id="focusCard">
+        <div class="status-emoji" id="statusIndicator">🎯</div>
+
+        <!-- ⏰ Relógio -->
+        <div id="nowClock" class="now-clock" aria-label="hora e data">--:--<br>---</div>
+
+        <div class="quote" id="quoteBox">
+          <span class="qt" id="qText"></span>
+          <span class="qa" id="qAuthor"></span>
+        </div>
+        <div id="emptyFocus" style="color:var(--text2)">Selecione uma tarefa e toque <b>Iniciar</b>.</div>
+        <div id="activeFocus" style="display:none">
+          <div class="focus-title">
+            <span id="currentTypeDot" class="type-dot" style="background:#8b5cf6"></span>
+            <span id="currentTaskTitle">Minha Tarefa</span>
+          </div>
+          <div class="focus-sub"><span id="focusSummaryLine">0/0 pomodoros • 0 interrupções</span></div>
+          <div class="focus-timer-wrap">
+            <span id="timerPlus" class="timer-plus">+</span>
+            <div class="focus-timer" id="timerDisplay">25:00</div>
+          </div>
+          <div class="progress" id="progressWrap">
+            <svg width="140" height="140" viewBox="0 0 140 140" style="transform: rotate(-90deg)">
+              <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="10"></circle>
+              <circle id="progressCircle" cx="70" cy="70" r="60" fill="none" stroke="rgba(0,0,0,.45)" stroke-width="10" stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="377"></circle>
+            </svg>
+          </div>
+          <div class="break-msg" id="breakMsg"></div>
+          <div class="controls" id="taskControls"></div>
+        </div>
+      </div>
+
+      <div class="card section tasks-wrapper">
+        <div class="header-row">
+          <div class="title">📋 Suas Tarefas</div>
+          <button class="new-btn" id="newTaskBtn"><i class="fas fa-plus"></i> Nova</button>
+        </div>
+        <div class="list" id="tasksList"></div>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div id="tasksView" class="view" style="display:none">
+      <div class="card section tasks-wrapper">
+        <div class="header-row">
+          <div class="title">📋 Tarefas</div>
+          <button class="new-btn" id="newTaskBtn2"><i class="fas fa-plus"></i> Nova</button>
+        </div>
+        <div class="list" id="tasksList2"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="settingsView" class="view" style="display:none">
+      <div class="card section tasks-wrapper">
+        <div class="header-row"><div class="title">⚙️ Configurações</div></div>
+        <div class="list">
+          <div class="row" style="grid-template-columns:1fr 110px 110px auto; align-items:end">
+            <div><label>Nome do preset</label><input id="newPresetName" class="input" placeholder="Clássico 25/5"/></div>
+            <div><label>Foco (min)</label><input id="newPresetFocus" type="number" class="input" min="1" max="180" value="25"/></div>
+            <div><label>Pausa (min)</label><input id="newPresetBreak" type="number" class="input" min="1" max="120" value="5"/></div>
+            <button class="btn ok" id="addPresetBtn">Adicionar</button>
+          </div>
+          <div class="row">
+            <label>Preset padrão</label>
+            <select id="defaultPresetSelect" class="input"></select>
+          </div>
+          <div class="row">
+            <label>Presets atuais</label>
+            <div id="presetsList"></div>
+          </div>
+
+          
+          <div class="row">
+            <label>🎭 Categorias de Citações (emoji + nome)</label>
+            <div id="quoteCatsList" style="display:flex; gap:8px; flex-wrap:wrap"></div>
+            <div style="display:grid; grid-template-columns:100px 1fr auto; gap:8px; margin-top:8px">
+              <input id="newCatEmoji" class="input" placeholder="Emoji (ex.: 💪)" />
+              <input id="newCatName" class="input" placeholder="Nome (ex.: Motivacional)" />
+              <button class="a-btn" id="addQuoteCatBtn">Adicionar</button>
+            </div>
+          </div>
+<div class="row">
+            <label>🔀 Citações</label>
+            <div style="display:grid; grid-template-columns:1fr 140px 160px 100px; gap:8px">
+              <input id="quoteInput" class="input" placeholder="Texto da citação" />
+              <input id="quoteAuthor" class="input" placeholder="Autor" />
+              <select id="quoteCatSelect" class="input"></select>
+              <button class="a-btn" id="addQuoteBtn">Adicionar</button>
+            </div>
+            <div id="quotesList" style="margin-top:8px"></div>
+            <div style="display:flex; gap:12px; margin-top:12px; align-items:center; flex-wrap:wrap" id="quoteColorMount"></div>
+            <div style="display:flex; gap:8px; margin-top:8px; align-items:center; flex-wrap:wrap">
+              <label style="margin:0">Exibir citações</label>
+              <input type="checkbox" id="quotesEnabled" />
+              <label style="margin-left:12px">Trocar a cada (s)</label>
+              <input id="quotesInterval" type="number" class="input" style="max-width:120px" value="20" min="5" />
+              <button class="a-btn" id="applyQuotesInterval">Aplicar</button>
+              <input id="quotesCsvFile" type="file" accept=".csv" style="display:none" />
+              <button class="a-btn" id="importQuotesBtn"><i class="fas fa-file-import"></i> Importar CSV</button>
+              <small class="chip">CSV: "citação,autor"</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Focus Mode Overlay (full-bleed) -->
+  <div id="focusOverlay" class="focus-mode">
+    <div class="focus-mode-inner" id="focusOverlayInner">
+      <div id="overlayQuote" class="overlay-quote">
+        <span class="qt" id="oqText"></span>
+        <span class="qa" id="oqAuthor"></span>
+      </div>
+      <div class="focus-title">
+        <span id="overlayDot" class="type-dot" style="background:#8b5cf6"></span>
+        <span id="overlayTitle">Minha Tarefa</span>
+      </div>
+      <div class="focus-sub" id="overlaySub">0/0 pomodoros • 0 interrupções</div>
+      <div class="focus-timer-wrap">
+        <span id="overlayTimerPlus" class="timer-plus">+</span>
+        <div class="focus-timer" id="overlayTimer">25:00</div>
+      </div>
+      <div class="break-msg" id="overlayBreakMsg"></div>
+      <div class="controls" style="margin-top:12px">
+        <button class="btn muted" id="exitFocusBtn"><i class="fas fa-compress"></i> Sair do Modo Foco</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de tarefa -->
+  <div id="taskModal" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.45); z-index:50">
+    <div class="card" style="width:min(720px,94vw); padding:16px">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+        <div style="font-weight:900; font-size:1.1rem" id="taskModalTitle">Nova tarefa</div>
+        <button class="a-btn" id="closeTaskModal"><i class="fas fa-times"></i> Fechar</button>
+      </div>
+      <div class="row">
+        <label>Título</label>
+        <input id="taskTitleInput" class="input" placeholder="Ex.: Enviar e-mail para escolas" />
+      </div>
+      <div class="row" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        <div>
+          <label>Tempo planejado (min)</label>
+          <input id="plannedMinutesInput" type="number" min="5" max="600" value="50" class="input" />
+        </div>
+        <div>
+          <label>Preset desta tarefa</label>
+          <select id="taskPresetSelect" class="input"></select>
+        </div>
+        <div>
+          <label>Pomodoros planejados (opcional)</label>
+          <input id="pomodorosPlannedInput" type="number" min="1" max="99" class="input" placeholder="auto"/>
+        </div>
+      </div>
+      <div class="row" style="grid-template-columns:1fr 1fr">
+        <div>
+          <label>Dificuldade (tarefa)</label>
+          <input id="difficultyRange" type="range" min="1" max="3" step="1" value="2" class="input" />
+        </div>
+        <div>
+          <label>Gasto de energia (tarefa)</label>
+          <input id="energyRange" type="range" min="1" max="3" step="1" value="2" class="input" />
+        </div>
+      </div>
+      <div class="row">
+        <label>Tags (separe por vírgulas)</label>
+        <input id="tagsInput" class="input" placeholder="ex.: urgente, cliente, estudo" />
+      </div>
+      <div class="row">
+        <label>Tipo</label>
+        <div style="display:flex; flex-wrap:wrap; gap:8px">
+          <button class="a-btn" data-type="human"><span class="type-dot" style="background:#ef4444; margin-right:6px"></span> Connected to another human</button>
+          <button class="a-btn" data-type="chores"><span class="type-dot" style="background:#f59e0b; margin-right:6px"></span> Chores (better to do)</button>
+          <button class="a-btn" data-type="feelgood"><span class="type-dot" style="background:#8b5cf6; margin-right:6px"></span> Make me feel good</button>
+          <button class="a-btn" data-type="nice"><span class="type-dot" style="background:#22c55e; margin-right:6px"></span> It would be nice If I could</button>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px">
+        <button class="a-btn" id="cancelTaskModalBtn">Cancelar</button>
+        <button class="btn ok" id="saveTaskBtn">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ====== ESTADO ======
+    const typeMeta = { human:'#ef4444', chores:'#f59e0b', feelgood:'#8b5cf6', nice:'#22c55e' };
+    let appState = {
+      tasks: [], currentTask:null,
+      isRunning:false, onBreak:false,
+      timeLeft:25*60, breakMs:0,
+      lastTickMs:null,
+      quotesEnabled:true, quotesInterval:20, quoteTimer:null, quoteIndex:0,
+      settings:{
+        darkMode:false,
+        presets:[
+          {id:'p25', name:'Clássico 25/5', focus:25, brk:5},
+          {id:'p50', name:'Profundo 50/10', focus:50, brk:10},
+          {id:'p15', name:'Sprint 15/3', focus:15, brk:3}
+        ],
+        defaultPresetId:'p25',
+        quotes:[
+          {t:'A persistência realiza o impossível.', a:'Provérbio', catId:'mot'},
+          {t:'Feito é melhor que perfeito.', a:'Sheryl Sandberg', catId:'mot'},
+          {t:'Concentre-se no que importa agora.', a:'Desconhecido', catId:'focus'}
+        ],
+        quoteCats:[
+          {id:'mot', emoji:'💪', name:'Motivacional'},
+          {id:'focus', emoji:'🎯', name:'Foco'},
+          {id:'calm', emoji:'🧘', name:'Calmo'},
+          {id:'fun', emoji:'😄', name:'Humor'}
+        ],
+        quoteColorMode:'auto',
+        quoteCustomColor:'#f59e0b'
+      },
+      selectedType:'human',
+      editingTaskId:null, modalOrigin:'tasks'
+    };
+
+    // ====== UTIL ======
+    const $ = (id)=>document.getElementById(id);
+    const saveLocal = ()=> localStorage.setItem('ff-v6-7-1', JSON.stringify(appState));
+    const loadLocal = ()=> { const s=localStorage.getItem('ff-v6-7-1'); if(s){ try{ appState={...appState, ...JSON.parse(s)} }catch{} } };
+    const getPresetById = (id)=> appState.settings.presets.find(p=>p.id===id) || appState.settings.presets[0];
+    const presetDisplay = (p)=> `${p.name} (${p.focus}/${p.brk})`;
+    const fmt = (sec)=> `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+    const uid = ()=> 't'+Math.random().toString(36).slice(2,8);
+    const nowIso = ()=> new Date().toISOString();
+
+    // ====== INIT ======
+    document.addEventListener('DOMContentLoaded', () => {
+      loadLocal();
+      applyTheme(true);
+      bindBasics();
+      renderPresets();
+      renderPresetsList();
+      renderQuoteCats();
+      renderQuotesUI();
+      injectQuoteColorControls();
+      renderTasks('tasksList','single'); // (filtra HOJE automaticamente — veja renderTasks)
+      renderTasks('tasksList2','flat');
+      updateControls();
+      startQuoteRotation();
+      startNowClock(); // ⏰ inicia relógio
+
+      if(appState.currentTask){
+        $('emptyFocus').style.display='none';
+        $('activeFocus').style.display='block';
+        updateTypeDots(); updateFocusSummaryLine();
+      }
+    });
+
+    
+    // ====== QUOTE CATS ======
+    function catById(id){ return (appState.quoteCats||[]).find(c=>c.id===id) || null; }
+    function catEmoji(id){ const c=catById(id); return c? c.emoji : ''; }
+// ====== THEME ======
+    function applyTheme(initial=false){
+      document.documentElement.setAttribute('data-theme', appState.settings.darkMode?'dark':'light');
+      $('themeBtn').innerHTML = `<i class="fas ${appState.settings.darkMode?'fa-sun':'fa-moon'}"></i>`;
+      if(!initial) saveLocal();
+    }
+
+    // ====== RELÓGIO (hora e data) ======
+    function formatNowClock(){
+      const d = new Date();
+      let h = d.getHours();
+      const ampm = h >= 12 ? 'pm' : 'am';
+      h = h % 12; if(h === 0) h = 12;
+      const m = String(d.getMinutes()).padStart(2,'0');
+      const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const w = weekdays[d.getDay()];
+      const day = d.getDate();
+      return { time: `${h}:${m}${ampm}`, date: `${w} ${day}` };
+    }
+    function startNowClock(){
+      const el = $('nowClock'); if(!el) return;
+      const tick = ()=>{ const {time,date}=formatNowClock(); el.innerHTML = `${time}<br>${date}`; };
+      tick();
+      setInterval(tick, 15000);
+    }
+
+    // ====== BINDINGS ======
+    function bindBasics(){
+      document.querySelectorAll('.nav .btn').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          document.querySelectorAll('.nav .btn').forEach(b=>b.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+          document.querySelectorAll('.view').forEach(v=>v.style.display='none');
+          const id = e.currentTarget.dataset.view+'View';
+          $(id).style.display = 'block';
+          if(id==='tasksView'){ renderTasks('tasksList2','flat'); }
+          if(id==='focusView'){ renderTasks('tasksList','single'); }
+        });
+      });
+      $('themeBtn').addEventListener('click', ()=>{ appState.settings.darkMode=!appState.settings.darkMode; applyTheme(); });
+
+      $('newTaskBtn').addEventListener('click', ()=>openTaskModal('focus'));
+      $('newTaskBtn2').addEventListener('click', ()=>openTaskModal('tasks'));
+      $('closeTaskModal').addEventListener('click', closeTaskModal);
+      $('cancelTaskModalBtn').addEventListener('click', closeTaskModal);
+      $('saveTaskBtn').addEventListener('click', saveTaskFromModal);
+
+      document.querySelectorAll('#taskModal [data-type]').forEach(b=>{
+        b.addEventListener('click', (e)=>{ appState.selectedType = e.currentTarget.dataset.type; });
+      });
+
+      $('addPresetBtn').addEventListener('click', addPreset);
+
+      $('addQuoteBtn').addEventListener('click', addQuote);
+      $('quotesEnabled').addEventListener('change', ()=>{ appState.quotesEnabled = $('quotesEnabled').checked; saveLocal(); startQuoteRotation(true); });
+      $('applyQuotesInterval').addEventListener('click', ()=>{ appState.quotesInterval = Math.max(5, parseInt($('quotesInterval').value||20)); saveLocal(); startQuoteRotation(true); });
+      $('importQuotesBtn').addEventListener('click', ()=> $('quotesCsvFile').click());
+      $('quotesCsvFile').addEventListener('change', handleQuotesCsvImport);
+      const addCatBtn = document.getElementById('addQuoteCatBtn'); if(addCatBtn){ addCatBtn.addEventListener('click', ()=>{ const emoji=(document.getElementById('newCatEmoji').value||'✨').trim(); const name=(document.getElementById('newCatName').value||'Geral').trim(); const id=Math.random().toString(36).slice(2,8); appState.quoteCats = appState.quoteCats||[]; appState.quoteCats.push({id,emoji,name}); saveLocal(); renderQuoteCats(); }); }
+
+      $('importQuotesBtn').addEventListener('click', ()=> $('quotesCsvFile').click());
+      $('quotesCsvFile').addEventListener('change', handleQuotesCsvImport);
+
+      $('exitFocusBtn').addEventListener('click', ()=> $('focusOverlay').classList.remove('active'));
+    }
+
+    // ====== QUOTES ======
+    function renderQuotesUI(){
+      $('quotesEnabled').checked = !!appState.quotesEnabled;
+      $('quotesInterval').value = appState.quotesInterval || 20;
+      const list = $('quotesList');
+      if(!appState.settings.quotes.length){ list.innerHTML = '<div class="chip">Nenhuma citação.</div>'; return; }
+      list.innerHTML = appState.settings.quotes.map((q,i)=>{
+        const c = (appState.quoteCats||[]).find(x=>x.id===q.catId);
+        const prefix = c? (c.emoji+' ') : '';
+        return `<div class="chip">${prefix}“${q.t}” — ${q.a} <button class="a-btn" onclick="delQuote(${i})">Excluir</button></div>`;
+      }).join(' ');
+      renderQuoteCats();
+    }
+    function addQuote(){
+      const t = ($('quoteInput').value||'').trim();
+      const a = ($('quoteAuthor').value||'').trim() || '—';
+      const catSel = document.getElementById('quoteCatSelect');
+      const catId = catSel ? (catSel.value||null) : null;
+      if(!t) return;
+      appState.settings.quotes.push({t,a,catId});
+      $('quoteInput').value=''; $('quoteAuthor').value='';
+      saveLocal(); renderQuotesUI();
+    }
+    function delQuote(i){ appState.settings.quotes.splice(i,1); saveLocal(); renderQuotesUI(); }
+    function startQuoteRotation(reset=false){
+      if(reset && appState.quoteTimer){ clearInterval(appState.quoteTimer); appState.quoteTimer=null; }
+      const show = ()=>{
+        if(!appState.quotesEnabled || !appState.settings.quotes.length){
+          $('qText').textContent=''; $('qAuthor').textContent=''; $('oqText').textContent=''; $('oqAuthor').textContent='';
+          return;
+        }
+        const q = appState.settings.quotes[appState.quoteIndex % appState.settings.quotes.length];
+        const cat = (appState.quoteCats||[]).find(x=>x.id===q.catId);
+        const prefix = cat? (cat.emoji + ' ') : '';
+        $('qText').textContent = `${prefix}“${q.t}”`; $('qAuthor').textContent = `— ${q.a}`;
+        $('oqText').textContent = `${prefix}“${q.t}”`; $('oqAuthor').textContent = `— ${q.a}`;
+        appState.quoteIndex++;
+      };
+      show();
+      appState.quoteTimer = setInterval(show, (appState.quotesInterval||20)*1000);
+    }
+    function handleQuotesCsvImport(evt){
+      const file = evt.target.files[0]; if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (e)=>{
+        const text = e.target.result;
+        const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+        let added=0;
+        for(const line of lines){
+          const idx = line.indexOf(',');
+          if(idx<=0) continue;
+          const t = line.slice(0, idx).trim().replace(/^"|"$/g,'');
+          const a = line.slice(idx+1).trim().replace(/^"|"$/g,'');
+          if(t){ appState.settings.quotes.push({t, a:a||'—'}); added++; }
+        }
+        saveLocal(); renderQuotesUI();
+        alert(`Importadas ${added} citações.`);
+        evt.target.value='';
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    // ====== QUOTE COLOR CONTROLS ======
+    function injectQuoteColorControls(){
+      const host = document.getElementById('quoteColorMount');
+      if(!host) return;
+      host.innerHTML = `
+        <div class="quote-color-section" id="quoteColorSection">
+          <h4>🎨 Citações — Cor do texto</h4>
+          <div class="quote-color-options">
+            <label><input type="radio" name="quoteColorMode" value="auto"> Automático</label>
+            <label><input type="radio" name="quoteColorMode" value="white"> Branco</label>
+            <label><input type="radio" name="quoteColorMode" value="gold"> Amarelo/Dourado</label>
+            <label><input type="radio" name="quoteColorMode" value="custom"> Personalizada</label>
+            <input type="color" id="quoteCustomPicker" value="${appState.settings.quoteCustomColor}" title="Cor personalizada">
+          </div>
+        </div>`;
+      host.querySelectorAll('input[name="quoteColorMode"]').forEach(r=>{
+        r.checked = (r.value === (appState.settings.quoteColorMode||'auto'));
+        r.addEventListener('change', ()=>{
+          appState.settings.quoteColorMode = r.value; saveLocal(); applyQuoteColor();
+        });
+      });
+      host.querySelector('#quoteCustomPicker').addEventListener('input', (e)=>{
+        appState.settings.quoteCustomColor = e.target.value; saveLocal(); if(appState.settings.quoteColorMode==='custom') applyQuoteColor();
+      });
+      applyQuoteColor();
+    }
+    function applyQuoteColor(){
+      const root = document.documentElement;
+      const body = document.body;
+      body.classList.remove('force-quote-color','break-auto');
+      const inBreak = document.querySelector('.focus-card.break-bg, .focus-mode.break-bg');
+      if(appState.settings.quoteColorMode === 'auto'){
+        if(inBreak) body.classList.add('break-auto');
+        return;
+      }
+      body.classList.add('force-quote-color');
+      let chosen = '#ffffff';
+      if(appState.settings.quoteColorMode==='white'){ chosen = '#ffffff'; }
+      else if(appState.settings.quoteColorMode==='gold'){ chosen = '#facc15'; }
+      else if(appState.settings.quoteColorMode==='custom'){ chosen = appState.settings.quoteCustomColor || '#f59e0b'; }
+      root.style.setProperty('--quoteColorForce', chosen);
+    }
+
+    // ====== PRESETS ======
+    function renderPresets(){
+      const sel = $('defaultPresetSelect');
+      sel.innerHTML = appState.settings.presets.map(p=>`<option value="${p.id}" ${p.id===appState.settings.defaultPresetId?'selected':''}>${presetDisplay(p)}</option>`).join('');
+      sel.onchange = (e)=>{ appState.settings.defaultPresetId = e.target.value; saveLocal(); updateUI(); };
+    }
+    function renderPresetsList(){
+      const wrap = $('presetsList');
+      wrap.innerHTML = appState.settings.presets.map((p)=>`
+        <div class="chip" style="display:inline-flex; gap:8px; align-items:center; margin:2px 6px 6px 0">
+          <b>${presetDisplay(p)}</b>
+          <button class="a-btn" onclick="editPreset('${p.id}')">Editar</button>
+          <button class="a-btn" onclick="deletePreset('${p.id}')">Excluir</button>
+        </div>
+      `).join('');
+    }
+    function addPreset(){
+      const name=($('newPresetName').value||'').trim();
+      const f=parseInt($('newPresetFocus').value||0);
+      const b=parseInt($('newPresetBreak').value||0);
+      if(!name||f<1||b<1){ alert('Preencha nome e tempos válidos.'); return; }
+      appState.settings.presets.push({id:uid(), name, focus:f, brk:b});
+      $('newPresetName').value=''; $('newPresetFocus').value=25; $('newPresetBreak').value=5;
+      saveLocal(); renderPresets(); renderPresetsList(); updateUI(); alert('Preset adicionado.');
+    }
+    function editPreset(id){
+      const p = getPresetById(id); if(!p) return;
+      const name = prompt('Nome do preset:', p.name); if(name===null) return;
+      const f = parseInt(prompt('Minutos de foco:', p.focus)); if(!f) return;
+      const b = parseInt(prompt('Minutos de pausa:', p.brk)); if(!b) return;
+      p.name = name; p.focus = f; p.brk = b;
+      saveLocal(); renderPresets(); renderPresetsList(); updateUI();
+    }
+    function deletePreset(id){
+      if(!confirm('Excluir preset?')) return;
+      appState.settings.presets = appState.settings.presets.filter(p=>p.id!==id);
+      if(appState.settings.defaultPresetId===id && appState.settings.presets.length){
+        appState.settings.defaultPresetId = appState.settings.presets[0].id;
+      }
+      saveLocal(); renderPresets(); renderPresetsList(); updateUI();
+    }
+
+    // ====== MODAL ======
+    function openTaskModal(origin='tasks', task=null){
+      appState.modalOrigin = origin;
+      appState.editingTaskId = task?task.id:null;
+      $('taskModalTitle').textContent = task?'Editar tarefa':'Nova tarefa';
+      $('taskTitleInput').value = task?task.title:'';
+      $('plannedMinutesInput').value = task? (task.plannedMinutes||50) : 50;
+      appState.selectedType = task? (task.type||'human') : 'human';
+      $('tagsInput').value = (task && task.tags && task.tags.length)? task.tags.join(', ') : '';
+      $('difficultyRange').value = task? (task.difficulty||2) : 2;
+      $('energyRange').value     = task? (task.energy||2)     : 2;
+      const presetSel = $('taskPresetSelect');
+      const chosen = task? (task.presetId || appState.settings.defaultPresetId) : appState.settings.defaultPresetId;
+      presetSel.innerHTML = appState.settings.presets.map(p=>`<option value="${p.id}" ${p.id===chosen?'selected':''}>${presetDisplay(p)}</option>`).join('');
+      $('pomodorosPlannedInput').value = (task && task.pomodorosTargetManual)? task.pomodorosTargetManual : '';
+      $('taskModal').style.display='flex';
+    }
+    function closeTaskModal(){ $('taskModal').style.display='none'; }
+    function saveTaskFromModal(){
+      const title = ($('taskTitleInput').value||'').trim();
+      if(!title){ alert('Digite um título.'); return; }
+      const type = appState.selectedType;
+      const plannedMinutes = Math.max(5, Math.min(600, parseInt($('plannedMinutesInput').value||50)));
+      const tags = ($('tagsInput').value||'').split(',').map(t=>t.trim()).filter(Boolean);
+      const presetId = $('taskPresetSelect').value;
+      const difficulty = parseInt($('difficultyRange').value||2);
+      const energy     = parseInt($('energyRange').value||2);
+      const pomPlanRaw = $('pomodorosPlannedInput').value;
+      const pomManual  = pomPlanRaw ? Math.max(1, Math.min(99, parseInt(pomPlanRaw))) : null;
+
+      if(appState.editingTaskId){
+        const t = appState.tasks.find(x=>x.id===appState.editingTaskId); if(!t) return;
+        t.title=title; t.type=type; t.tags=tags; t.plannedMinutes=plannedMinutes; t.presetId=presetId;
+        t.difficulty=difficulty; t.energy=energy; t.pomodorosTargetManual=pomManual;
+      }else{
+        const preset = getPresetById(presetId);
+        const autoTarget = Math.max(1, Math.ceil(plannedMinutes / preset.focus));
+        const task = {
+          id: Date.now()+Math.random(), created: nowIso(),
+          plannedToday: (appState.modalOrigin==='focus'),
+          canceled:false, completed:false, completedAt:null,
+          title, type, tags, plannedMinutes,
+          presetId, difficulty, energy,
+          pomodorosTargetManual: pomManual,
+          pomodorosTarget: pomManual || autoTarget,
+          pomodorosDone: 0, interruptions: 0, focusSeconds: 0,
+          log: []
+        };
+        task.log.push({ts:nowIso(), ev:'criada'});
+        appState.tasks.unshift(task);
+      }
+      closeTaskModal(); saveLocal(); updateUI();
+    }
+
+    // ====== LISTAS ======
+    function renderTasks(targetId='tasksList', mode='single'){
+      const container = $(targetId);
+      const baseList = appState.tasks || [];
+
+      // 🔽 FILTRO: na aba Foco (tasksList + single) mostrar apenas tarefas ativas planejadas para HOJE
+      const list = (targetId === 'tasksList' && mode === 'single')
+        ? baseList.filter(t => t.plannedToday && !t.canceled && !t.completed)
+        : baseList;
+
+      if(!list.length){
+        container.innerHTML = (targetId === 'tasksList' && mode === 'single')
+          ? '<div class="chip">Nenhuma tarefa para hoje.</div>'
+          : '<div class="chip">Nenhuma tarefa ainda.</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(t=>{
+        const color = typeMeta[t.type||'human'];
+        const isCurrent = appState.currentTask && appState.currentTask.id===t.id;
+        const live = (isCurrent && (appState.isRunning||appState.onBreak));
+        const cls = ['task-card', isCurrent?'selected':'', live?'live':''].join(' ');
+        const preset = getPresetById(t.presetId || appState.settings.defaultPresetId);
+        const needAuto = Math.max(1, Math.ceil((t.plannedMinutes||0)/preset.focus));
+        const need = t.pomodorosTargetManual || needAuto;
+        t.pomodorosTarget = need;
+        const done = t.pomodorosDone||0;
+        const tags = (t.tags||[]).map(x=>`<span class="chip">#${x}</span>`).join('');
+        const headHtml = `
+          <div class="task-head">
+            <span class="dot" style="background:${color}"></span>
+            <div class="task-title">${({"human":"🤝","chores":"🧹","feelgood":"😊","nice":"🌱"}[t.type||"nice"])} ${t.title} ${t.completed?'<span class="chip">Concluída</span>':''} ${t.canceled?'<span class="chip">Cancelada</span>':''}</div>
+            <div class="title-right">
+              ${t.plannedToday?'<span class="chip">Hoje</span>':''}
+              <span class="chip">${presetDisplay(preset)}</span>
+              <span class="chip">Pomodoros: ${done}/${need}</span>
+              ${tags}
+              ${ mode==='single' ? `<button class="a-btn" onclick="selectTaskWithPrompt('${t.id}')">🎯 Focar</button>` : ''}
+            </div>
+          </div>`;
+
+        const logHtml = (mode==='flat' && t.log && t.log.length) ? `<div style="padding:0 12px 12px 12px; color:var(--text2); font-size:.88rem">
+          <b>Log:</b> ${t.log.map(i=>`${new Date(i.ts).toLocaleString()} — ${i.ev}`).join(' · ')}
+        </div>` : '';
+
+        const bodyHtml = (mode==='flat') ? `
+          <div class="actions">
+            ${(!t.completed && !t.canceled) ? `<button class="a-btn" onclick="selectTaskWithPrompt('${t.id}')">🎯 Focar</button>` : ''}
+            ${(!t.completed && !t.canceled) ? `<button class="a-btn" onclick="openTaskModal('${targetId==='tasksList'?'focus':'tasks'}', appState.tasks.find(x=>String(x.id)==='${t.id}'))">✏️ Editar</button>` : ''}
+            ${(!t.completed && !t.canceled) ? `<button class="a-btn" onclick="cancelTask('${t.id}')">🚫 Cancelar</button>` : ''}
+            <button class="a-btn" onclick="deleteTask('${t.id}')">🗑️ Excluir</button>
+            <span style="flex:1"></span>
+            <span class="chip">Dificuldade: ${['Baixa','Média','Alta'][(t.difficulty||2)-1]} ${['😌','😐','😤'][(t.difficulty||2)-1]}</span>
+            <span class="chip">Energia: ${['Baixa','Média','Alta'][(t.energy||2)-1]} ${['💤','⚡','🔥'][(t.energy||2)-1]}</span>
+            <span class="chip">Tempo planejado: <b>${t.plannedMinutes||0} min</b></span>
+          </div>${logHtml}` : '';
+
+        return `<div class="${cls}">${headHtml}${bodyHtml}</div>`;
+      }).join('');
+    }
+
+    // ====== SELEÇÃO / CONTROLES ======
+    function selectTaskWithPrompt(id){
+      const next = appState.tasks.find(x=> String(x.id) === String(id));
+      if(!next || next.completed || next.canceled) return;
+      if(appState.currentTask && appState.currentTask.id !== next.id && !appState.currentTask.completed && !appState.currentTask.canceled && (appState.isRunning || appState.onBreak)){
+        const ok = confirm('Deseja interromper a tarefa atual e alternar para essa tarefa?');
+        if(!ok) return;
+        logEvent(appState.currentTask, 'interrompida por troca → ' + next.title);
+        incInterruptions(appState.currentTask);
+        interruptCurrent();
+      }
+      selectTaskCore(next);
+    }
+    function selectTaskCore(next){
+      appState.currentTask = next;
+      appState.isRunning = false;
+      appState.onBreak = false; appState.breakMs = 0;
+      const preset = getPresetById(next.presetId || appState.settings.defaultPresetId);
+      appState.timeLeft = preset.focus * 60;
+      appState.lastTickMs = null;
+      $('emptyFocus').style.display='none';
+      $('activeFocus').style.display='block';
+      updateTypeDots();
+      updateControls(); tickRender(); updateFocusSummaryLine();
+      $('focusCard').classList.remove('blink-warn','blink-danger','break-bg');
+      $('focusOverlay').classList.remove('break-bg');
+    }
+    function updateControls(){
+      const running = appState.isRunning;
+      $('taskControls').innerHTML = `
+        <button class="btn ${running?'warn':'ok'}" onclick="${running?'interruptCurrent()':'startTask()'}">
+          <i class="fas ${running?'fa-ban':'fa-play'}"></i> ${running?'Interromper':'Iniciar'}
+        </button>
+        <button class="btn muted" onclick="enterFocusMode()"><i class='fas fa-expand'></i> Modo Foco</button>
+        <button class="btn muted" onclick="completeTask()"><i class='fas fa-check'></i> Concluir</button>
+        <button class="btn danger" onclick="cancelTaskCurrent()"><i class='fas fa-ban'></i> Cancelar</button>
+      `;
+    }
+
+    function startTask(){
+      if(!appState.currentTask){ alert('Selecione uma tarefa.'); return; }
+      const preset = getPresetById(appState.currentTask.presetId || appState.settings.defaultPresetId);
+      if(appState.onBreak){
+        appState.onBreak = false;
+        appState.breakMs = 0;
+        $('timerPlus').style.display='none';
+        $('overlayTimerPlus').style.display='none';
+        appState.timeLeft = preset.focus * 60;
+        $('focusCard').classList.remove('break-bg');
+        $('focusOverlay').classList.remove('break-bg');
+        $('progressWrap').style.display='block';
+        $('breakMsg').style.display='none';
+        $('overlayBreakMsg').style.display='none';
+        logEvent(appState.currentTask,'retomada pós-pausa');
+      } else {
+        logEvent(appState.currentTask,'iniciada');
+      }
+      appState.isRunning = true;
+      appState.lastTickMs = performance.now();
+      $('statusIndicator').textContent='🔥';
+      loop();
+      updateControls();
+      applyQuoteColor();
+    }
+
+    function interruptCurrent(){
+      if(!appState.currentTask) return;
+      appState.isRunning=false; appState.onBreak=false; appState.breakMs=0; appState.lastTickMs=null;
+      $('statusIndicator').textContent='🎯';
+      $('timerPlus').style.display='none';
+      $('overlayTimerPlus').style.display='none';
+      const preset = getPresetById(appState.currentTask.presetId || appState.settings.defaultPresetId);
+      appState.timeLeft = preset.focus*60;
+      $('focusCard').classList.remove('break-bg','blink-warn','blink-danger');
+      $('focusOverlay').classList.remove('break-bg');
+      $('progressWrap').style.display='block';
+      $('breakMsg').style.display='none';
+      $('overlayBreakMsg').style.display='none';
+      logEvent(appState.currentTask,'interrompida');
+      incInterruptions(appState.currentTask);
+      updateControls(); updateFocusSummaryLine(); saveLocal();
+      applyQuoteColor();
+    }
+
+    function completeTask(){
+      if(!appState.currentTask) return;
+      appState.isRunning=false; appState.onBreak=false; appState.breakMs=0; appState.lastTickMs=null;
+      $('focusCard').classList.remove('blink-warn','blink-danger','break-bg');
+      $('focusOverlay').classList.remove('break-bg');
+      $('timerPlus').style.display='none'; $('overlayTimerPlus').style.display='none';
+      appState.currentTask.completed = true;
+      appState.currentTask.completedAt = nowIso();
+      logEvent(appState.currentTask,'concluída');
+      saveLocal(); updateUI();
+      applyQuoteColor();
+    }
+
+    function cancelTaskCurrent(){
+      if(!appState.currentTask) return;
+      if(!confirm('Cancelar esta tarefa?')) return;
+      appState.isRunning=false; appState.onBreak=false; appState.breakMs=0; appState.lastTickMs=null;
+      $('focusCard').classList.remove('blink-warn','blink-danger','break-bg');
+      $('focusOverlay').classList.remove('break-bg');
+      $('timerPlus').style.display='none'; $('overlayTimerPlus').style.display='none';
+      appState.currentTask.canceled = true;
+      logEvent(appState.currentTask,'cancelada');
+      appState.currentTask=null;
+      saveLocal(); updateUI();
+      applyQuoteColor();
+    }
+
+    function logEvent(task, ev){
+      if(!task) return;
+      task.log = task.log || [];
+      task.log.push({ts: nowIso(), ev});
+    }
+    function incInterruptions(task){
+      task.interruptions = (task.interruptions||0)+1;
+    }
+
+    // ====== LOOP DO TIMER ======
+    let rafId = null;
+    function loop(){
+      if(rafId) return;
+      const step = (ts)=>{
+        if(!appState.currentTask){ rafId=null; return; }
+        const preset = getPresetById(appState.currentTask.presetId || appState.settings.defaultPresetId);
+        if(appState.isRunning){
+          if(appState.lastTickMs==null) appState.lastTickMs = ts;
+          const elapsed = ts - appState.lastTickMs;
+          if(elapsed >= 1000){
+            const ticks = Math.floor(elapsed / 1000);
+            appState.timeLeft = Math.max(0, appState.timeLeft - ticks);
+            appState.lastTickMs += ticks*1000;
+            if(appState.timeLeft===0){
+              appState.isRunning=false; appState.onBreak=true;
+              appState.breakMs=0; appState.lastTickMs=null;
+              $('statusIndicator').textContent='⏸️';
+              $('focusCard').classList.add('break-bg');
+              $('focusOverlay').classList.add('break-bg');
+              $('progressWrap').style.display='none';
+              $('breakMsg').style.display='block';
+              $('overlayBreakMsg').style.display='block';
+              showBreakPhrase();
+              appState.currentTask.pomodorosDone = (appState.currentTask.pomodorosDone||0)+1;
+              logEvent(appState.currentTask,'pomodoro concluído → pausa');
+              updateControls();
+              applyQuoteColor();
+            }
+          }
+        } else if(appState.onBreak){
+          if(appState.lastTickMs==null) appState.lastTickMs = ts;
+          const elapsed = ts - appState.lastTickMs;
+          if(elapsed >= 1000){
+            const ticks = Math.floor(elapsed / 1000);
+            appState.breakMs += ticks*1000;
+            appState.lastTickMs += ticks*1000;
+            if(Math.floor(appState.breakMs/1000) % 15 === 0){
+              showBreakPhrase();
+            }
+          }
+        } else {
+          appState.lastTickMs = null;
+        }
+
+        tickRender();
+
+        if(appState.isRunning){
+          if(appState.timeLeft <= 5){ $('focusCard').classList.add('blink-danger'); $('focusCard').classList.remove('blink-warn'); }
+          else if(appState.timeLeft <= 10){ $('focusCard').classList.add('blink-warn'); $('focusCard').classList.remove('blink-danger'); }
+          else { $('focusCard').classList.remove('blink-warn','blink-danger'); }
+        } else {
+          $('focusCard').classList.remove('blink-warn','blink-danger');
+        }
+
+        if(appState.isRunning || appState.onBreak) { rafId = requestAnimationFrame(step); }
+        else { rafId=null; }
+      };
+      rafId = requestAnimationFrame(step);
+    }
+
+    function showBreakPhrase(){
+      const list = [
+        '🍵 Get out of here, we are on break!',
+        '🚶‍♀️ Dê uma volta e alongue!',
+        '💧 Beba água agora mesmo.',
+        '❤️ Manda um “te amo” pra sua esposa.',
+        '💊 Remédios em dia?',
+        '👀 20s olhando para longe da tela.',
+        '🧘 Respire: 4-4-4-4.'
+      ];
+      const msg=list[Math.floor(Math.random()*list.length)];
+      $('breakMsg').textContent=msg;
+      $('overlayBreakMsg').textContent=msg;
+    }
+
+    function tickRender(){
+      const t = Math.max(0, appState.timeLeft);
+      const preset = appState.currentTask ? getPresetById(appState.currentTask.presetId || appState.settings.defaultPresetId) : getPresetById(appState.settings.defaultPresetId);
+      const breakSec = Math.floor(appState.breakMs/1000);
+      $('timerPlus').style.display='none';
+      $('overlayTimerPlus').style.display='none';
+
+      if(appState.onBreak){
+        const showPlus = breakSec > (preset.brk*60);
+        $('timerDisplay').textContent = fmt(breakSec);
+        $('overlayTimer').textContent = fmt(breakSec);
+        if(showPlus){ $('timerPlus').style.display='inline-block'; $('overlayTimerPlus').style.display='inline-block'; }
+      } else {
+        $('timerDisplay').textContent = fmt(t);
+        $('overlayTimer').textContent = fmt(t);
+      }
+
+      const total = preset.focus*60;
+      const circ = 2*Math.PI*60; const off = circ - ((total - t)/total)*circ;
+      const pc = $('progressCircle'); if(pc) pc.style.strokeDashoffset = off;
+      updateFocusSummaryLine();
+      renderTasks('tasksList','single');
+      renderTasks('tasksList2','flat');
+      saveLocal();
+    }
+
+    function updateTypeDots(){
+      const t = appState.currentTask;
+      if(!t){ return; }
+      const color = typeMeta[t.type||'human'];
+      $('currentTypeDot').style.background = color;
+      $('overlayDot').style.background = color;
+      $('currentTaskTitle').textContent = t.title;
+      $('overlayTitle').textContent = t.title;
+    }
+    function updateFocusSummaryLine(){
+      const t = appState.currentTask;
+      if(!t){ $('focusSummaryLine').textContent=''; $('overlaySub').textContent=''; return; }
+      const preset = getPresetById(t.presetId || appState.settings.defaultPresetId);
+      const neededAuto = Math.max(1, Math.ceil((t.plannedMinutes||0) / preset.focus));
+      const needed = t.pomodorosTargetManual || neededAuto;
+      t.pomodorosTarget = needed;
+      const done = t.pomodorosDone||0;
+      const interruptions = t.interruptions||0;
+      const line = `${done}/${needed} pomodoros • ${interruptions} interrupções`;
+      $('focusSummaryLine').textContent = line;
+      $('overlaySub').textContent = line;
+    }
+
+    // ====== FOCUS OVERLAY ======
+    function enterFocusMode(){ $('focusOverlay').classList.add('active'); if(appState.onBreak){ $('focusOverlay').classList.add('break-bg'); } else { $('focusOverlay').classList.remove('break-bg'); } }
+    window.enterFocusMode = enterFocusMode;
+
+    // ====== TASK OPS ======
+    function deleteTask(id){
+      const idStr = String(id);
+      if(!confirm('Excluir esta tarefa?')) return;
+
+      if (appState.currentTask && String(appState.currentTask.id) === idStr) {
+        interruptCurrent();
+        appState.currentTask = null;
+      }
+
+      appState.tasks = appState.tasks.filter(t => String(t.id) !== idStr);
+
+      saveLocal();
+      updateUI();
+    }
+
+    function cancelTask(id){
+      const idStr = String(id);
+      const t = appState.tasks.find(x => String(x.id) === idStr);
+      if(!t) return;
+
+      if(!confirm('Cancelar esta tarefa?')) return;
+
+      t.canceled = true;
+      logEvent(t, 'cancelada');
+
+      if (appState.currentTask && String(appState.currentTask.id) === idStr) {
+        interruptCurrent();
+        appState.currentTask = null;
+      }
+
+      saveLocal();
+      updateUI();
+    }
+
+    window.deleteTask=deleteTask; window.cancelTask=cancelTask;
+
+    // ====== UI UPDATE ======
+    function updateUI(){
+      renderTasks('tasksList','single');
+      renderTasks('tasksList2','flat');
+      renderPresetsList();
+      updateControls();
+      if(appState.currentTask){
+        $('emptyFocus').style.display='none';
+        $('activeFocus').style.display='block';
+        updateTypeDots(); updateFocusSummaryLine();
+      }else{
+        $('emptyFocus').style.display='block';
+        $('activeFocus').style.display='none';
+      }
+    }
+  
+// === EXTENSIONS v6.7.1r11 (1C/2B/3A) ===
+(function(){
+  function ensureCats(){
+    if(!appState.quoteCats){ appState.quoteCats=[{id:'mot',emoji:'💪',name:'Motivacional'},{id:'focus',emoji:'🎯',name:'Foco'},{id:'calm',emoji:'🧘',name:'Calmo'},{id:'fun',emoji:'😄',name:'Humor'}]; }
+  }
+  window.renderQuoteCats = function(){
+    ensureCats();
+    const mount = document.getElementById('quoteCatsList'); if(!mount) return;
+    mount.innerHTML = appState.quoteCats.map(c=>`<span class="chip">\${c.emoji} \${c.name} <button class="a-btn" onclick="editQuoteCat('\${c.id}')">✎</button> <button class="a-btn" onclick="removeQuoteCat('\${c.id}')">🗑</button></span>`).join(' ');
+    const sel = document.getElementById('quoteCatSelect'); if(sel){ sel.innerHTML = appState.quoteCats.map(c=>`<option value="\${c.id}">\${c.emoji} \${c.name}</option>`).join(''); }
+  };
+  window.editQuoteCat = function(id){
+    const c = (appState.quoteCats||[]).find(x=>x.id===id); if(!c) return;
+    const e = prompt('Emoji', c.emoji) || c.emoji;
+    const n = prompt('Nome', c.name) || c.name;
+    c.emoji=e; c.name=n; saveLocal(); renderQuoteCats(); renderQuotesUI();
+  };
+  window.removeQuoteCat = function(id){
+    if(!confirm('Excluir categoria?')) return;
+    appState.quoteCats = (appState.quoteCats||[]).filter(c=>c.id!==id);
+    saveLocal(); renderQuoteCats(); renderQuotesUI();
+  };
+  // override renderQuotesUI to include category emoji and populate select
+  const _oldRenderQuotesUI = renderQuotesUI;
+  window.renderQuotesUI = function(){
+    ensureCats();
+    $('quotesEnabled').checked = !!appState.quotesEnabled;
+    $('quotesInterval').value = appState.quotesInterval || 20;
+    const list = $('quotesList');
+    if(!appState.settings.quotes.length){ list.innerHTML = '<div class="chip">Nenhuma citação.</div>'; }
+    else {
+      list.innerHTML = appState.settings.quotes.map((q,i)=>{ const c=(appState.quoteCats||[]).find(x=>x.id===q.catId); const pref=c? (c.emoji+' ') : ''; return `<div class="chip">\${pref}“\${q.t}” — \${q.a} <button class="a-btn" onclick="delQuote(\${i})">Excluir</button></div>`; }).join(' ');
+    }
+    // select
+    const sel = document.getElementById('quoteCatSelect'); if(sel){ sel.innerHTML = (appState.quoteCats||[]).map(c=>`<option value="\${c.id}">\${c.emoji} \${c.name}</option>`).join(''); }
+  };
+  // bind buttons after DOM is ready
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const addBtn = document.getElementById('addQuoteCatBtn');
+    if(addBtn){
+      addBtn.addEventListener('click', ()=>{
+        ensureCats();
+        const emoji = (document.getElementById('newCatEmoji').value||'✨').trim();
+        const name = (document.getElementById('newCatName').value||'Geral').trim();
+        const id = Math.random().toString(36).slice(2,8);
+        appState.quoteCats.push({id,emoji,name}); saveLocal(); renderQuoteCats();
+        document.getElementById('newCatEmoji').value=''; document.getElementById('newCatName').value='';
+      });
+    }
+    const csv = document.getElementById('quotesCsvFile');
+    if(csv){ csv.addEventListener('change', handleQuotesCsvImport); }
+    renderQuoteCats();
+  });
+})();
+
+</script>
+</body>
+</html>

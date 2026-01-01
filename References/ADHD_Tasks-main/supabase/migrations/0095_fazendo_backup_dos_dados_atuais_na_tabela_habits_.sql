@@ -1,0 +1,1 @@
+SELECT id, title, project_id, hashtags, type, goal_value, goal_unit, increment_value, created_at FROM public.habits;
