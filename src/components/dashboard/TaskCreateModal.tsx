@@ -28,9 +28,10 @@ import {
   Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Task, Priority, TaskStatus, Project } from "@/types";
+import type { Task, Priority, TaskStatus, TaskCategory } from "@/types";
 import { useProjects } from "@/hooks/useProjects";
 import { FolderKanban } from "lucide-react";
+import { TaskCategorySelector } from "./TaskCategoryBadge";
 
 interface TaskCreateModalProps {
   isOpen: boolean;
@@ -57,6 +58,7 @@ export function TaskCreateModal({ isOpen, onClose, onSave }: TaskCreateModalProp
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const [status, setStatus] = useState<TaskStatus>('next');
+  const [category, setCategory] = useState<TaskCategory | undefined>();
   const [tagsInput, setTagsInput] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | undefined>();
   const [projectId, setProjectId] = useState<string | undefined>();
@@ -68,6 +70,7 @@ export function TaskCreateModal({ isOpen, onClose, onSave }: TaskCreateModalProp
     setDescription('');
     setPriority('medium');
     setStatus('next');
+    setCategory(undefined);
     setTagsInput('');
     setEstimatedMinutes(undefined);
     setProjectId(undefined);
@@ -92,6 +95,7 @@ export function TaskCreateModal({ isOpen, onClose, onSave }: TaskCreateModalProp
       description: description.trim() || undefined,
       priority,
       status,
+      category,
       tags,
       estimatedMinutes,
       projectId,
@@ -180,6 +184,12 @@ export function TaskCreateModal({ isOpen, onClose, onSave }: TaskCreateModalProp
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Category - ADHD Visual System */}
+          <div className="space-y-2">
+            <Label>Categoria Visual (ADHD)</Label>
+            <TaskCategorySelector value={category} onChange={setCategory} />
           </div>
 
           {/* Tags */}
