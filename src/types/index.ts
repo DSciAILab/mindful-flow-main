@@ -8,7 +8,8 @@ export type TaskStatus =
   | "someday"
   | "done";
 
-export type TaskCategory = "red" | "yellow" | "purple" | "green";
+// Task Category removed
+// export type TaskCategory = "red" | "yellow" | "purple" | "green";
 
 export interface ActivityLogEntry {
   timestamp: string;
@@ -22,7 +23,7 @@ export interface Task {
   description?: string;
   priority: Priority;
   status: TaskStatus;
-  category?: TaskCategory;
+  // category?: TaskCategory;
   dueDate?: Date;
   projectId?: string;
   areaId?: string;
