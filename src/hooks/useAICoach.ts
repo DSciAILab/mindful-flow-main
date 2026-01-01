@@ -74,13 +74,20 @@ Responda sempre em português brasileiro. Seja conciso e motivador.`;
 
       // Use Gemini API via fetch
       const apiKey = config?.apiKey || import.meta.env.VITE_GEMINI_API_KEY;
+      const model = config?.model || 'gemini-1.5-flash';
       
       if (!apiKey) {
         throw new Error('API key not configured');
       }
 
+      // Construct URL based on model selection
+      // Note: Some models might require different versions or endpoints, 
+      // but for standard Gemini models (1.5-flash, 1.5-pro, 2.0-flash), this endpoint works.
+      const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+      const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
+
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        url,
         {
           method: 'POST',
           headers: {

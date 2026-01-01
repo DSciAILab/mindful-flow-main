@@ -76,13 +76,13 @@ export const useTasks = () => {
           description: taskData.description || null,
           priority: taskData.priority || 'medium',
           status: taskData.status || 'next',
-          // category: taskData.category || null, // Temporary: Uncomment after migration
+          category: taskData.category || null,
           tags: taskData.tags || [],
           points: taskData.points || 10,
           estimated_minutes: taskData.estimatedMinutes || null,
           project_id: taskData.projectId || null,
           due_date: taskData.dueDate?.toISOString() || null,
-          // activity_log: JSON.stringify([{ timestamp: new Date().toISOString(), action: 'created' }]), // Temporary: Uncomment after migration
+          activity_log: JSON.stringify([{ timestamp: new Date().toISOString(), action: 'created' }]),
         })
         .select()
         .single();
@@ -130,7 +130,7 @@ export const useTasks = () => {
       if (updates.description !== undefined) dbUpdates.description = updates.description || null;
       if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
       if (updates.status !== undefined) dbUpdates.status = updates.status;
-      // if (updates.category !== undefined) dbUpdates.category = updates.category || null; // Temporary: Uncomment after migration
+      if (updates.category !== undefined) dbUpdates.category = updates.category || null;
       if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
       if (updates.points !== undefined) dbUpdates.points = updates.points;
       if (updates.timeSpentMinutes !== undefined) dbUpdates.time_spent_minutes = updates.timeSpentMinutes;
