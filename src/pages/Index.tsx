@@ -14,6 +14,10 @@ import { TaskCreateModal } from "@/components/dashboard/TaskCreateModal";
 import { ProcessInboxModal } from "@/components/dashboard/ProcessInboxModal";
 import { HabitTracker } from "@/components/dashboard/HabitTracker";
 import { HabitWidget } from "@/components/dashboard/HabitWidget";
+import { FloatingCoach } from "@/components/dashboard/FloatingCoach";
+import { FocusMode } from "@/components/dashboard/FocusMode";
+import { TimerDashboard } from "@/components/dashboard/TimerDashboard";
+import { QuoteDisplay } from "@/components/dashboard/QuoteDisplay";
 import { ProjectCreateModal } from "@/components/projects/ProjectCreateModal";
 import { WheelOfLife } from "@/components/planning/WheelOfLife";
 import { YearAtGlance } from "@/components/planning/YearAtGlance";
@@ -91,6 +95,9 @@ export default function Index() {
   
   // Inbox processing state
   const [processingInboxItem, setProcessingInboxItem] = useState<CaptureItem | null>(null);
+
+  // Focus mode state
+  const [isFocusModeOpen, setIsFocusModeOpen] = useState(false);
 
   const { 
     tasks, 
