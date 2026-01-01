@@ -28,10 +28,9 @@ import {
   Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Task, Priority, TaskStatus, TaskCategory } from "@/types";
+import type { Task, Priority, TaskStatus } from "@/types";
 import { useProjects } from "@/hooks/useProjects";
 import { FolderKanban } from "lucide-react";
-import { TaskCategorySelector } from "./TaskCategoryBadge";
 
 interface TaskCreateModalProps {
   isOpen: boolean;
@@ -56,8 +55,8 @@ const statusOptions: { value: TaskStatus; label: string }[] = [
 export function TaskCreateModal({ isOpen, onClose, onSave }: TaskCreateModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState<Priority>('medium');
   const [status, setStatus] = useState<TaskStatus>('next');
-  const [category, setCategory] = useState<TaskCategory | undefined>();
   const [tagsInput, setTagsInput] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | undefined>();
   const [projectId, setProjectId] = useState<string | undefined>();
@@ -67,9 +66,8 @@ export function TaskCreateModal({ isOpen, onClose, onSave }: TaskCreateModalProp
   const resetForm = () => {
     setTitle('');
     setDescription('');
+    setPriority('medium');
     setStatus('next');
-    setStatus('next');
-    setCategory(undefined);
     setTagsInput('');
     setEstimatedMinutes(undefined);
     setProjectId(undefined);
@@ -89,23 +87,15 @@ export function TaskCreateModal({ isOpen, onClose, onSave }: TaskCreateModalProp
       .map(t => t.trim())
       .filter(t => t.length > 0);
 
-    // Auto-calculate priority based on category
-    let calculatedPriority: Priority = 'medium';
-    if (category === 'red') calculatedPriority = 'urgent';
-    else if (category === 'yellow') calculatedPriority = 'medium';
-    else if (category === 'purple') calculatedPriority = 'high';
-    else if (category === 'green') calculatedPriority = 'low';
-
     const result = await onSave({
       title: title.trim(),
       description: description.trim() || undefined,
-      priority: calculatedPriority,
+      priority,
       status,
-      category,
       tags,
       estimatedMinutes,
       projectId,
-      points: calculatedPriority === 'urgent' ? 25 : calculatedPriority === 'high' ? 20 : calculatedPriority === 'medium' ? 15 : 10,
+      points: priority === 'urgent' ? 25 : priority === 'high' ? 20 : priority === 'medium' ? 15 : 10,
     });
 
     setIsSaving(false);
@@ -154,8 +144,25 @@ export function TaskCreateModal({ isOpen, onClose, onSave }: TaskCreateModalProp
           {/* Priority & Status */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Categoria Visual (ADHD)</Label>
-              <TaskCategorySelector value={category} onChange={setCategory} />
+              <Label>Prioridade</Label>
+              <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {priorityOptions.map((opt) => {
+                    const Icon = opt.icon;
+                    return (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <div className="flex items-center gap-2">
+                          <Icon className={cn("h-4 w-4", opt.color)} />
+                          {opt.label}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

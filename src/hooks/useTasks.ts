@@ -34,7 +34,6 @@ export const useTasks = () => {
         description: task.description || undefined,
         priority: task.priority as Task['priority'],
         status: task.status as Task['status'],
-        category: task.category as Task['category'] || undefined,
         tags: task.tags || [],
         points: task.points || 10,
         createdAt: new Date(task.created_at),
@@ -76,7 +75,6 @@ export const useTasks = () => {
           description: taskData.description || null,
           priority: taskData.priority || 'medium',
           status: taskData.status || 'next',
-          category: taskData.category || null,
           tags: taskData.tags || [],
           points: taskData.points || 10,
           estimated_minutes: taskData.estimatedMinutes || null,
@@ -95,7 +93,6 @@ export const useTasks = () => {
         description: data.description || undefined,
         priority: data.priority as Task['priority'],
         status: data.status as Task['status'],
-        category: data.category as Task['category'] || undefined,
         tags: data.tags || [],
         points: data.points || 10,
         createdAt: new Date(data.created_at),
@@ -130,7 +127,6 @@ export const useTasks = () => {
       if (updates.description !== undefined) dbUpdates.description = updates.description || null;
       if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
       if (updates.status !== undefined) dbUpdates.status = updates.status;
-      if (updates.category !== undefined) dbUpdates.category = updates.category || null;
       if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
       if (updates.points !== undefined) dbUpdates.points = updates.points;
       if (updates.timeSpentMinutes !== undefined) dbUpdates.time_spent_minutes = updates.timeSpentMinutes;
