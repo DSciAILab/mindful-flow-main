@@ -35,7 +35,7 @@ export function useLLMConfig() {
       }
 
       const { data: profile } = await supabase
-        .from('profiles')
+        .from('mf_profiles')
         .select('llm_provider, llm_api_key, llm_model')
         .eq('id', user.id)
         .single();

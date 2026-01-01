@@ -48,7 +48,7 @@ export function TaskAttachments({ taskId, userId }: TaskAttachmentsProps) {
     
     setIsLoading(true);
     const { data, error } = await supabase
-      .from('task_attachments')
+      .from('mf_task_attachments')
       .select('*')
       .eq('task_id', taskId)
       .order('created_at', { ascending: false });
@@ -80,14 +80,14 @@ export function TaskAttachments({ taskId, userId }: TaskAttachmentsProps) {
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
-        .from('task-attachments')
+        .from('mf-task-attachments')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       // Save reference in database
       const { error: dbError } = await supabase
-        .from('task_attachments')
+        .from('mf_task_attachments')
         .insert({
           task_id: taskId,
           user_id: userId,
@@ -116,14 +116,14 @@ export function TaskAttachments({ taskId, userId }: TaskAttachmentsProps) {
     try {
       // Delete from storage
       const { error: storageError } = await supabase.storage
-        .from('task-attachments')
+        .from('mf-task-attachments')
         .remove([attachment.file_path]);
 
       if (storageError) throw storageError;
 
       // Delete from database
       const { error: dbError } = await supabase
-        .from('task_attachments')
+        .from('mf_task_attachments')
         .delete()
         .eq('id', attachment.id);
 
@@ -139,7 +139,7 @@ export function TaskAttachments({ taskId, userId }: TaskAttachmentsProps) {
 
   const getPublicUrl = (filePath: string) => {
     const { data } = supabase.storage
-      .from('task-attachments')
+      .from('mf-task-attachments')
       .getPublicUrl(filePath);
     return data.publicUrl;
   };

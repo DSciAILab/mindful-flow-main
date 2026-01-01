@@ -21,7 +21,7 @@ export const useHabits = () => {
     try {
       // Fetch habits
       const { data: habitsData, error: habitsError } = await supabase
-        .from('habits')
+        .from('mf_habits')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true });
@@ -33,7 +33,7 @@ export const useHabits = () => {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
       const { data: logsData, error: logsError } = await supabase
-        .from('habit_logs')
+        .from('mf_habit_logs')
         .select('habit_id, log_date, completed')
         .eq('user_id', user.id)
         .gte('log_date', format(thirtyDaysAgo, 'yyyy-MM-dd'));
@@ -81,7 +81,7 @@ export const useHabits = () => {
 
     try {
       const { data, error } = await supabase
-        .from('habits')
+        .from('mf_habits')
         .insert({
           user_id: user.id,
           title: habitData.title || 'Novo Hábito',
@@ -130,7 +130,7 @@ export const useHabits = () => {
       if (isCompleted) {
         // Remove log
         const { error } = await supabase
-          .from('habit_logs')
+          .from('mf_habit_logs')
           .delete()
           .eq('habit_id', habitId)
           .eq('log_date', dateStr)
@@ -140,7 +140,7 @@ export const useHabits = () => {
       } else {
         // Add log
         const { error } = await supabase
-          .from('habit_logs')
+          .from('mf_habit_logs')
           .insert({
             user_id: user.id,
             habit_id: habitId,

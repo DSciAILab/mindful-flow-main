@@ -19,7 +19,7 @@ export const useProjects = () => {
 
     try {
       const { data, error } = await supabase
-        .from('projects')
+        .from('mf_projects')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -53,7 +53,7 @@ export const useProjects = () => {
 
     try {
       const { data, error } = await supabase
-        .from('projects')
+        .from('mf_projects')
         .insert({
           user_id: user.id,
           name: projectData.name || 'Novo Projeto',

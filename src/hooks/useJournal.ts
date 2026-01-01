@@ -20,14 +20,14 @@ export const useJournal = () => {
 
     try {
       const { data, error } = await supabase
-        .from('journal_entries')
+        .from('mf_journal_entries')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
         // Don't show error toast if table doesn't exist yet (PGRST205)
-        if (error.code === 'PGRST205' || error.message?.includes('journal_entries')) {
+        if (error.code === 'PGRST205' || error.message?.includes('mf_journal_entries')) {
           console.log('Journal table not yet created - this is expected if migration hasn\'t been applied');
           setEntries([]);
           setLoading(false);
@@ -70,7 +70,7 @@ export const useJournal = () => {
 
     try {
       const { data, error } = await supabase
-        .from('journal_entries')
+        .from('mf_journal_entries')
         .insert({
           user_id: user.id,
           title: entryData.title || null,
@@ -119,7 +119,7 @@ export const useJournal = () => {
       if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
 
       const { error } = await supabase
-        .from('journal_entries')
+        .from('mf_journal_entries')
         .update(dbUpdates)
         .eq('id', entryId)
         .eq('user_id', user.id);
@@ -150,7 +150,7 @@ export const useJournal = () => {
 
     try {
       const { error } = await supabase
-        .from('journal_entries')
+        .from('mf_journal_entries')
         .delete()
         .eq('id', entryId)
         .eq('user_id', user.id);

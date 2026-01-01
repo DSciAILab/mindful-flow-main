@@ -20,7 +20,7 @@ export const useTasks = () => {
 
     try {
       const { data, error } = await supabase
-        .from('tasks')
+        .from('mf_tasks')
         .select('*')
         .eq('user_id', user.id)
         .is('completed_at', null)
@@ -68,7 +68,7 @@ export const useTasks = () => {
 
     try {
       const { data, error } = await supabase
-        .from('tasks')
+        .from('mf_tasks')
         .insert({
           user_id: user.id,
           title: taskData.title || 'Nova tarefa',
@@ -134,7 +134,7 @@ export const useTasks = () => {
       if (updates.completedAt !== undefined) dbUpdates.completed_at = updates.completedAt?.toISOString() || null;
 
       const { error } = await supabase
-        .from('tasks')
+        .from('mf_tasks')
         .update(dbUpdates)
         .eq('id', taskId)
         .eq('user_id', user.id);
@@ -165,7 +165,7 @@ export const useTasks = () => {
 
     try {
       const { error } = await supabase
-        .from('tasks')
+        .from('mf_tasks')
         .update({ completed_at: new Date().toISOString() })
         .eq('id', taskId)
         .eq('user_id', user.id);
@@ -191,7 +191,7 @@ export const useTasks = () => {
 
     try {
       const { error } = await supabase
-        .from('tasks')
+        .from('mf_tasks')
         .delete()
         .eq('id', taskId)
         .eq('user_id', user.id);

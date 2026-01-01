@@ -122,7 +122,7 @@ export function LLMSettings() {
       }
 
       const { data: profile } = await supabase
-        .from('profiles')
+        .from('mf_profiles')
         .select('llm_provider, llm_api_key, llm_model')
         .eq('id', user.id)
         .single();
@@ -173,7 +173,7 @@ export function LLMSettings() {
       }
 
       const { error } = await supabase
-        .from('profiles')
+        .from('mf_profiles')
         .update({
           llm_provider: selectedProvider,
           llm_api_key: requiresApiKey ? apiKey : null,
