@@ -208,7 +208,36 @@ export function LLMSettings() {
           setSelectedModel(provider.models[0].id);
         }
       }
-    } else if (provider && provider.models.length > 0) {
+    }
+    // Fetch available models for LM Studio
+    else if (providerId === 'lm-studio') {
+      try {
+        const lmStudioUrl = 'http://localhost:1234';
+        const response = await fetch(`${lmStudioUrl}/v1/models`);
+        if (response.ok) {
+          const data = await response.json();
+          const availableModels = data.data?.map((m: any) => ({
+            id: m.id,
+            name: m.id,
+          })) || [];
+          
+          if (availableModels.length > 0) {
+            // Update provider models list dynamically
+            const providerIndex = providers.findIndex(p => p.id === 'lm-studio');
+            if (providerIndex !== -1) {
+              providers[providerIndex].models = availableModels;
+            }
+            setSelectedModel(availableModels[0].id);
+          }
+        }
+      } catch (error) {
+        console.log('LM Studio not running, using default models');
+        if (provider && provider.models.length > 0) {
+          setSelectedModel(provider.models[0].id);
+        }
+      }
+    } 
+    else if (provider && provider.models.length > 0) {
       setSelectedModel(provider.models[0].id);
     }
   };
