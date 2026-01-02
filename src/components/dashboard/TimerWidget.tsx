@@ -18,6 +18,7 @@ interface TimerWidgetProps {
   onDone: () => void;
   onBreak: () => void;
   onClearTask: () => void;
+  onRequestTaskSelection?: () => void;
 }
 
 const wellnessReminders: WellnessReminder[] = [
@@ -42,6 +43,7 @@ export function TimerWidget({
   onDone,
   onBreak,
   onClearTask,
+  onRequestTaskSelection,
 }: TimerWidgetProps) {
   const currentReminder = wellnessReminders[sessionsCompleted % wellnessReminders.length];
   const circumference = 2 * Math.PI * 88;
@@ -131,7 +133,7 @@ export function TimerWidget({
             Clique no botão play ao lado de uma tarefa
           </p>
         </div>
-      </div>
+      )}
 
       {/* Timer circle */}
       <div className="relative mx-auto mb-3 h-48 w-48">
@@ -211,8 +213,13 @@ export function TimerWidget({
           <Button
             variant={type === 'focus' ? 'default' : 'calm'}
             size="xl"
-            onClick={onStart}
-            disabled={!selectedTask}
+            onClick={() => {
+              if (selectedTask) {
+                onStart();
+              } else if (onRequestTaskSelection) {
+                onRequestTaskSelection();
+              }
+            }}
             className="min-w-40"
           >
             <Play className="mr-2 h-5 w-5" />

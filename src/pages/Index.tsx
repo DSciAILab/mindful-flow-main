@@ -28,6 +28,7 @@ import { Settings } from "@/components/settings/Settings";
 import { KanbanBoard } from "@/components/projects/KanbanBoard";
 import { JournalEditor } from "@/components/journal/JournalEditor";
 import { JournalList } from "@/components/journal/JournalList";
+import { TaskSelectorDialog } from "@/components/dashboard/TaskSelectorDialog";
 import { Button } from "@/components/ui/button";
 import { useTimer } from "@/hooks/useTimer";
 import { useUserStats } from "@/hooks/useUserStats";
@@ -75,6 +76,9 @@ export default function Index() {
 
   // Focus mode state
   const [isFocusModeOpen, setIsFocusModeOpen] = useState(false);
+  
+  // Task selector dialog state
+  const [isTaskSelectorOpen, setIsTaskSelectorOpen] = useState(false);
 
   const { 
     tasks, 
@@ -720,6 +724,7 @@ export default function Index() {
                     onDone={handleTaskDone}
                     onBreak={timer.goToBreak}
                     onClearTask={handleClearTask}
+                    onRequestTaskSelection={() => setIsTaskSelectorOpen(true)}
                   />
                 </div>
 
@@ -859,6 +864,14 @@ export default function Index() {
 
       {/* FloatingCoach AI Assistant */}
       <FloatingCoach />
+
+      {/* Task Selector Dialog */}
+      <TaskSelectorDialog
+        isOpen={isTaskSelectorOpen}
+        onClose={() => setIsTaskSelectorOpen(false)}
+        tasks={tasks}
+        onSelectTask={handleSelectTask}
+      />
 
       {/* FocusMode Fullscreen */}
       <FocusMode
