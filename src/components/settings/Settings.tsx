@@ -153,8 +153,24 @@ export function Settings({ onThemeChange }: SettingsProps) {
   const [selectedFont, setSelectedFont] = useState('jakarta');
 
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains('dark');
+    // Load saved dark mode preference
+    const savedDarkMode = localStorage.getItem('app-dark-mode');
+    const isDark = savedDarkMode === 'true' || document.documentElement.classList.contains('dark');
     setDarkMode(isDark);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    }
+    
+    // Load saved theme preference
+    const savedTheme = localStorage.getItem('app-theme');
+    if (savedTheme) {
+      setSelectedTheme(savedTheme);
+      const theme = themePresets.find(t => t.id === savedTheme);
+      if (theme) {
+        document.documentElement.style.setProperty('--primary', theme.colors.primary);
+        document.documentElement.style.setProperty('--accent', theme.colors.accent);
+      }
+    }
     
     // Load saved font preference
     const savedFont = localStorage.getItem('app-font');
@@ -165,10 +181,18 @@ export function Settings({ onThemeChange }: SettingsProps) {
         document.documentElement.style.setProperty('--font-sans', font.family);
       }
     }
+    
+    // Load reduced motion preference
+    const savedReducedMotion = localStorage.getItem('app-reduced-motion');
+    if (savedReducedMotion === 'true') {
+      setReducedMotion(true);
+      document.documentElement.classList.add('reduce-motion');
+    }
   }, []);
 
   const handleDarkModeChange = (enabled: boolean) => {
     setDarkMode(enabled);
+    localStorage.setItem('app-dark-mode', String(enabled));
     if (enabled) {
       document.documentElement.classList.add('dark');
     } else {
@@ -178,6 +202,7 @@ export function Settings({ onThemeChange }: SettingsProps) {
 
   const handleThemeSelect = (themeId: string) => {
     setSelectedTheme(themeId);
+    localStorage.setItem('app-theme', themeId);
     const theme = themePresets.find(t => t.id === themeId);
     if (theme) {
       // Apply theme colors to CSS variables
@@ -189,6 +214,7 @@ export function Settings({ onThemeChange }: SettingsProps) {
 
   const handleReducedMotionChange = (enabled: boolean) => {
     setReducedMotion(enabled);
+    localStorage.setItem('app-reduced-motion', String(enabled));
     if (enabled) {
       document.documentElement.classList.add('reduce-motion');
     } else {

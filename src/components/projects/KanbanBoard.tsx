@@ -112,7 +112,7 @@ export function KanbanBoard({ tasks, onTaskMove, onTaskClick }: KanbanBoardProps
   };
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       {columns.map((column) => {
         const columnTasks = getTasksByStatus(column.id);
         const isOver = dragOverColumn === column.id;
@@ -121,7 +121,7 @@ export function KanbanBoard({ tasks, onTaskMove, onTaskClick }: KanbanBoardProps
           <div
             key={column.id}
             className={cn(
-              "flex min-w-[280px] flex-1 flex-col rounded-2xl border border-border/50 bg-card/50 transition-all",
+              "flex flex-col rounded-2xl border border-border/50 bg-card/50 transition-all h-fit",
               isOver && "border-primary bg-primary/5"
             )}
             onDragOver={(e) => handleDragOver(e, column.id)}
