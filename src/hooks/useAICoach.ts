@@ -71,24 +71,50 @@ Responda sempre em português brasileiro. Seja conciso e motivador.`;
       }));
 
       const systemPrompt = buildSystemPrompt(context);
-
-      // Use Gemini API via fetch
-      const apiKey = config?.apiKey || import.meta.env.VITE_GEMINI_API_KEY;
-      const model = config?.model || 'gemini-1.5-flash';
       
-      if (!apiKey) {
-        throw new Error('API key not configured');
-      }
+      const provider = config?.provider || 'lovable';
+      const model = config?.model || 'gemini-1.5-flash';
+      const apiKey = config?.apiKey;
 
-      // Construct URL based on model selection
-      // Note: Some models might require different versions or endpoints, 
-      // but for standard Gemini models (1.5-flash, 1.5-pro, 2.0-flash), this endpoint works.
-      const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
-      const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
+      let aiResponse = '';
 
-      const response = await fetch(
-        url,
-        {
+      // Ollama (Local) - no API key needed
+      if (provider === 'ollama') {
+        const ollamaUrl = apiKey || 'http://localhost:11434';
+        
+        const response = await fetch(`${ollamaUrl}/api/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...recentMessages,
+              { role: 'user', content: userMessage },
+            ],
+            stream: false,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Ollama não está rodando. Inicie com: ollama serve');
+        }
+
+        const data = await response.json();
+        aiResponse = data.message?.content || 'Desculpe, não consegui processar sua mensagem.';
+      } 
+      // Google AI
+      else if (provider === 'google') {
+        if (!apiKey) {
+          throw new Error('API key not configured');
+        }
+
+        const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+        const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
+
+        const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -113,15 +139,58 @@ Responda sempre em português brasileiro. Seja conciso e motivador.`;
               maxOutputTokens: 500,
             },
           }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to get AI response');
         }
-      );
 
-      if (!response.ok) {
-        throw new Error('Failed to get AI response');
+        const data = await response.json();
+        aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Desculpe, não consegui processar sua mensagem.';
       }
+      // Lovable (default fallback)
+      else {
+        if (!apiKey) {
+          throw new Error('API key not configured');
+        }
+        
+        const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+        const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
 
-      const data = await response.json();
-      const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Desculpe, não consegui processar sua mensagem.';
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: systemPrompt }],
+              },
+              ...recentMessages.map(m => ({
+                role: m.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: m.content }],
+              })),
+              {
+                role: 'user',
+                parts: [{ text: userMessage }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 500,
+            },
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to get AI response');
+        }
+
+        const data = await response.json();
+        aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Desculpe, não consegui processar sua mensagem.';
+      }
 
       // Check for task creation action
       const taskMatch = aiResponse.match(/\{"action":\s*"create_task"[^}]+\}/);

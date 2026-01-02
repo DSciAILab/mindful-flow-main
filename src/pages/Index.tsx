@@ -29,6 +29,7 @@ import { KanbanBoard } from "@/components/projects/KanbanBoard";
 import { JournalEditor } from "@/components/journal/JournalEditor";
 import { JournalList } from "@/components/journal/JournalList";
 import { TaskSelectorDialog } from "@/components/dashboard/TaskSelectorDialog";
+import { TaskCompleteDialog } from "@/components/dashboard/TaskCompleteDialog";
 import { WelcomeDialog } from "@/components/onboarding/WelcomeDialog";
 import { Button } from "@/components/ui/button";
 import { useTimer } from "@/hooks/useTimer";
@@ -93,6 +94,10 @@ export default function Index() {
       setShowWelcome(true);
     }
   }, [needsWelcome, showWelcome]);
+  
+  // Task complete celebration state
+  const [showTaskComplete, setShowTaskComplete] = useState(false);
+  const [completedTaskTitle, setCompletedTaskTitle] = useState<string>();
 
   const { 
     tasks, 
@@ -284,7 +289,18 @@ export default function Index() {
 
   const handleTaskDone = () => {
     if (selectedTask) {
+      // Show celebration before completing
+      setCompletedTaskTitle(selectedTask.title);
+      setShowTaskComplete(true);
+    }
+  };
+  
+  const handleTaskCompleteClose = () => {
+    setShowTaskComplete(false);
+    if (selectedTask) {
       handleTaskComplete(selectedTask.id);
+      setSelectedTask(null);
+      timer.resetAll();
     }
   };
 
@@ -895,6 +911,15 @@ export default function Index() {
           updateDisplayName(displayName);
           setShowWelcome(false);
         }}
+      />
+
+      {/* Task Complete Celebration */}
+      <TaskCompleteDialog
+        isOpen={showTaskComplete}
+        onClose={handleTaskCompleteClose}
+        taskTitle={completedTaskTitle}
+        xpEarned={10}
+        sessionsCompleted={timer.sessionsCompleted}
       />
 
       {/* FocusMode Fullscreen */}

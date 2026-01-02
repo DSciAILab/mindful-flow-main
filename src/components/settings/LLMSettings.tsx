@@ -96,6 +96,24 @@ const providers: LLMProvider[] = [
     apiKeyUrl: 'https://aistudio.google.com/app/apikey',
     apiKeyPlaceholder: 'AIza...',
   },
+  {
+    id: 'ollama',
+    name: 'Ollama (Local)',
+    description: 'Modelos LLM rodando localmente na sua máquina',
+    models: [
+      { id: 'llama3.2:latest', name: 'Llama 3.2' },
+      { id: 'llama3.1:latest', name: 'Llama 3.1' },
+      { id: 'llama3:latest', name: 'Llama 3' },
+      { id: 'mistral:latest', name: 'Mistral' },
+      { id: 'mixtral:latest', name: 'Mixtral' },
+      { id: 'codellama:latest', name: 'Code Llama' },
+      { id: 'phi3:latest', name: 'Phi-3' },
+      { id: 'gemma2:latest', name: 'Gemma 2' },
+      { id: 'qwen2.5:latest', name: 'Qwen 2.5' },
+    ],
+    apiKeyUrl: 'http://localhost:11434',
+    apiKeyPlaceholder: 'http://localhost:11434 (URL padrão do Ollama)',
+  },
 ];
 
 export function LLMSettings() {
