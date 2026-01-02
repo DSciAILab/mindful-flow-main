@@ -37,6 +37,7 @@ import { useTasks } from "@/hooks/useTasks";
 import { useProjects } from "@/hooks/useProjects";
 import { useJournal } from "@/hooks/useJournal";
 import { useProfile } from "@/hooks/useProfile";
+import { useCaptureItems } from "@/hooks/useCaptureItems";
 import { cn } from "@/lib/utils";
 import { 
   Sparkles, 
@@ -54,35 +55,10 @@ import {
 } from "lucide-react";
 import type { Task, CaptureItem, JournalEntry, Project } from "@/types";
 
-const sampleInboxItems: CaptureItem[] = [
-  {
-    id: '1',
-    type: 'text',
-    content: 'Lembrar de ligar para o dentista amanhã cedo',
-    createdAt: new Date(Date.now() - 1000 * 60 * 30),
-    processed: false,
-  },
-  {
-    id: '2',
-    type: 'audio',
-    content: 'Nota de voz: Ideia para o novo projeto de marketing...',
-    createdAt: new Date(Date.now() - 1000 * 60 * 120),
-    processed: false,
-  },
-  {
-    id: '3',
-    type: 'text',
-    content: 'Comprar: leite, pão, café, frutas',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5),
-    processed: true,
-  },
-];
-
 export default function Index() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeView, setActiveView] = useState('dashboard');
   const [panicModeOpen, setPanicModeOpen] = useState(false);
-  const [inboxItems, setInboxItems] = useState(sampleInboxItems);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -148,6 +124,14 @@ export default function Index() {
     updateEntry: updateJournalEntry,
     deleteEntry: deleteJournalEntry,
   } = useJournal();
+  
+  const {
+    items: inboxItems,
+    loading: inboxLoading,
+    addItem: addCaptureItem,
+    deleteItem: deleteCaptureItem,
+    markAsProcessed,
+  } = useCaptureItems();
   
   const { greetingName } = useProfile();
   
@@ -236,27 +220,24 @@ export default function Index() {
     onSessionComplete: handleSessionComplete,
   });
 
-  const handleCapture = (type: string, content: string) => {
-    const newItem: CaptureItem = {
-      id: Date.now().toString(),
-      type: type as CaptureItem['type'],
-      content,
-      createdAt: new Date(),
-      processed: false,
-    };
-    setInboxItems([newItem, ...inboxItems]);
-    toast({
-      title: "Capturado!",
-      description: "Sua ideia foi salva no Inbox.",
-    });
+  const handleCapture = async (type: string, content: string) => {
+    const item = await addCaptureItem(type as CaptureItem['type'], content);
+    if (item) {
+      toast({
+        title: "Capturado!",
+        description: "Sua ideia foi salva no Inbox.",
+      });
+    }
   };
 
-  const handleDeleteInboxItem = (id: string) => {
-    setInboxItems(inboxItems.filter(item => item.id !== id));
-    toast({
-      title: "Item excluído",
-      description: "O item foi removido do Inbox.",
-    });
+  const handleDeleteInboxItem = async (id: string) => {
+    const success = await deleteCaptureItem(id);
+    if (success) {
+      toast({
+        title: "Item excluído",
+        description: "O item foi removido do Inbox.",
+      });
+    }
   };
 
   const handleTaskComplete = async (taskId: string) => {
@@ -865,9 +846,7 @@ export default function Index() {
           }
         }}
         onMarkProcessed={(id) => {
-          setInboxItems(inboxItems.map(i => 
-            i.id === id ? { ...i, processed: true } : i
-          ));
+          markAsProcessed(id);
         }}
       />
 
