@@ -123,7 +123,10 @@ export function LLMSettings() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+  const [isTesting, setIsTesting] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [connectionMessage, setConnectionMessage] = useState('');
+  const { toast} = useToast();
 
   const currentProvider = providers.find(p => p.id === selectedProvider);
   const requiresApiKey = selectedProvider !== 'lovable';
@@ -166,6 +169,69 @@ export function LLMSettings() {
     }
     if (providerId === 'lovable') {
       setApiKey('');
+    }
+  };
+
+  const testConnection = async () => {
+    setIsTesting(true);
+    setConnectionStatus('idle');
+    setConnectionMessage('');
+    
+    try {
+      if (selectedProvider === 'ollama') {
+        const ollamaUrl = apiKey || 'http://localhost:11434';
+        const response = await fetch(`${ollamaUrl}/api/tags`, {
+          method: 'GET',
+        });
+        
+        if (!response.ok) {
+          throw new Error('Ollama não está rodando');
+        }
+        
+        const data = await response.json();
+        const models = data.models || [];
+        const modelExists = models.some((m: any) => m.name === selectedModel || m.name.startsWith(selectedModel.split(':')[0]));
+        
+        if (!modelExists) {
+          setConnectionStatus('error');
+          setConnectionMessage(`❌ Modelo "${selectedModel}" não encontrado. Execute: ollama pull ${selectedModel}`);
+        } else {
+          setConnectionStatus('success');
+          setConnectionMessage(`✅ Ollama online! Modelo "${selectedModel}" disponível`);
+        }
+      } else if (selectedProvider === 'google') {
+        if (!apiKey) throw new Error('API key necessária');
+        
+        const testUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+        const response = await fetch(testUrl);
+        
+        if (!response.ok) {
+          throw new Error('API key inválida ou serviço offline');
+        }
+        
+        setConnectionStatus('success');
+        setConnectionMessage('✅ Google AI online! API key válida');
+      } else {
+        setConnectionStatus('success');
+        setConnectionMessage('✅ Configuração salva. Teste no chat para validar');
+      }
+      
+      toast({
+        title: connectionStatus === 'success' ? 'Conexão bem-sucedida!' : 'Teste concluído',
+        description: connectionMessage,
+      });
+    } catch (error: any) {
+      setConnectionStatus('error');
+      const errorMsg = error.message || 'Erro ao conectar';
+      setConnectionMessage(`❌ ${errorMsg}`);
+      
+      toast({
+        title: 'Erro de conexão',
+        description: errorMsg,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsTesting(false);
     }
   };
 
