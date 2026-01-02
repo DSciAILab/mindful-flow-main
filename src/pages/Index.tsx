@@ -29,6 +29,7 @@ import { KanbanBoard } from "@/components/projects/KanbanBoard";
 import { JournalEditor } from "@/components/journal/JournalEditor";
 import { JournalList } from "@/components/journal/JournalList";
 import { TaskSelectorDialog } from "@/components/dashboard/TaskSelectorDialog";
+import { WelcomeDialog } from "@/components/onboarding/WelcomeDialog";
 import { Button } from "@/components/ui/button";
 import { useTimer } from "@/hooks/useTimer";
 import { useUserStats } from "@/hooks/useUserStats";
@@ -79,6 +80,16 @@ export default function Index() {
   
   // Task selector dialog state
   const [isTaskSelectorOpen, setIsTaskSelectorOpen] = useState(false);
+  
+  // Welcome dialog state
+  const [showWelcome, setShowWelcome] = useState(false);
+  
+  // Show welcome dialog when profile loads and needs welcome
+  useEffect(() => {
+    if (needsWelcome && !showWelcome) {
+      setShowWelcome(true);
+    }
+  }, [needsWelcome, showWelcome]);
 
   const { 
     tasks, 
@@ -137,7 +148,7 @@ export default function Index() {
     markAsProcessed,
   } = useCaptureItems();
   
-  const { greetingName } = useProfile();
+  const { greetingName, needsWelcome, profile, updateDisplayName } = useProfile();
   
   const { stats, completeTask: addPointsForTask, addFocusTime } = useUserStats();
   const { toast } = useToast();

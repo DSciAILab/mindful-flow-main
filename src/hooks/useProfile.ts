@@ -61,8 +61,22 @@ export const useProfile = () => {
   // Get first name or display name for greeting
   const getGreetingName = (): string | null => {
     if (!profile?.displayName) return null;
+    // Don't use email as greeting name
+    if (profile.displayName.includes('@')) return null;
     // Get first word of display name
     return profile.displayName.split(' ')[0];
+  };
+
+  // Check if user needs to complete welcome (display_name is email or empty)
+  const needsWelcome = profile && (!profile.displayName || profile.displayName.includes('@'));
+
+  const updateDisplayName = async (newDisplayName: string) => {
+    if (!user) return;
+    
+    setProfile(prev => prev ? {
+      ...prev,
+      displayName: newDisplayName
+    } : null);
   };
 
   return {
@@ -70,5 +84,7 @@ export const useProfile = () => {
     loading,
     displayName: profile?.displayName || null,
     greetingName: getGreetingName(),
+    needsWelcome: needsWelcome || false,
+    updateDisplayName,
   };
 };
