@@ -30,6 +30,7 @@ export const useProjects = () => {
         id: p.id,
         name: p.name,
         description: p.description || undefined,
+        areaId: p.life_area_id || undefined,
         color: p.color || '#3b82f6',
         progress: 0, // Calculated later or stored
         tasks: [], // Fetched separately if needed
@@ -59,6 +60,7 @@ export const useProjects = () => {
           name: projectData.name || 'Novo Projeto',
           description: projectData.description || null,
           color: projectData.color || '#3b82f6',
+          life_area_id: projectData.areaId || null,
         })
         .select()
         .single();
@@ -69,6 +71,7 @@ export const useProjects = () => {
         id: data.id,
         name: data.name,
         description: data.description || undefined,
+        areaId: data.life_area_id || undefined,
         color: data.color,
         progress: 0,
         tasks: [],
@@ -98,6 +101,7 @@ export const useProjects = () => {
           name: updates.name,
           description: updates.description,
           color: updates.color,
+          life_area_id: updates.areaId,
         })
         .eq('id', projectId)
         .eq('user_id', user.id);

@@ -3,10 +3,13 @@ import { ptBR } from "date-fns/locale";
 import { Flame, CheckCircle2, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useHabits } from "@/hooks/useHabits";
+import { useProjects } from "@/hooks/useProjects";
 import { Button } from "@/components/ui/button";
+import { LifeAreaBadge } from "@/components/ui/LifeAreaBadge";
 
 export function HabitWidget() {
   const { habits, loading, toggleHabit } = useHabits();
+  const { projects } = useProjects();
   const today = startOfToday();
   const todayStr = format(today, 'yyyy-MM-dd');
 
@@ -57,7 +60,15 @@ export function HabitWidget() {
                 ) : (
                   <Circle className="h-4 w-4 text-muted-foreground" />
                 )}
-                <span className="text-sm font-medium">{habit.title}</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium">{habit.title}</span>
+                  {(() => {
+                    const project = projects.find(p => p.id === habit.projectId);
+                    return project?.areaId ? (
+                      <LifeAreaBadge areaId={project.areaId} showName={false} className="scale-90" />
+                    ) : null;
+                  })()}
+                </div>
               </div>
               <div 
                 className="h-2 w-2 rounded-full" 

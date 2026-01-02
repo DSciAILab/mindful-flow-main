@@ -10,7 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Plus, X, Save, Palette, FileEdit } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, X, Save, Palette, FileEdit, TrendingUp } from "lucide-react";
+import { LIFE_AREAS, getLifeAreaById } from "@/lib/lifeAreas";
 import { cn } from "@/lib/utils";
 import type { Project } from "@/types";
 
@@ -29,6 +37,7 @@ export function ProjectCreateModal({ isOpen, onClose, onSave, projectToEdit }: P
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState(colors[0]);
+  const [lifeAreaId, setLifeAreaId] = useState<string | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
 
   // Populate form when projectToEdit changes or modal opens
@@ -37,6 +46,7 @@ export function ProjectCreateModal({ isOpen, onClose, onSave, projectToEdit }: P
       setName(projectToEdit.name);
       setDescription(projectToEdit.description || "");
       setColor(projectToEdit.color);
+      setLifeAreaId(projectToEdit.areaId);
     } else if (isOpen && !projectToEdit) {
       resetForm();
     }
@@ -46,6 +56,7 @@ export function ProjectCreateModal({ isOpen, onClose, onSave, projectToEdit }: P
     setName("");
     setDescription("");
     setColor(colors[0]);
+    setLifeAreaId(undefined);
   };
 
   const handleClose = () => {
@@ -61,6 +72,7 @@ export function ProjectCreateModal({ isOpen, onClose, onSave, projectToEdit }: P
       name: name.trim(),
       description: description.trim() || undefined,
       color,
+      areaId: lifeAreaId,
     });
 
     setIsSaving(false);
@@ -107,6 +119,31 @@ export function ProjectCreateModal({ isOpen, onClose, onSave, projectToEdit }: P
               placeholder="Sobre o que é este projeto?"
               rows={3}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Área da Roda da Vida
+            </Label>
+            <Select value={lifeAreaId} onValueChange={setLifeAreaId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma área..." />
+              </SelectTrigger>
+              <SelectContent>
+                {LIFE_AREAS.map((area) => {
+                  const Icon = area.icon;
+                  return (
+                    <SelectItem key={area.id} value={area.id}>
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4" style={{ color: area.color }} />
+                        <span>{area.name}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

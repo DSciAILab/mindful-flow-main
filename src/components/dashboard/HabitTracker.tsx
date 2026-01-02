@@ -16,10 +16,13 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Habit } from "@/types";
 import { useHabits } from "@/hooks/useHabits";
+import { useProjects } from "@/hooks/useProjects";
+import { LifeAreaBadge } from "@/components/ui/LifeAreaBadge";
 import { HabitCreateModal } from "./HabitCreateModal";
 
 export function HabitTracker() {
   const { habits, loading, toggleHabit, addHabit, deleteHabit } = useHabits();
+  const { projects } = useProjects();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -126,7 +129,13 @@ export function HabitTracker() {
                       />
                       <div>
                         <p className="font-semibold text-foreground">{habit.title}</p>
-                        <div className="flex items-center gap-3 mt-0.5">
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          {(() => {
+                            const project = projects.find(p => p.id === habit.projectId);
+                            return project?.areaId ? (
+                              <LifeAreaBadge areaId={project.areaId} showName={false} />
+                            ) : null;
+                          })()}
                           {streak > 0 && (
                             <div className="flex items-center gap-1 text-[10px] bg-orange-500/10 text-orange-500 px-1.5 py-0.5 rounded-full font-bold">
                               <Flame className="h-3 w-3 fill-current" />
