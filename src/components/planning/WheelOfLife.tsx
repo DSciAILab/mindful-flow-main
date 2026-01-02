@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,6 +26,7 @@ import {
   Loader2,
   Sparkles
 } from "lucide-react";
+import { useWheelOfLife } from "@/hooks/useWheelOfLife";
 
 interface LifeArea {
   id: string;
@@ -67,6 +68,7 @@ interface WheelOfLifeProps {
 }
 
 export function WheelOfLife({ onSave }: WheelOfLifeProps) {
+  const { areas: savedAreas, saveScores } = useWheelOfLife();
   const [areas, setAreas] = useState<LifeArea[]>(defaultAreas);
   const [changelog, setChangelog] = useState<ScoreChange[]>([]);
   const [showChangelog, setShowChangelog] = useState(false);
@@ -87,6 +89,18 @@ export function WheelOfLife({ onSave }: WheelOfLifeProps) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
+  
+  // Load saved scores on mount
+  useEffect(() => {
+    if (savedAreas && savedAreas.length > 0) {
+      // Map saved scores to areas with full data
+      const loadedAreas = defaultAreas.map(area => {
+        const saved = savedAreas.find(s => s.id === area.id);
+        return saved ? { ...area, score: saved.score } : area;
+      });
+      setAreas(loadedAreas);
+    }
+  }, [savedAreas]);
   
   const svgRef = useRef<SVGSVGElement>(null);
   
@@ -202,6 +216,16 @@ export function WheelOfLife({ onSave }: WheelOfLifeProps) {
     };
     
     setChangelog(prev => [newChange, ...prev]);
+    
+    // Save to database
+    const areasToSave = areas.map(a => ({
+      id: a.id,
+      name: a.name,
+      score: a.score,
+      color: a.color
+    }));
+    await saveScores(areasToSave);
+    
     setPendingChange(null);
     setChangeReason("");
     setIsAnalyzing(false);
