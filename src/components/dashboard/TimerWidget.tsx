@@ -131,10 +131,10 @@ export function TimerWidget({
             Clique no botão play ao lado de uma tarefa
           </p>
         </div>
-      )}
+      </div>
 
       {/* Timer circle */}
-      <div className="relative mx-auto mb-6 h-48 w-48">
+      <div className="relative mx-auto mb-3 h-48 w-48">
         <svg className="h-full w-full -rotate-90 transform">
           <circle
             cx="96"
@@ -171,10 +171,38 @@ export function TimerWidget({
             {formattedTime}
           </span>
           <span className="text-sm text-muted-foreground">
-            {type === 'focus' ? 'minutos restantes' : 'de descanso'}
+            {type === 'focus' ? 'FOCUS' : 'BREAK'}
           </span>
         </div>
       </div>
+
+      {/* Pomodoro Session Indicators */}
+      {selectedTask && (() => {
+        // Calculate total sessions needed (25min per session)
+        const pomodoroLength = 25; // minutes per Pomodoro
+        const totalSessionsNeeded = selectedTask.estimatedMinutes 
+          ? Math.ceil(selectedTask.estimatedMinutes / pomodoroLength)
+          : 4; // default to 4 if no estimate
+        
+        // Limit to max 8 sessions for visual clarity
+        const displaySessions = Math.min(totalSessionsNeeded, 8);
+        
+        return (
+          <div className="mb-6 flex items-center justify-center gap-2">
+            {Array.from({ length: displaySessions }).map((_, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "h-2.5 w-2.5 rounded-full transition-all duration-300",
+                  index < sessionsCompleted
+                    ? "bg-primary scale-110 shadow-lg shadow-primary/50"
+                    : "bg-muted"
+                )}
+              />
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Controls - Simplified */}
       <div className="flex flex-col items-center gap-3">
