@@ -34,6 +34,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
+import { LifeAreaBadge } from "@/components/ui/LifeAreaBadge";
 import { cn } from "@/lib/utils";
 import type { Project, Task } from "@/types";
 
@@ -86,10 +87,15 @@ export function ProjectCard({
                 style={{ color: project.color }}
               />
             </div>
-            <div className="min-w-0">
-              <h3 className="font-semibold text-foreground truncate">
-                {project.name}
-              </h3>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold text-foreground truncate">
+                  {project.name}
+                </h3>
+                {project.areaId && (
+                  <LifeAreaBadge areaId={project.areaId} className="scale-90" />
+                )}
+              </div>
               {project.description && (
                 <p className="text-xs text-muted-foreground truncate mt-0.5">
                   {project.description}

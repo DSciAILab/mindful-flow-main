@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface LLMProvider {
   id: string;
@@ -429,8 +430,8 @@ export function LLMSettings() {
         </div>
       )}
 
-      {/* Lovable AI Info */}
-      {!requiresApiKey && (
+      {/* Provider Status Info */}
+      {selectedProvider === 'lovable' && (
         <div className="rounded-xl bg-primary/10 p-4">
           <div className="flex items-start gap-3">
             <Check className="mt-0.5 h-5 w-5 text-primary" />
@@ -444,25 +445,85 @@ export function LLMSettings() {
           </div>
         </div>
       )}
+      
+      {selectedProvider === 'ollama' && (
+        <div className="rounded-xl bg-emerald-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <Brain className="mt-0.5 h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <div>
+              <p className="font-medium text-foreground">Ollama (Local)</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Modelos rodando localmente. Certifique-se que o Ollama está rodando em localhost:11434
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {selectedProvider === 'lm-studio' && (
+        <div className="rounded-xl bg-purple-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <Brain className="mt-0.5 h-5 w-5 text-purple-600 dark:text-purple-400" />
+            <div>
+              <p className="font-medium text-foreground">LM Studio (Local)</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Modelos rodando via LM Studio. Certifique-se que o servidor está ativo em localhost:1234
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Save Button */}
-      <Button 
-        onClick={handleSave} 
-        disabled={isSaving}
-        className="w-full"
-      >
-        {isSaving ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Salvando...
-          </>
-        ) : (
-          <>
-            <Check className="mr-2 h-4 w-4" />
-            Salvar Configurações
-          </>
-        )}
-      </Button>
+      {/* Connection Status */}
+      {connectionMessage && (
+        <div className={cn(
+          "rounded-lg p-3 text-sm font-medium",
+          connectionStatus === 'success' && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+          connectionStatus === 'error' && "bg-red-500/10 text-red-600 dark:text-red-400"
+        )}>
+          {connectionMessage}
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="flex gap-3">
+        <Button 
+          onClick={testConnection} 
+          disabled={isLoading || isTesting}
+          variant="outline"
+          className="flex-1"
+        >
+          {isTesting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Testando...
+            </>
+          ) : (
+            <>
+              <Brain className="mr-2 h-4 w-4" />
+              Testar Conexão
+            </>
+          )}
+        </Button>
+        
+        <Button 
+          onClick={handleSave} 
+          disabled={isSaving}
+          className="flex-1"
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Salvando...
+            </>
+          ) : (
+            <>
+              <Check className="mr-2 h-4 w-4" />
+              Salvar
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }
