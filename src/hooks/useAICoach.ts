@@ -104,6 +104,34 @@ Responda sempre em português brasileiro. Seja conciso e motivador.`;
 
         const data = await response.json();
         aiResponse = data.message?.content || 'Desculpe, não consegui processar sua mensagem.';
+      }
+      // LM Studio (Local) - OpenAI compatible API
+      else if (provider === 'lm-studio') {
+        const lmStudioUrl = apiKey || 'http://localhost:1234';
+        
+        const response = await fetch(`${lmStudioUrl}/v1/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...recentMessages,
+              { role: 'user', content: userMessage },
+            ],
+            temperature: 0.7,
+            max_tokens: 500,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('LM Studio não está rodando. Inicie o servidor local');
+        }
+
+        const data = await response.json();
+        aiResponse = data.choices?.[0]?.message?.content || 'Desculpe, não consegui processar sua mensagem.';
       } 
       // Google AI
       else if (provider === 'google') {

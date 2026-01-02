@@ -114,6 +114,16 @@ const providers: LLMProvider[] = [
     apiKeyUrl: 'http://localhost:11434',
     apiKeyPlaceholder: 'http://localhost:11434 (URL padrão do Ollama)',
   },
+  {
+    id: 'lm-studio',
+    name: 'LM Studio (Local)',
+    description: 'Modelos LLM rodando via LM Studio',
+    models: [
+      { id: 'local-model', name: 'Modelo Local' },
+    ],
+    apiKeyUrl: 'http://localhost:1234',
+    apiKeyPlaceholder: 'http://localhost:1234 (URL padrão do LM Studio)',
+  },
 ];
 
 export function LLMSettings() {
@@ -129,7 +139,7 @@ export function LLMSettings() {
   const { toast} = useToast();
 
   const currentProvider = providers.find(p => p.id === selectedProvider);
-  const requiresApiKey = selectedProvider !== 'lovable';
+  const requiresApiKey = selectedProvider !== 'lovable' && selectedProvider !== 'ollama' && selectedProvider !== 'lm-studio';
 
   useEffect(() => {
     loadSettings();
@@ -161,14 +171,44 @@ export function LLMSettings() {
     }
   };
 
-  const handleProviderChange = (providerId: string) => {
+  const handleProviderChange = async (providerId: string) => {
     setSelectedProvider(providerId);
     const provider = providers.find(p => p.id === providerId);
-    if (provider && provider.models.length > 0) {
-      setSelectedModel(provider.models[0].id);
-    }
-    if (providerId === 'lovable') {
+    
+    // Clear API key for local providers
+    if (providerId === 'lovable' || providerId === 'ollama' || providerId === 'lm-studio') {
       setApiKey('');
+    }
+    
+    // Fetch available models for Ollama
+    if (providerId === 'ollama') {
+      try {
+        const ollamaUrl = 'http://localhost:11434';
+        const response = await fetch(`${ollamaUrl}/api/tags`);
+        if (response.ok) {
+          const data = await response.json();
+          const availableModels = data.models?.map((m: any) => ({
+            id: m.name,
+            name: m.name.split(':')[0],
+          })) || [];
+          
+          if (availableModels.length > 0) {
+            // Update provider models list dynamically
+            const providerIndex = providers.findIndex(p => p.id === 'ollama');
+            if (providerIndex !== -1) {
+              providers[providerIndex].models = availableModels;
+            }
+            setSelectedModel(availableModels[0].id);
+          }
+        }
+      } catch (error) {
+        console.log('Ollama not running, using default models');
+        if (provider && provider.models.length > 0) {
+          setSelectedModel(provider.models[0].id);
+        }
+      }
+    } else if (provider && provider.models.length > 0) {
+      setSelectedModel(provider.models[0].id);
     }
   };
 
