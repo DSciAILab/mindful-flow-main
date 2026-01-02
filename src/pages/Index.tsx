@@ -81,6 +81,9 @@ export default function Index() {
   // Task selector dialog state
   const [isTaskSelectorOpen, setIsTaskSelectorOpen] = useState(false);
   
+  // Profile hook - must be before useEffect that uses it
+  const { greetingName, needsWelcome, profile, updateDisplayName } = useProfile();
+  
   // Welcome dialog state
   const [showWelcome, setShowWelcome] = useState(false);
   
@@ -148,8 +151,7 @@ export default function Index() {
     markAsProcessed,
   } = useCaptureItems();
   
-  const { greetingName, needsWelcome, profile, updateDisplayName } = useProfile();
-  
+
   const { stats, completeTask: addPointsForTask, addFocusTime } = useUserStats();
   const { toast } = useToast();
   const { isSplitting, subtasks, splitTask, removeSubtask } = useTaskSplitting();
@@ -882,6 +884,17 @@ export default function Index() {
         onClose={() => setIsTaskSelectorOpen(false)}
         tasks={tasks}
         onSelectTask={handleSelectTask}
+      />
+
+      {/* Welcome Dialog */}
+      <WelcomeDialog
+        isOpen={showWelcome}
+        userId={profile?.id || ""}
+        currentEmail={profile?.displayName || ""}
+        onComplete={(displayName) => {
+          updateDisplayName(displayName);
+          setShowWelcome(false);
+        }}
       />
 
       {/* FocusMode Fullscreen */}
