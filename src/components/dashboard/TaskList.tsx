@@ -31,6 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { Task, Priority, Project } from "@/types";
 import { useProjects } from "@/hooks/useProjects";
+import { LifeAreaBadge } from "@/components/ui/LifeAreaBadge";
 
 interface TaskListProps {
   tasks: Task[];
@@ -162,6 +163,9 @@ export function TaskList({
                       <PriorityIcon className="h-3 w-3" />
                       {priority.label}
                     </span>
+                    {project?.areaId && (
+                      <LifeAreaBadge areaId={project.areaId} />
+                    )}
                     {project && (
                       <span className="flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                         <FolderKanban className="h-3 w-3" style={{ color: project.color }} />
