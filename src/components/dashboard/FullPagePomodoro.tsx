@@ -4,14 +4,13 @@ import { cn } from "@/lib/utils";
 import { 
   Play, 
   Pause, 
-  RotateCcw,
+  Check,
   Minimize2,
   Coffee,
   Target,
   Timer,
   Volume2,
   VolumeX,
-  Settings,
   ChevronLeft
 } from "lucide-react";
 import { useTimer } from "@/hooks/useTimer";
@@ -25,6 +24,7 @@ interface FullPagePomodoroProps {
 
 export function FullPagePomodoro({ onExit, onMinimize }: FullPagePomodoroProps) {
   const [isMinimized, setIsMinimized] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
   const { playFocusEndSound, playBreakEndSound, settings, saveSettings } = useTimerSounds();
   const { stats, addFocusTime, addFocusSession } = useUserStats();
 
@@ -45,6 +45,15 @@ export function FullPagePomodoro({ onExit, onMinimize }: FullPagePomodoroProps) 
     onSessionComplete: handleSessionComplete,
     onMinutePassed: handleMinutePassed,
   });
+
+  // Track if timer has been started at least once
+  const handleStart = () => {
+    if (!hasStarted) setHasStarted(true);
+    timer.start();
+  };
+
+  // Show side buttons only when paused AFTER having started
+  const showSideButtons = timer.isPaused && hasStarted;
 
   // Use stats.focusSessionsToday for persistent session count
   const totalSessions = stats.focusSessionsToday + timer.sessionsCompleted;
@@ -265,59 +274,96 @@ export function FullPagePomodoro({ onExit, onMinimize }: FullPagePomodoroProps) 
           ))}
         </div>
 
-        {/* Controls */}
-        <div className="flex items-center gap-4 animate-fade-in" style={{ animationDelay: '300ms' }}>
-          {/* Reset button */}
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={timer.reset}
-            className="rounded-full h-14 w-14"
-          >
-            <RotateCcw className="h-5 w-5" />
-          </Button>
+        {/* Controls - Single button with expanding side buttons */}
+        <div className="relative flex items-center justify-center gap-12 min-h-[120px] animate-fade-in" style={{ animationDelay: '300ms' }}>
+          
+          {/* Break/Focus Button (Left) - appears when paused after starting */}
+          <div className={cn(
+            "transition-all duration-500 transform",
+            showSideButtons 
+              ? "opacity-100 translate-y-0" 
+              : "opacity-0 translate-y-10 pointer-events-none absolute left-0"
+          )}>
+            <button 
+              onClick={timer.type === 'focus' ? timer.goToBreak : timer.skipToFocus}
+              className="flex flex-col items-center gap-3 group"
+            >
+              <div className={cn(
+                "w-14 h-14 rounded-full border flex items-center justify-center transition-all",
+                "bg-card border-border",
+                timer.type === 'focus' ? "text-accent" : "text-primary",
+                timer.type === 'focus' 
+                  ? "group-hover:border-accent/50 group-hover:bg-accent/10"
+                  : "group-hover:border-primary/50 group-hover:bg-primary/10"
+              )}>
+                {timer.type === 'focus' ? (
+                  <Coffee className="h-5 w-5" />
+                ) : (
+                  <Target className="h-5 w-5" />
+                )}
+              </div>
+              <span className={cn(
+                "text-[10px] font-bold uppercase tracking-widest text-muted-foreground transition-colors",
+                timer.type === 'focus' ? "group-hover:text-accent" : "group-hover:text-primary"
+              )}>
+                {timer.type === 'focus' ? 'Break' : 'Focus'}
+              </span>
+            </button>
+          </div>
 
-          {/* Play/Pause button */}
-          <Button
-            size="lg"
-            onClick={timer.isRunning ? timer.pause : timer.start}
+          {/* Main Play/Pause Button (Center) */}
+          <button 
+            onClick={timer.isRunning ? timer.pause : handleStart}
             className={cn(
-              "rounded-full h-20 w-20 shadow-xl transition-all",
-              "hover:scale-105 active:scale-95",
-              timer.type === 'focus' 
-                ? "bg-primary hover:bg-primary/90" 
-                : "bg-accent hover:bg-accent/90"
+              "relative z-20 w-20 h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 active:scale-95",
+              timer.isRunning 
+                ? "bg-transparent border-2 border-foreground/20 text-foreground hover:bg-foreground/10" 
+                : timer.type === 'focus'
+                  ? "bg-primary text-primary-foreground hover:scale-105 shadow-primary/20"
+                  : "bg-accent text-accent-foreground hover:scale-105 shadow-accent/20"
             )}
           >
             {timer.isRunning ? (
-              <Pause className="h-8 w-8" />
+              <Pause className="h-8 w-8 animate-in fade-in zoom-in duration-300" />
             ) : (
-              <Play className="h-8 w-8 ml-1" />
+              <Play className="h-8 w-8 ml-1 animate-in fade-in zoom-in duration-300" />
             )}
-          </Button>
+          </button>
 
-          {/* Skip to break/focus button */}
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={timer.type === 'focus' ? timer.goToBreak : timer.skipToFocus}
-            className="rounded-full h-14 w-14"
-          >
-            {timer.type === 'focus' ? (
-              <Coffee className="h-5 w-5" />
-            ) : (
-              <Target className="h-5 w-5" />
-            )}
-          </Button>
+          {/* Done Button (Right) - appears when paused after starting */}
+          <div className={cn(
+            "transition-all duration-500 transform",
+            showSideButtons 
+              ? "opacity-100 translate-y-0" 
+              : "opacity-0 translate-y-10 pointer-events-none absolute right-0"
+          )}>
+            <button 
+              onClick={timer.completeTask}
+              className="flex flex-col items-center gap-3 group"
+            >
+              <div className={cn(
+                "w-14 h-14 rounded-full border flex items-center justify-center transition-all",
+                "bg-card border-border text-green-500",
+                "group-hover:border-green-500/50 group-hover:bg-green-500/10"
+              )}>
+                <Check className="h-5 w-5" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-green-500 transition-colors">
+                Done
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Hint text */}
         <p className="mt-6 text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '350ms' }}>
           {timer.isRunning 
             ? "Mantenha o foco. Você está indo muito bem!"
-            : timer.type === 'focus' 
-              ? "Pronto para começar? Clique no play."
-              : "Aproveite sua pausa. Levante, alongue-se, respire."
+            : timer.isPaused
+              ? "Escolha uma ação ou continue"
+              : timer.type === 'focus' 
+                ? "Pronto para começar? Clique no play."
+                : "Aproveite sua pausa. Levante, alongue-se, respire."
           }
         </p>
 
