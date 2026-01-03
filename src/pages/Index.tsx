@@ -409,6 +409,11 @@ export default function Index() {
                     >
                       <div className="flex-1">
                         <p className="text-sm text-foreground">{item.content}</p>
+                        {item.audioUrl && (
+                          <div className="mt-2">
+                             <audio src={item.audioUrl} controls className="h-8 w-full max-w-[200px]" />
+                          </div>
+                        )}
                         <p className="mt-1 text-xs text-muted-foreground">
                           {item.createdAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         </p>

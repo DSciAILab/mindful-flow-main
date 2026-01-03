@@ -80,6 +80,14 @@ export function InboxPreview({ items, onViewAll, onProcess, onDelete }: InboxPre
                 )}>
                   {item.content}
                 </p>
+                {item.audioUrl && (
+                   <audio 
+                     src={item.audioUrl} 
+                     controls 
+                     className="mt-2 h-6 w-full max-w-[180px]" 
+                     onClick={(e) => e.stopPropagation()}
+                   />
+                )}
                 <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   {timeAgo}

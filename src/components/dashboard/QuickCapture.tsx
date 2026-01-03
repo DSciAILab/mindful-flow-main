@@ -74,10 +74,14 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
         finalContent += ` [Project: ${selectedProject.name}]`;
       }
 
+      // If we have an audio URL, ensure the type is set to 'audio' so it passes DB constraints
+      if (audioUrl && (type === "text" || !type)) {
+        type = "audio";
+      }
+
       // If it's just audio, ensure we have a fallback title
       if (!finalContent.trim() && audioUrl) {
         finalContent = `Audio Note - ${new Date().toLocaleString()}`;
-        if (type === "text") type = "audio"; // Switch type to audio if it was default
       }
 
       await onCapture(type, finalContent, audioUrl);
@@ -102,9 +106,9 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
   };
 
   const classificationOptions = [
-    { label: "Make it a Task", icon: CheckCircle2, onClick: () => handleCapture("Task"), color: "text-blue-500", bg: "hover:bg-blue-500/5", border: "hover:border-blue-200" },
-    { label: "Set as a Goal", icon: Flag, onClick: () => handleCapture("Goal"), color: "text-green-500", bg: "hover:bg-green-500/5", border: "hover:border-green-200" },
-    { label: "Save as a Note", icon: FileText, onClick: () => handleCapture("Note"), color: "text-slate-500", bg: "hover:bg-slate-500/5", border: "hover:border-slate-200" },
+    { label: "Make it a Task", icon: CheckCircle2, onClick: () => handleCapture("text", "Task"), color: "text-blue-500", bg: "hover:bg-blue-500/5", border: "hover:border-blue-200" },
+    { label: "Set as a Goal", icon: Flag, onClick: () => handleCapture("text", "Goal"), color: "text-green-500", bg: "hover:bg-green-500/5", border: "hover:border-green-200" },
+    { label: "Save as a Note", icon: FileText, onClick: () => handleCapture("text", "Note"), color: "text-slate-500", bg: "hover:bg-slate-500/5", border: "hover:border-slate-200" },
   ];
 
   return (
