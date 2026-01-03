@@ -149,11 +149,41 @@ export function TaskList({
                   )}>
                     {task.title}
                   </p>
-                  {task.description && (
-                    <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
-                      {task.description}
-                    </p>
-                  )}
+                  
+                  {(() => {
+                    // Check for audio URL
+                    const audioMatch = task.description?.match(/Áudio anexado: (https?:\/\/[^\s]+)/);
+                    const audioUrl = audioMatch ? audioMatch[1] : null;
+                    const cleanDescription = task.description?.replace(/Áudio anexado: https?:\/\/[^\s]+/, '').trim();
+
+                    return (
+                      <>
+                        {cleanDescription && (
+                          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
+                            {cleanDescription}
+                          </p>
+                        )}
+                        {audioUrl && (
+                          <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                            <audio 
+                              controls 
+                              src={audioUrl} 
+                              className="h-8 w-full max-w-[200px]" 
+                            />
+                            <a 
+                              href={audioUrl} 
+                              download
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-primary hover:underline mt-1 inline-block ml-1"
+                            >
+                              Baixar Áudio
+                            </a>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <span className={cn(
                       "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium",

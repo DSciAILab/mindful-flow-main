@@ -253,7 +253,32 @@ export default function Index() {
     onSessionComplete: handleSessionComplete,
   });
 
-  const handleCapture = async (type: string, content: string, audioUrl?: string) => {
+  const handleCapture = async (type: string, content: string, audioUrl?: string, projectId?: string) => {
+    // Check for direct conversion intents
+    if (content.startsWith("Task:")) {
+      const cleanTitle = content
+        .replace("Task:", "")
+        .replace(/\[Project: .*?\]/, "") // Remove project tag if present in filtered content
+        .trim();
+        
+      const newTask = await addTask({
+        title: cleanTitle || "Nova Tarefa",
+        description: audioUrl ? `Áudio anexado: ${audioUrl}` : undefined,
+        projectId: projectId,
+        priority: "medium",
+        status: "next" // Default status
+      });
+
+      if (newTask) {
+        toast({
+          title: "Tarefa criada!",
+          description: `"${newTask.title}" foi adicionada às suas tarefas.`,
+        });
+      }
+      return;
+    }
+
+    // Default: Add to Inbox
     const item = await addCaptureItem(type as CaptureItem['type'], content, audioUrl);
     if (item) {
       toast({

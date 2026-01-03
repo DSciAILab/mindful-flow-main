@@ -24,7 +24,7 @@ import {
 import { Command, CommandGroup, CommandItem, CommandList, CommandEmpty, CommandInput } from "@/components/ui/command";
 
 interface QuickCaptureProps {
-  onCapture: (type: string, content: string, audioUrl?: string) => void;
+  onCapture: (type: string, content: string, audioUrl?: string, projectId?: string) => Promise<void>;
 }
 
 export function QuickCapture({ onCapture }: QuickCaptureProps) {
@@ -54,7 +54,7 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
   };
 
   const handleCapture = async (type: string = "text", prefix: string = "") => {
-    if ((!inputText.trim() && !audioBlob)) return;
+    if ((!inputText.trim() && !audioBlob) || isUploading) return;
     
     setIsUploading(true);
     let audioUrl: string | undefined;
@@ -70,6 +70,8 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
 
       let finalContent = prefix ? `${prefix}: ${inputText}` : inputText;
       
+      // If project selected, we might want to append it to content OR just pass the ID
+      // We'll proceed with keeping it in content for visibility but also pass the ID
       if (selectedProject) {
         finalContent += ` [Project: ${selectedProject.name}]`;
       }
@@ -84,7 +86,7 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
         finalContent = `Audio Note - ${new Date().toLocaleString()}`;
       }
 
-      await onCapture(type, finalContent, audioUrl);
+      await onCapture(type, finalContent, audioUrl, selectedProjectId || undefined);
       
       // Reset state
       setInputText("");
