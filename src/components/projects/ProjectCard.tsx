@@ -251,30 +251,7 @@ export function ProjectList({
 
   return (
     <div className="space-y-3">
-      {/* All tasks option */}
-      <Card 
-        className={cn(
-          "cursor-pointer transition-all duration-200 hover:shadow-md",
-          selectedProjectId === null 
-            ? "ring-2 ring-primary border-primary/50" 
-            : "hover:border-primary/30"
-        )}
-        onClick={() => onSelectProject(null)}
-      >
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center">
-              <Circle className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Todas as Tarefas</h3>
-              <p className="text-xs text-muted-foreground">
-                {tasks.length} tarefas no total
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Project cards */}
       {projects.map((project) => (
@@ -283,7 +260,7 @@ export function ProjectList({
           project={project}
           tasks={tasks}
           isSelected={selectedProjectId === project.id}
-          onSelect={() => onSelectProject(project.id)}
+          onSelect={() => onSelectProject(selectedProjectId === project.id ? null : project.id)}
           onEdit={() => onEditProject(project)}
           onDelete={() => setProjectToDelete(project)}
           onTaskClick={onEditTask}
