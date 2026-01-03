@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SwipeableCard } from "@/components/ui/SwipeableCard";
 import { 
   FolderKanban, 
-  MoreVertical, 
   Pencil, 
   Trash2, 
   CheckCircle2,
@@ -12,12 +12,6 @@ import {
   ChevronUp,
   ListTodo
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,15 +60,16 @@ export function ProjectCard({
     : 0;
 
   return (
-    <Card 
-      className={cn(
-        "cursor-pointer transition-all duration-200 hover:shadow-md",
-        isSelected 
-          ? "ring-2 ring-primary border-primary/50" 
-          : "hover:border-primary/30"
-      )}
-      onClick={onSelect}
-    >
+    <SwipeableCard onDelete={onDelete}>
+      <Card 
+        className={cn(
+          "cursor-pointer transition-all duration-200 hover:shadow-md group",
+          isSelected 
+            ? "ring-2 ring-primary border-primary/50" 
+            : "hover:border-primary/30"
+        )}
+        onClick={onSelect}
+      >
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -104,26 +99,25 @@ export function ProjectCard({
             </div>
           </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="icon-sm" className="flex-shrink-0">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Excluir
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Action icons - appear on hover */}
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button 
+              variant="ghost" 
+              size="icon-sm" 
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon-sm" 
+              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Progress section */}
@@ -197,6 +191,7 @@ export function ProjectCard({
         </Collapsible>
       </CardContent>
     </Card>
+    </SwipeableCard>
   );
 }
 

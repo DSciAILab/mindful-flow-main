@@ -42,7 +42,7 @@ export const useTasks = () => {
         timeSpentMinutes: task.time_spent_minutes || 0,
         estimatedMinutes: task.estimated_minutes || undefined,
         projectId: task.project_id || undefined,
-        activityLog: task.activity_log || [],
+        activityLog: [],
       }));
 
       setTasks(mappedTasks);
@@ -80,7 +80,6 @@ export const useTasks = () => {
           estimated_minutes: taskData.estimatedMinutes || null,
           project_id: taskData.projectId || null,
           due_date: taskData.dueDate?.toISOString() || null,
-          activity_log: JSON.stringify([{ timestamp: new Date().toISOString(), action: 'created' }]),
         })
         .select()
         .single();
@@ -100,7 +99,7 @@ export const useTasks = () => {
         timeSpentMinutes: data.time_spent_minutes || 0,
         estimatedMinutes: data.estimated_minutes || undefined,
         projectId: data.project_id || undefined,
-        activityLog: data.activity_log || [],
+        activityLog: [],
       };
 
       setTasks((prev) => [newTask, ...prev]);
