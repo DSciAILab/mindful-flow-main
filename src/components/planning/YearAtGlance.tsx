@@ -30,20 +30,25 @@ import {
   Leaf,
   Snowflake,
   Trash2,
-  Loader2
+  Loader2,
+  Pencil,
+  FolderKanban
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAnnualGoals, AnnualGoalInput } from "@/hooks/useAnnualGoals";
+
+import { useAnnualGoals, AnnualGoalInput, AnnualGoal } from "@/hooks/useAnnualGoals";
 import { useProjects } from "@/hooks/useProjects";
 import { useTasks } from "@/hooks/useTasks";
 import { useHabits } from "@/hooks/useHabits";
 import { LIFE_AREAS } from "@/lib/lifeAreas";
+import { QuarterCard } from "./QuarterCard";
+
 
 const quarters = [
-  { id: 1, name: 'Q1', months: 'Jan - Mar', icon: Flower2, color: 'text-pink-500' },
-  { id: 2, name: 'Q2', months: 'Abr - Jun', icon: Sun, color: 'text-yellow-500' },
-  { id: 3, name: 'Q3', months: 'Jul - Set', icon: Leaf, color: 'text-orange-500' },
-  { id: 4, name: 'Q4', months: 'Out - Dez', icon: Snowflake, color: 'text-blue-400' },
+  { id: 1, name: 'Q1', months: 'Jan - Mar', icon: Flower2, color: 'text-pink-500', bgColor: 'bg-pink-500/10' },
+  { id: 2, name: 'Q2', months: 'Abr - Jun', icon: Sun, color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
+  { id: 3, name: 'Q3', months: 'Jul - Set', icon: Leaf, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
+  { id: 4, name: 'Q4', months: 'Out - Dez', icon: Snowflake, color: 'text-blue-400', bgColor: 'bg-blue-400/10' },
 ];
 
 const months = [
@@ -54,12 +59,13 @@ const months = [
 export function YearAtGlance() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<AnnualGoal | null>(null);
   const [newGoal, setNewGoal] = useState<Partial<AnnualGoalInput>>({
     title: '',
     year: new Date().getFullYear(),
   });
   
-  const { goals, loading, stats, addGoal, toggleComplete, deleteGoal } = useAnnualGoals(year);
+  const { goals, loading, stats, addGoal, updateGoal, toggleComplete, deleteGoal } = useAnnualGoals(year);
   const { projects } = useProjects();
   const { tasks } = useTasks();
   const { habits } = useHabits();
@@ -80,19 +86,36 @@ export function YearAtGlance() {
     };
   };
 
-  const handleCreateGoal = async () => {
+  const handleSaveGoal = async () => {
     if (!newGoal.title?.trim()) return;
     
-    await addGoal({
-      title: newGoal.title.trim(),
-      description: newGoal.description,
-      year,
-      quarter: newGoal.quarter,
-      areaId: newGoal.areaId,
-      projectId: newGoal.projectId,
-    });
+    if (editingGoal) {
+      // Update existing goal
+      await updateGoal(editingGoal.id, {
+        title: newGoal.title.trim(),
+        description: newGoal.description,
+        quarter: newGoal.quarter,
+        areaId: newGoal.areaId,
+      });
+    } else {
+      // Create new goal
+      await addGoal({
+        title: newGoal.title.trim(),
+        description: newGoal.description,
+        year,
+        quarter: newGoal.quarter,
+        areaId: newGoal.areaId,
+      });
+    }
     
     setNewGoal({ title: '', year });
+    setEditingGoal(null);
+    setIsModalOpen(false);
+  };
+
+  const handleCloseModal = () => {
+    setNewGoal({ title: '', year });
+    setEditingGoal(null);
     setIsModalOpen(false);
   };
 
@@ -152,142 +175,80 @@ export function YearAtGlance() {
         </div>
       </div>
 
-      {/* Quarters */}
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {quarters.map((q) => {
-          const quarterStats = stats.byQuarter.find(qs => qs.quarter === q.id);
-          const isCurrent = q.id === currentQuarter && year === new Date().getFullYear();
-          const Icon = q.icon;
+      {/* Quarter Cards List */}
+      <div className="space-y-4 mb-6">
+        {quarters.map((q) => (
+          <QuarterCard
+            key={q.id}
+            id={q.id}
+            title={q.name}
+            subtitle={q.months}
+            icon={q.icon}
+            color={q.color}
+            bgColor={q.bgColor}
+            goals={goals.filter(g => g.quarter === q.id)}
+            projects={projects}
+            isCurrent={q.id === currentQuarter && year === new Date().getFullYear()}
+            onAddGoal={() => {
+              setNewGoal({ title: '', year, quarter: q.id as 1 | 2 | 3 | 4 });
+              setEditingGoal(null);
+              setIsModalOpen(true);
+            }}
+            onEditGoal={(goal) => {
+              setEditingGoal(goal);
+              setNewGoal({
+                title: goal.title,
+                description: goal.description,
+                quarter: goal.quarter,
+                areaId: goal.areaId,
+              });
+              setIsModalOpen(true);
+            }}
+            onDeleteGoal={deleteGoal}
+            onToggleComplete={toggleComplete}
+          />
+        ))}
 
-          return (
-            <div
-              key={q.id}
-              className={cn(
-                "rounded-xl border p-4 transition-all duration-200",
-                isCurrent 
-                  ? "border-primary bg-primary/5 ring-2 ring-primary/20" 
-                  : "border-border/50 bg-muted/20 hover:bg-muted/40"
-              )}
-            >
-              <div className="mb-2 flex items-center justify-between">
-                <Icon className={cn("h-6 w-6", q.color)} />
-                {isCurrent && (
-                  <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
-                    Atual
-                  </span>
-                )}
-              </div>
-              <h4 className="font-semibold text-foreground">{q.name}</h4>
-              <p className="mb-2 text-xs text-muted-foreground">{q.months}</p>
-              <div className="flex items-center gap-1 text-xs">
-                <CheckCircle2 className="h-3 w-3 text-status-completed" />
-                <span className="text-muted-foreground">
-                  {quarterStats?.completed || 0}/{quarterStats?.total || 0} metas
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Goals list */}
-      <div>
-        <div className="mb-3 flex items-center justify-between">
-          <h4 className="flex items-center gap-2 font-semibold text-foreground">
-            <Target className="h-4 w-4 text-primary" />
-            Metas do Ano ({stats.total})
-          </h4>
-          <Button variant="ghost" size="sm" onClick={() => setIsModalOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" />
-            Nova Meta
-          </Button>
-        </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : goals.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border/50 p-8 text-center">
-            <Target className="mx-auto h-10 w-10 text-muted-foreground/30 mb-2" />
-            <p className="text-muted-foreground">Nenhuma meta definida para {year}</p>
-            <Button variant="outline" size="sm" className="mt-3" onClick={() => setIsModalOpen(true)}>
-              <Plus className="mr-1 h-4 w-4" />
-              Criar primeira meta
-            </Button>
-          </div>
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-2">
-            {goals.map((goal) => {
-              const area = getAreaInfo(goal.areaId);
-              const project = projects.find(p => p.id === goal.projectId);
-              const isCompleted = goal.status === 'completed';
-
-              return (
-                <div
-                  key={goal.id}
-                  className={cn(
-                    "group flex items-start gap-3 rounded-xl p-3 transition-all duration-200",
-                    isCompleted 
-                      ? "bg-status-completed/10" 
-                      : "bg-muted/30 hover:bg-muted/50"
-                  )}
-                >
-                  <button onClick={() => toggleComplete(goal.id)} className="mt-0.5">
-                    {isCompleted ? (
-                      <CheckCircle2 className="h-5 w-5 text-status-completed" />
-                    ) : (
-                      <Circle className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "text-sm font-medium",
-                      isCompleted ? "text-muted-foreground line-through" : "text-foreground"
-                    )}>
-                      {goal.title}
-                    </p>
-                    <div className="mt-1 flex items-center gap-2 flex-wrap">
-                      {goal.quarter && (
-                        <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-                          Q{goal.quarter}
-                        </span>
-                      )}
-                      {area && (
-                        <span 
-                          className="rounded-md px-1.5 py-0.5 text-xs font-medium"
-                          style={{ backgroundColor: `${area.color}20`, color: area.color }}
-                        >
-                          {area.icon} {area.name}
-                        </span>
-                      )}
-                      {project && (
-                        <span className="text-xs text-muted-foreground truncate max-w-[100px]">
-                          📁 {project.name}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => deleteGoal(goal.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+        {/* General / Other Goals */}
+        {goals.some(g => !g.quarter) && (
+          <QuarterCard
+            id="general"
+            title="Geral / Anual"
+            subtitle="Metas sem trimestre definido"
+            icon={Target}
+            color="text-gray-500"
+            bgColor="bg-gray-500/10"
+            goals={goals.filter(g => !g.quarter)}
+            projects={projects}
+            isCurrent={false}
+            onAddGoal={() => {
+              setNewGoal({ title: '', year, quarter: undefined });
+              setEditingGoal(null);
+              setIsModalOpen(true);
+            }}
+            onEditGoal={(goal) => {
+              setEditingGoal(goal);
+              setNewGoal({
+                title: goal.title,
+                description: goal.description,
+                quarter: goal.quarter,
+                areaId: goal.areaId,
+              });
+              setIsModalOpen(true);
+            }}
+            onDeleteGoal={deleteGoal}
+            onToggleComplete={toggleComplete}
+          />
         )}
       </div>
 
-      {/* Create Goal Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      {/* Create/Edit Goal Modal */}
+      <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Target className="h-5 w-5 text-primary" />
-              Nova Meta Anual
+              {editingGoal ? 'Editar Meta' : 'Nova Meta Anual'}
             </DialogTitle>
           </DialogHeader>
 
@@ -345,46 +306,29 @@ export function YearAtGlance() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhuma</SelectItem>
-                    {LIFE_AREAS.map((area) => (
-                      <SelectItem key={area.id} value={area.id}>
-                        <span style={{ color: area.color }}>{area.icon}</span> {area.name}
-                      </SelectItem>
-                    ))}
+                    {LIFE_AREAS.map((area) => {
+                      const Icon = area.icon;
+                      return (
+                        <SelectItem key={area.id} value={area.id}>
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4" style={{ color: area.color }} />
+                            <span>{area.name}</span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label>Vincular a Projeto</Label>
-              <Select 
-                value={newGoal.projectId || 'none'} 
-                onValueChange={(v) => setNewGoal({ ...newGoal, projectId: v === 'none' ? undefined : v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar projeto..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Nenhum projeto</SelectItem>
-                  {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
-                        {p.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+            <Button variant="outline" onClick={handleCloseModal}>
               Cancelar
             </Button>
-            <Button onClick={handleCreateGoal} disabled={!newGoal.title?.trim()}>
-              Criar Meta
+            <Button onClick={handleSaveGoal} disabled={!newGoal.title?.trim()}>
+              {editingGoal ? 'Salvar' : 'Criar Meta'}
             </Button>
           </DialogFooter>
         </DialogContent>

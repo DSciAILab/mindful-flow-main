@@ -17,10 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, X, Save, Palette, FileEdit, TrendingUp } from "lucide-react";
-import { LIFE_AREAS, getLifeAreaById } from "@/lib/lifeAreas";
+import { Plus, X, Save, Palette, FileEdit, TrendingUp, Target } from "lucide-react";
+import { LIFE_AREAS } from "@/lib/lifeAreas";
 import { cn } from "@/lib/utils";
 import type { Project } from "@/types";
+import { useAnnualGoals } from "@/hooks/useAnnualGoals";
 
 interface ProjectCreateModalProps {
   isOpen: boolean;
@@ -38,7 +39,11 @@ export function ProjectCreateModal({ isOpen, onClose, onSave, projectToEdit }: P
   const [description, setDescription] = useState("");
   const [color, setColor] = useState(colors[0]);
   const [lifeAreaId, setLifeAreaId] = useState<string | undefined>(undefined);
+  const [goalId, setGoalId] = useState<string | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
+
+  const currentYear = new Date().getFullYear();
+  const { goals } = useAnnualGoals(currentYear);
 
   // Populate form when projectToEdit changes or modal opens
   useEffect(() => {
@@ -47,6 +52,7 @@ export function ProjectCreateModal({ isOpen, onClose, onSave, projectToEdit }: P
       setDescription(projectToEdit.description || "");
       setColor(projectToEdit.color);
       setLifeAreaId(projectToEdit.areaId);
+      setGoalId(projectToEdit.goalId);
     } else if (isOpen && !projectToEdit) {
       resetForm();
     }
@@ -57,6 +63,7 @@ export function ProjectCreateModal({ isOpen, onClose, onSave, projectToEdit }: P
     setDescription("");
     setColor(colors[0]);
     setLifeAreaId(undefined);
+    setGoalId(undefined);
   };
 
   const handleClose = () => {
@@ -73,6 +80,7 @@ export function ProjectCreateModal({ isOpen, onClose, onSave, projectToEdit }: P
       description: description.trim() || undefined,
       color,
       areaId: lifeAreaId,
+      goalId: goalId,
     });
 
     setIsSaving(false);
@@ -142,6 +150,26 @@ export function ProjectCreateModal({ isOpen, onClose, onSave, projectToEdit }: P
                     </SelectItem>
                   );
                 })}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Vincular a Meta Anual ({currentYear})
+            </Label>
+            <Select value={goalId || 'none'} onValueChange={(v) => setGoalId(v === 'none' ? undefined : v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma meta..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhuma meta</SelectItem>
+                {goals.map((goal) => (
+                  <SelectItem key={goal.id} value={goal.id}>
+                    {goal.title}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

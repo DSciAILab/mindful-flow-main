@@ -43,6 +43,7 @@ export interface Project {
   name: string;
   description?: string;
   areaId?: string;
+  goalId?: string;
   color: string;
   progress: number;
   tasks: string[];

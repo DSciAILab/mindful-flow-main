@@ -79,9 +79,14 @@ export const useAnnualGoals = (year?: number) => {
 
   // Add a new goal
   const addGoal = useCallback(async (input: AnnualGoalInput): Promise<AnnualGoal | null> => {
-    if (!user) return null;
+    if (!user) {
+      console.error('No user logged in');
+      return null;
+    }
 
     try {
+      console.log('Adding goal:', { user_id: user.id, ...input });
+      
       const { data, error } = await supabase
         .from('mf_annual_goals')
         .insert({
@@ -97,7 +102,10 @@ export const useAnnualGoals = (year?: number) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       const newGoal = mapGoal(data);
       setGoals((prev) => [newGoal, ...prev]);
@@ -108,11 +116,11 @@ export const useAnnualGoals = (year?: number) => {
       });
 
       return newGoal;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding annual goal:', error);
       toast({
         title: 'Erro ao criar meta',
-        description: 'Não foi possível criar a meta.',
+        description: error?.message || 'Não foi possível criar a meta.',
         variant: 'destructive',
       });
       return null;
