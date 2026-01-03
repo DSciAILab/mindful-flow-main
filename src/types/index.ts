@@ -63,6 +63,7 @@ export interface CaptureItem {
   type: "text" | "audio" | "photo" | "video" | "canvas";
   content: string;
   processedText?: string;
+  audioUrl?: string; // URL for audio recording
   createdAt: Date;
   processed: boolean;
 }

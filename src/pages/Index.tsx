@@ -253,8 +253,8 @@ export default function Index() {
     onSessionComplete: handleSessionComplete,
   });
 
-  const handleCapture = async (type: string, content: string) => {
-    const item = await addCaptureItem(type as CaptureItem['type'], content);
+  const handleCapture = async (type: string, content: string, audioUrl?: string) => {
+    const item = await addCaptureItem(type as CaptureItem['type'], content, audioUrl);
     if (item) {
       toast({
         title: "Capturado!",

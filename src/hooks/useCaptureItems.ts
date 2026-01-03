@@ -33,6 +33,7 @@ export const useCaptureItems = () => {
         type: item.type as CaptureItem['type'],
         content: item.content,
         processedText: undefined,
+        audioUrl: item.audio_url,
         createdAt: new Date(item.created_at),
         processed: item.processed,
       }));
@@ -55,7 +56,7 @@ export const useCaptureItems = () => {
   }, [fetchItems]);
 
   // Add a new capture item
-  const addItem = useCallback(async (type: CaptureItem['type'], content: string): Promise<CaptureItem | null> => {
+  const addItem = useCallback(async (type: CaptureItem['type'], content: string, audioUrl?: string): Promise<CaptureItem | null> => {
     if (!user) return null;
 
     try {
@@ -65,6 +66,7 @@ export const useCaptureItems = () => {
           user_id: user.id,
           type,
           content,
+          audio_url: audioUrl,
           processed: false,
         })
         .select()
@@ -76,6 +78,7 @@ export const useCaptureItems = () => {
         id: data.id,
         type: data.type as CaptureItem['type'],
         content: data.content,
+        audioUrl: data.audio_url,
         createdAt: new Date(data.created_at),
         processed: data.processed,
       };
