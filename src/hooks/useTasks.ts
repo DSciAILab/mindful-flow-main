@@ -6,11 +6,30 @@ import type { Task } from '@/types';
 
 export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Fetch tasks from Supabase
+  // Map raw DB data to Task type
+  const mapTask = (task: any): Task => ({
+    id: task.id,
+    title: task.title,
+    description: task.description || undefined,
+    priority: task.priority as Task['priority'],
+    status: task.status as Task['status'],
+    tags: task.tags || [],
+    points: task.points || 10,
+    createdAt: new Date(task.created_at),
+    dueDate: task.due_date ? new Date(task.due_date) : undefined,
+    completedAt: task.completed_at ? new Date(task.completed_at) : undefined,
+    timeSpentMinutes: task.time_spent_minutes || 0,
+    estimatedMinutes: task.estimated_minutes || undefined,
+    projectId: task.project_id || undefined,
+    activityLog: [],
+  });
+
+  // Fetch active tasks from Supabase
   const fetchTasks = useCallback(async () => {
     if (!user) {
       setTasks([]);
@@ -28,24 +47,7 @@ export const useTasks = () => {
 
       if (error) throw error;
 
-      const mappedTasks: Task[] = (data || []).map((task: any) => ({
-        id: task.id,
-        title: task.title,
-        description: task.description || undefined,
-        priority: task.priority as Task['priority'],
-        status: task.status as Task['status'],
-        tags: task.tags || [],
-        points: task.points || 10,
-        createdAt: new Date(task.created_at),
-        dueDate: task.due_date ? new Date(task.due_date) : undefined,
-        completedAt: task.completed_at ? new Date(task.completed_at) : undefined,
-        timeSpentMinutes: task.time_spent_minutes || 0,
-        estimatedMinutes: task.estimated_minutes || undefined,
-        projectId: task.project_id || undefined,
-        activityLog: [],
-      }));
-
-      setTasks(mappedTasks);
+      setTasks((data || []).map(mapTask));
     } catch (error) {
       console.error('Error fetching tasks:', error);
       toast({
@@ -57,6 +59,33 @@ export const useTasks = () => {
       setLoading(false);
     }
   }, [user, toast]);
+
+  // Fetch completed tasks (last 30 days)
+  const fetchCompletedTasks = useCallback(async () => {
+    if (!user) {
+      setCompletedTasks([]);
+      return;
+    }
+
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { data, error } = await supabase
+        .from('mf_tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        .not('completed_at', 'is', null)
+        .gte('completed_at', thirtyDaysAgo.toISOString())
+        .order('completed_at', { ascending: false });
+
+      if (error) throw error;
+
+      setCompletedTasks((data || []).map(mapTask));
+    } catch (error) {
+      console.error('Error fetching completed tasks:', error);
+    }
+  }, [user]);
 
   useEffect(() => {
     fetchTasks();
@@ -224,6 +253,7 @@ export const useTasks = () => {
 
   return {
     tasks,
+    completedTasks,
     loading,
     addTask,
     updateTask,
@@ -231,5 +261,6 @@ export const useTasks = () => {
     deleteTask,
     addTimeToTask,
     refetch: fetchTasks,
+    fetchCompletedTasks,
   };
 };

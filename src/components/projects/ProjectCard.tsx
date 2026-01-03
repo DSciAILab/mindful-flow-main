@@ -10,7 +10,8 @@ import {
   Circle,
   ChevronDown,
   ChevronUp,
-  ListTodo
+  ListTodo,
+  Plus
 } from "lucide-react";
 import {
   AlertDialog,
@@ -40,6 +41,7 @@ interface ProjectCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onTaskClick?: (task: Task) => void;
+  onAddTask?: () => void;
 }
 
 export function ProjectCard({ 
@@ -49,7 +51,8 @@ export function ProjectCard({
   onSelect, 
   onEdit, 
   onDelete,
-  onTaskClick
+  onTaskClick,
+  onAddTask
 }: ProjectCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   // Calculate progress based on tasks
@@ -187,6 +190,22 @@ export function ProjectCard({
                 ))}
               </div>
             )}
+            
+            {/* Add task button inside the card */}
+            {onAddTask && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full mt-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border/50 hover:border-primary/50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddTask();
+                }}
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Nova Tarefa
+              </Button>
+            )}
           </CollapsibleContent>
         </Collapsible>
       </CardContent>
@@ -203,6 +222,7 @@ interface ProjectListProps {
   onEditProject: (project: Project) => void;
   onDeleteProject: (projectId: string) => void;
   onEditTask?: (task: Task) => void;
+  onAddTask?: (projectId: string) => void;
 }
 
 export function ProjectList({
@@ -213,6 +233,7 @@ export function ProjectList({
   onEditProject,
   onDeleteProject,
   onEditTask,
+  onAddTask,
 }: ProjectListProps) {
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
@@ -266,6 +287,7 @@ export function ProjectList({
           onEdit={() => onEditProject(project)}
           onDelete={() => setProjectToDelete(project)}
           onTaskClick={onEditTask}
+          onAddTask={onAddTask ? () => onAddTask(project.id) : undefined}
         />
       ))}
 

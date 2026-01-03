@@ -74,6 +74,7 @@ export default function Index() {
   
   // Task create modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createTaskProjectId, setCreateTaskProjectId] = useState<string | undefined>();
   
   // Inbox processing state
   const [processingInboxItem, setProcessingInboxItem] = useState<CaptureItem | null>(null);
@@ -511,6 +512,10 @@ export default function Index() {
                   setEditingTask(task);
                   setIsEditModalOpen(true);
                 }}
+                onAddTask={(projectId) => {
+                  setCreateTaskProjectId(projectId);
+                  setIsCreateModalOpen(true);
+                }}
               />
             </div>
 
@@ -522,19 +527,6 @@ export default function Index() {
                     : "Todas as Tarefas"
                   }
                 </h2>
-                {selectedProjectId && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setNewTaskProjectId(selectedProjectId);
-                      setIsTaskModalOpen(true);
-                    }}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Nova Tarefa
-                  </Button>
-                )}
               </div>
               
               <KanbanBoard 
@@ -861,7 +853,10 @@ export default function Index() {
 
       <TaskCreateModal
         isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setCreateTaskProjectId(undefined);
+        }}
         onSave={async (taskData) => {
           const newTask = await addTask(taskData);
           if (newTask) {
@@ -872,6 +867,7 @@ export default function Index() {
           }
           return newTask;
         }}
+        defaultProjectId={createTaskProjectId}
       />
 
       <ProcessInboxModal

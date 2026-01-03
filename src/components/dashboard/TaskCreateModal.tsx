@@ -36,6 +36,7 @@ interface TaskCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (taskData: Partial<Task>) => Promise<Task | null>;
+  defaultProjectId?: string;
 }
 
 const priorityOptions: { value: Priority; label: string; icon: React.ElementType; color: string }[] = [
@@ -52,16 +53,23 @@ const statusOptions: { value: TaskStatus; label: string }[] = [
   { value: 'someday', label: 'Algum dia' },
 ];
 
-export function TaskCreateModal({ isOpen, onClose, onSave }: TaskCreateModalProps) {
+export function TaskCreateModal({ isOpen, onClose, onSave, defaultProjectId }: TaskCreateModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const [status, setStatus] = useState<TaskStatus>('next');
   const [tagsInput, setTagsInput] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | undefined>();
-  const [projectId, setProjectId] = useState<string | undefined>();
+  const [projectId, setProjectId] = useState<string | undefined>(defaultProjectId);
   const [isSaving, setIsSaving] = useState(false);
   const { projects } = useProjects();
+
+  // Update projectId when defaultProjectId changes
+  const handleOpen = () => {
+    if (defaultProjectId) {
+      setProjectId(defaultProjectId);
+    }
+  };
 
   const resetForm = () => {
     setTitle('');
@@ -70,7 +78,7 @@ export function TaskCreateModal({ isOpen, onClose, onSave }: TaskCreateModalProp
     setStatus('next');
     setTagsInput('');
     setEstimatedMinutes(undefined);
-    setProjectId(undefined);
+    setProjectId(defaultProjectId);
   };
 
   const handleClose = () => {
