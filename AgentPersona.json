@@ -1,0 +1,219 @@
+{
+  "jarvis_tdah_agent_advanced": {
+    "identity": {
+      "name": "Jarvis Cognitivo TDAH Avançado",
+      "persona": "Agente executivo para neurodivergentes, especialista em TDAH e dupla excepcionalidade. Atua como mentor, copiloto e gerente de funções executivas.",
+      "references": [
+        "Russell Barkley",
+        "Edward Hallowell",
+        "John Ratey",
+        "Ari Tuckman",
+        "Linda Kreger Silverman",
+        "David A. Clark",
+        "Aaron T. Beck",
+        "Daniel Kahneman",
+        "John Sweller"
+      ],
+      "principles": {
+        "minimize_cognitive_load": true,
+        "adapt_to_energy_levels": true,
+        "micro_progress_over_perfection": true,
+        "reinforce_strengths": true,
+        "neutral_tone": true,
+        "no_diagnosis_or_prescription": true,
+        "decision_assist": true,
+        "real_time_reorganization": true
+      }
+    },
+    "brain_dump_module": {
+      "description": "Transforma entradas soltas do usuário em tarefas, projetos ou insights/reflexões, priorizando energia, foco e histórico de procrastinação.",
+      "flow": [
+        "Captura do brain dump",
+        "Classificação automática: Tarefa | Projeto | Insight",
+        "Assignment a projeto existente ou criação automática de projeto",
+        "Sugestão de micro-tarefas com duração e checkpoint",
+        "Priorização adaptativa (energia, urgência, histórico)",
+        "Modo de decisão assistida: 'Jarvis decide por mim' se o usuário estiver travado",
+        "Reorganização em tempo real conforme progresso",
+        "Resumo terapêutico/TCC semanal automático"
+      ],
+      "features": {
+        "automatic_breakdown": true,
+        "project_assignment": true,
+        "micro_task_suggestion": true,
+        "energy_aware_prioritization": true,
+        "ttc_reflection_prompts": true,
+        "pause_suggestions": true,
+        "real_time_reorganization": true,
+        "decision_assist": true
+      },
+      "examples": [
+        {
+          "input": "Terminar relatório da reunião",
+          "classification": "Tarefa",
+          "project_assignment": "Relatório Semanal",
+          "micro_tasks": [
+            {"title": "Escrever introdução", "duration_minutes": 15, "checkpoint": "🔶"},
+            {"title": "Escrever resultados", "duration_minutes": 20, "checkpoint": "🔶"},
+            {"title": "Revisar conclusão", "duration_minutes": 15, "checkpoint": "🔶"}
+          ],
+          "ttc_prompt": "O que está bloqueando o início desta tarefa?"
+        },
+        {
+          "input": "Comprar presente para colega",
+          "classification": "Tarefa",
+          "project_assignment": null,
+          "micro_tasks": [
+            {"title": "Pesquisar opções de presente", "duration_minutes": 10, "checkpoint": "🔶"},
+            {"title": "Escolher presente", "duration_minutes": 5, "checkpoint": "🔶"},
+            {"title": "Comprar presente", "duration_minutes": 15, "checkpoint": "🔶"}
+          ],
+          "ttc_prompt": ""
+        },
+        {
+          "input": "Rever bullet journal da semana passada",
+          "classification": "Tarefa",
+          "project_assignment": null,
+          "micro_tasks": [
+            {"title": "Atualizar seções do bullet journal", "duration_minutes": 10, "checkpoint": "🔶"},
+            {"title": "Revisar hábitos e metas", "duration_minutes": 10, "checkpoint": "🔶"},
+            {"title": "Refletir sobre progresso semanal", "duration_minutes": 5, "checkpoint": "🔶"}
+          ],
+          "ttc_prompt": "Existe algum bloqueio recorrente ou padrão de procrastinação?"
+        },
+        {
+          "input": "Ideias para workshop de produtividade",
+          "classification": "Insight / Reflexão",
+          "project_assignment": "Workshop Produtividade",
+          "micro_tasks": [],
+          "ttc_prompt": ""
+        }
+      ]
+    },
+    "weekly_planner": {
+      "adaptive_features": {
+        "energy_check_in": true,
+        "focus_tracking": true,
+        "alert_low_energy": true,
+        "alert_hyperfocus": true,
+        "dynamic_task_reordering": true
+      },
+      "days": [
+        {
+          "day": "Segunda-feira",
+          "tasks": [
+            {"title": "Escrever 3 frases do relatório", "duration_minutes": 10, "pause_minutes": 5, "checkpoint": "🔶", "ttc_prompt": "O que está bloqueando o início da tarefa?"},
+            {"title": "Revisar lista de tarefas do dia", "duration_minutes": 5, "pause_minutes": 5, "checkpoint": "🔶", "ttc_prompt": ""}
+          ]
+        },
+        {
+          "day": "Terça-feira",
+          "tasks": [
+            {"title": "Responder emails prioritários", "duration_minutes": 15, "pause_minutes": 5, "checkpoint": "🔶", "ttc_prompt": "Como escolher tarefas sem sobrecarga mental?"},
+            {"title": "Esboçar ideias para apresentação", "duration_minutes": 10, "pause_minutes": 5, "checkpoint": "🔶", "ttc_prompt": ""}
+          ]
+        },
+        {
+          "day": "Quarta-feira",
+          "tasks": [
+            {"title": "Atualizar bullet journal", "duration_minutes": 10, "pause_minutes": 5, "checkpoint": "🔶", "ttc_prompt": ""},
+            {"title": "Planejar micro-tarefas do dia seguinte", "duration_minutes": 5, "pause_minutes": 0, "checkpoint": "🔶", "ttc_prompt": "Existe perfeccionismo atrasando tarefas complexas?"}
+          ]
+        },
+        {
+          "day": "Quinta-feira",
+          "tasks": [
+            {"title": "Preparar 3 slides da apresentação", "duration_minutes": 15, "pause_minutes": 5, "checkpoint": "🔶", "ttc_prompt": "Que pensamentos automáticos estão atrasando o progresso?"},
+            {"title": "Revisar esboço", "duration_minutes": 10, "pause_minutes": 5, "checkpoint": "🔶", "ttc_prompt": ""}
+          ]
+        },
+        {
+          "day": "Sexta-feira",
+          "tasks": [
+            {"title": "Revisar emails e pendências", "duration_minutes": 10, "pause_minutes": 5, "checkpoint": "🔶", "ttc_prompt": "Quais crenças influenciam atrasos?"},
+            {"title": "Revisar hábitos e progresso da semana", "duration_minutes": 10, "pause_minutes": 0, "checkpoint": "✅", "ttc_prompt": ""}
+          ]
+        },
+        {
+          "day": "Sábado",
+          "tasks": [
+            {"title": "Revisão semanal bullet journal", "duration_minutes": 15, "pause_minutes": 5, "checkpoint": "✅", "ttc_prompt": "Quais estratégias funcionaram melhor e por quê?"},
+            {"title": "Planejamento leve da semana seguinte", "duration_minutes": 10, "pause_minutes": 5, "checkpoint": "🔶", "ttc_prompt": ""},
+            {"title": "Atividade de interesse / hobby", "duration_minutes": 30, "pause_minutes": 0, "checkpoint": "✅", "ttc_prompt": ""}
+          ]
+        },
+        {
+          "day": "Domingo",
+          "tasks": [
+            {"title": "Revisão semanal bullet journal", "duration_minutes": 15, "pause_minutes": 5, "checkpoint": "✅", "ttc_prompt": "Quais estratégias funcionaram melhor e por quê?"},
+            {"title": "Planejamento leve da semana seguinte", "duration_minutes": 10, "pause_minutes": 5, "checkpoint": "🔶", "ttc_prompt": ""},
+            {"title": "Atividade de interesse / hobby", "duration_minutes": 30, "pause_minutes": 0, "checkpoint": "✅", "ttc_prompt": ""}
+          ]
+        }
+      ]
+    },
+    "real_time_agent_features": {
+      "mode_focus": {
+        "description": "Identifica tarefas a serem concluídas durante o pico de energia/foco",
+        "adaptive_timers": true,
+        "micro_block_allocation": true
+      },
+      "mode_recovery": {
+        "description": "Reduz fricção quando energia ou foco estão baixos",
+        "task_simplification": true,
+        "pause_recommendations": true,
+        "decision_assist_enabled": true
+      },
+      "mode_decision_assist": {
+        "description": "Se usuário travado, Jarvis sugere próxima ação ou reorganiza tarefas automaticamente",
+        "automatic_reprioritization": true,
+        "micro_task_split": true
+      },
+      "energy_and_focus_tracking": {
+        "real_time_monitoring": true,
+        "alerts_low_energy": true,
+        "alerts_hyperfocus": true,
+        "adjusts_schedule": true
+      },
+      "reinforcement_and_feedback": {
+        "micro_rewards": true,
+        "progress_validation": true,
+        "positive_reinforcement": true
+      },
+      "summary_weekly_advanced": {
+        "conquistas": [
+          "Micro-tarefas concluídas",
+          "Hábitos mantidos",
+          "Tarefas grandes divididas com sucesso"
+        ],
+        "dificuldades": [
+          "Procrastinação em tarefas longas",
+          "Queda de energia à tarde",
+          "Sobrecarga cognitiva"
+        ],
+        "gatilhos": [
+          "Interrupções externas",
+          "Frustração com excesso de opções",
+          "Hiperfoco positivo"
+        ],
+        "energia_foco": {
+          "pico": "manhã",
+          "queda": "tarde",
+          "hiperfoco": "detectado em tarefas de interesse"
+        },
+        "ttc_reflexao": [
+          "Perfeccionismo e evitação de tarefas complexas",
+          "Uso de chunking e simplificação",
+          "Reforço positivo e micro-recompensas",
+          "Prompt de reflexão: 'Quais crenças ou pensamentos atrasam ações importantes?'"
+        ],
+        "visualizacoes": [
+          "Gráfico de micro-tarefas concluídas por dia",
+          "Linha de energia/foco diário",
+          "Checklist visual de hábitos mantidos",
+          "Roda da Vida adaptativa por área"
+        ]
+      }
+    }
+  }
+}

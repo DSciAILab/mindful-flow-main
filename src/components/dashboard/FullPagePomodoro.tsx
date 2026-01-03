@@ -1,0 +1,344 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { 
+  Play, 
+  Pause, 
+  RotateCcw,
+  Minimize2,
+  Coffee,
+  Target,
+  Timer,
+  Volume2,
+  VolumeX,
+  Settings,
+  ChevronLeft
+} from "lucide-react";
+import { useTimer } from "@/hooks/useTimer";
+import { useTimerSounds } from "@/hooks/useTimerSounds";
+import { useUserStats } from "@/hooks/useUserStats";
+
+interface FullPagePomodoroProps {
+  onExit: () => void;
+  onMinimize?: () => void;
+}
+
+export function FullPagePomodoro({ onExit, onMinimize }: FullPagePomodoroProps) {
+  const [isMinimized, setIsMinimized] = useState(false);
+  const { playFocusEndSound, playBreakEndSound, settings, saveSettings } = useTimerSounds();
+  const { stats, addFocusTime, addFocusSession } = useUserStats();
+
+  const handleSessionComplete = (type: 'focus' | 'break') => {
+    if (type === 'focus') {
+      playFocusEndSound();
+      addFocusSession(); // Persist the session to stats
+    } else {
+      playBreakEndSound();
+    }
+  };
+
+  const handleMinutePassed = () => {
+    addFocusTime(1);
+  };
+
+  const timer = useTimer({
+    onSessionComplete: handleSessionComplete,
+    onMinutePassed: handleMinutePassed,
+  });
+
+  // Use stats.focusSessionsToday for persistent session count
+  const totalSessions = stats.focusSessionsToday + timer.sessionsCompleted;
+
+  // Prevent body scroll when fullscreen
+  useEffect(() => {
+    if (!isMinimized) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMinimized]);
+
+  // Calculate circular progress
+  const circumference = 2 * Math.PI * 140;
+  const strokeDashoffset = circumference - (timer.progress * circumference);
+
+  // Minimized floating widget
+  if (isMinimized) {
+    return (
+      <div className="fixed bottom-4 right-4 z-[100] animate-scale-in">
+        <div className="rounded-2xl border border-border/50 bg-card/95 backdrop-blur-xl shadow-2xl p-4">
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "flex h-12 w-12 items-center justify-center rounded-xl",
+              timer.type === 'focus' ? "bg-primary/20" : "bg-accent/20"
+            )}>
+              {timer.type === 'focus' ? (
+                <Target className="h-6 w-6 text-primary" />
+              ) : (
+                <Coffee className="h-6 w-6 text-accent" />
+              )}
+            </div>
+            
+            <div>
+              <p className="text-2xl font-bold tabular-nums text-foreground">
+                {timer.formattedTime}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {timer.type === 'focus' ? 'Foco' : 'Pausa'} • {totalSessions} sessões
+              </p>
+            </div>
+
+            <div className="flex items-center gap-1 ml-2">
+              {!timer.isRunning ? (
+                <Button size="icon" variant="ghost" className="h-10 w-10" onClick={timer.start}>
+                  <Play className="h-5 w-5" />
+                </Button>
+              ) : (
+                <Button size="icon" variant="ghost" className="h-10 w-10" onClick={timer.pause}>
+                  <Pause className="h-5 w-5" />
+                </Button>
+              )}
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="h-10 w-10" 
+                onClick={() => setIsMinimized(false)}
+              >
+                <Target className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+          
+          {/* Mini progress bar */}
+          <div className="h-1.5 w-full rounded-full bg-muted mt-3 overflow-hidden">
+            <div 
+              className={cn(
+                "h-full rounded-full transition-all duration-1000",
+                timer.type === 'focus' ? "bg-primary" : "bg-accent"
+              )}
+              style={{ width: `${timer.progress * 100}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Fullscreen mode
+  return (
+    <div className="fixed inset-0 z-[100] bg-background animate-fade-in">
+      {/* Background gradient */}
+      <div className={cn(
+        "absolute inset-0 transition-all duration-1000",
+        timer.type === 'focus' 
+          ? "bg-gradient-to-br from-primary/5 via-background to-primary/10"
+          : "bg-gradient-to-br from-accent/5 via-background to-accent/10"
+      )} />
+
+      {/* Animated circles background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className={cn(
+          "absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full blur-3xl opacity-20 animate-pulse",
+          timer.type === 'focus' ? "bg-primary" : "bg-accent"
+        )} style={{ animationDuration: '4s' }} />
+        <div className={cn(
+          "absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full blur-3xl opacity-15 animate-pulse",
+          timer.type === 'focus' ? "bg-primary" : "bg-accent"
+        )} style={{ animationDuration: '6s', animationDelay: '2s' }} />
+      </div>
+
+      {/* Top bar */}
+      <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+        <Button 
+          variant="ghost" 
+          onClick={onExit}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Voltar
+        </Button>
+        
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => saveSettings({ enabled: !settings.enabled })}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            {settings.enabled ? (
+              <Volume2 className="h-4 w-4" />
+            ) : (
+              <VolumeX className="h-4 w-4" />
+            )}
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setIsMinimized(true)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Minimize2 className="h-4 w-4 mr-2" />
+            Minimizar
+          </Button>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="relative h-full flex flex-col items-center justify-center px-4">
+        {/* Mode indicator */}
+        <div className="text-center mb-8 animate-fade-in" style={{ animationDelay: '100ms' }}>
+          <div className={cn(
+            "inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4",
+            timer.type === 'focus' ? "bg-primary/20 text-primary" : "bg-accent/20 text-accent"
+          )}>
+            {timer.type === 'focus' ? (
+              <Target className="h-5 w-5" />
+            ) : (
+              <Coffee className="h-5 w-5" />
+            )}
+            <span className="font-semibold">
+              {timer.type === 'focus' ? 'Modo Foco' : 'Modo Pausa'}
+            </span>
+          </div>
+          <p className="text-muted-foreground">
+            {totalSessions} sessões completadas hoje
+          </p>
+        </div>
+
+        {/* Circular timer */}
+        <div className="relative mb-8 animate-scale-in" style={{ animationDelay: '200ms' }}>
+          <svg className="w-72 h-72 md:w-96 md:h-96 transform -rotate-90">
+            {/* Background circle */}
+            <circle
+              cx="50%"
+              cy="50%"
+              r="140"
+              fill="none"
+              strokeWidth="8"
+              className="stroke-muted/30"
+            />
+            {/* Progress circle */}
+            <circle
+              cx="50%"
+              cy="50%"
+              r="140"
+              fill="none"
+              strokeWidth="10"
+              strokeLinecap="round"
+              className={cn(
+                "transition-all duration-1000",
+                timer.type === 'focus' ? "stroke-primary" : "stroke-accent"
+              )}
+              style={{ 
+                strokeDasharray: circumference,
+                strokeDashoffset: strokeDashoffset
+              }}
+            />
+          </svg>
+          
+          {/* Time display */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-7xl md:text-8xl font-bold tabular-nums text-foreground">
+              {timer.formattedTime}
+            </span>
+            <span className="text-sm text-muted-foreground mt-2 uppercase tracking-wider">
+              {timer.type === 'focus' ? 'Focus Time' : 'Break Time'}
+            </span>
+          </div>
+        </div>
+
+        {/* Session indicators */}
+        <div className="flex items-center gap-2 mb-8 animate-fade-in" style={{ animationDelay: '250ms' }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div 
+              key={i}
+              className={cn(
+                "w-3 h-3 rounded-full transition-all",
+                i < totalSessions % 4
+                  ? timer.type === 'focus' ? "bg-primary" : "bg-accent"
+                  : "bg-muted"
+              )}
+            />
+          ))}
+        </div>
+
+        {/* Controls */}
+        <div className="flex items-center gap-4 animate-fade-in" style={{ animationDelay: '300ms' }}>
+          {/* Reset button */}
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={timer.reset}
+            className="rounded-full h-14 w-14"
+          >
+            <RotateCcw className="h-5 w-5" />
+          </Button>
+
+          {/* Play/Pause button */}
+          <Button
+            size="lg"
+            onClick={timer.isRunning ? timer.pause : timer.start}
+            className={cn(
+              "rounded-full h-20 w-20 shadow-xl transition-all",
+              "hover:scale-105 active:scale-95",
+              timer.type === 'focus' 
+                ? "bg-primary hover:bg-primary/90" 
+                : "bg-accent hover:bg-accent/90"
+            )}
+          >
+            {timer.isRunning ? (
+              <Pause className="h-8 w-8" />
+            ) : (
+              <Play className="h-8 w-8 ml-1" />
+            )}
+          </Button>
+
+          {/* Skip to break/focus button */}
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={timer.type === 'focus' ? timer.goToBreak : timer.skipToFocus}
+            className="rounded-full h-14 w-14"
+          >
+            {timer.type === 'focus' ? (
+              <Coffee className="h-5 w-5" />
+            ) : (
+              <Target className="h-5 w-5" />
+            )}
+          </Button>
+        </div>
+
+        {/* Hint text */}
+        <p className="mt-6 text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '350ms' }}>
+          {timer.isRunning 
+            ? "Mantenha o foco. Você está indo muito bem!"
+            : timer.type === 'focus' 
+              ? "Pronto para começar? Clique no play."
+              : "Aproveite sua pausa. Levante, alongue-se, respire."
+          }
+        </p>
+
+        {/* Quick stats */}
+        <div className="mt-8 flex items-center gap-6 text-xs text-muted-foreground animate-fade-in" style={{ animationDelay: '400ms' }}>
+          <div className="text-center">
+            <p className="text-lg font-semibold text-foreground">{totalSessions}</p>
+            <p>Sessões</p>
+          </div>
+          <div className="h-8 w-px bg-border" />
+          <div className="text-center">
+            <p className="text-lg font-semibold text-foreground">{totalSessions * 25}</p>
+            <p>Minutos</p>
+          </div>
+          <div className="h-8 w-px bg-border" />
+          <div className="text-center">
+            <p className="text-lg font-semibold text-foreground">{timer.totalBreakTime}</p>
+            <p>Pausas (min)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

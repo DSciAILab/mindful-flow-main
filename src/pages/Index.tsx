@@ -17,6 +17,7 @@ import { HabitWidget } from "@/components/dashboard/HabitWidget";
 import { FloatingCoach } from "@/components/dashboard/FloatingCoach";
 import { FocusMode } from "@/components/dashboard/FocusMode";
 import { TimerDashboard } from "@/components/dashboard/TimerDashboard";
+import { FullPagePomodoro } from "@/components/dashboard/FullPagePomodoro";
 import { QuoteDisplay } from "@/components/dashboard/QuoteDisplay";
 import { ProjectCreateModal } from "@/components/projects/ProjectCreateModal";
 import { ProjectList } from "@/components/projects/ProjectCard";
@@ -41,6 +42,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { useJournal } from "@/hooks/useJournal";
 import { useProfile } from "@/hooks/useProfile";
 import { useCaptureItems } from "@/hooks/useCaptureItems";
+import { useTimerSounds } from "@/hooks/useTimerSounds";
 import { cn } from "@/lib/utils";
 import { 
   Sparkles, 
@@ -160,6 +162,7 @@ export default function Index() {
   const { stats, completeTask: addPointsForTask, addFocusTime } = useUserStats();
   const { toast } = useToast();
   const { isSplitting, subtasks, splitTask, removeSubtask } = useTaskSplitting();
+  const { playFocusEndSound, playBreakEndSound } = useTimerSounds();
 
   // Journal handlers
   const handleSaveJournalEntry = useCallback(async (entryData: Partial<JournalEntry>) => {
@@ -230,12 +233,19 @@ export default function Index() {
     }
   }, [selectedTask, addTimeToTask, addFocusTime]);
 
-  const handleSessionComplete = useCallback(() => {
+  const handleSessionComplete = useCallback((type: 'focus' | 'break' = 'focus') => {
+    // Play appropriate sound based on session type
+    if (type === 'focus') {
+      playFocusEndSound();
+    } else {
+      playBreakEndSound();
+    }
+    
     toast({
-      title: "Sessão completa!",
-      description: "Ótimo trabalho! Hora de uma pausa.",
+      title: type === 'focus' ? "Sessão completa!" : "Pausa terminada!",
+      description: type === 'focus' ? "Ótimo trabalho! Hora de uma pausa." : "Vamos voltar ao foco!",
     });
-  }, [toast]);
+  }, [toast, playFocusEndSound, playBreakEndSound]);
 
   const timer = useTimer({
     onMinutePassed: handleMinutePassed,
@@ -675,6 +685,13 @@ export default function Index() {
               <TimerDashboard />
             </div>
           </div>
+        );
+
+      case 'pomodoro':
+        return (
+          <FullPagePomodoro 
+            onExit={() => setActiveView('dashboard')}
+          />
         );
 
       case 'settings':

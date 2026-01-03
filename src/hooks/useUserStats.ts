@@ -3,13 +3,18 @@ import type { UserStats } from '@/types';
 
 const LEVEL_THRESHOLDS = [0, 100, 300, 600, 1000, 1500, 2200, 3000, 4000, 5500, 7500, 10000];
 
+interface ExtendedStats extends UserStats {
+  focusSessionsToday: number;
+}
+
 export function useUserStats() {
-  const [stats, setStats] = useState<UserStats>({
+  const [stats, setStats] = useState<ExtendedStats>({
     totalPoints: 245,
     currentStreak: 5,
     longestStreak: 12,
     tasksCompletedToday: 3,
     focusMinutesToday: 75,
+    focusSessionsToday: 0,
     level: 3,
   });
 
@@ -41,6 +46,14 @@ export function useUserStats() {
     }));
   }, []);
 
+  const addFocusSession = useCallback(() => {
+    setStats(prev => ({
+      ...prev,
+      focusSessionsToday: prev.focusSessionsToday + 1,
+      totalPoints: prev.totalPoints + 10, // Bonus for completing a session
+    }));
+  }, []);
+
   const getPointsToNextLevel = useCallback(() => {
     const nextThreshold = LEVEL_THRESHOLDS[stats.level] || LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1];
     const currentThreshold = LEVEL_THRESHOLDS[stats.level - 1] || 0;
@@ -56,6 +69,8 @@ export function useUserStats() {
     addPoints,
     completeTask,
     addFocusTime,
+    addFocusSession,
     getPointsToNextLevel,
   };
 }
+

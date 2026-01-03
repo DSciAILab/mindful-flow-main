@@ -14,7 +14,7 @@ interface UseTimerOptions {
   focusDuration?: number;
   breakDuration?: number;
   onMinutePassed?: () => void;
-  onSessionComplete?: () => void;
+  onSessionComplete?: (sessionType: 'focus' | 'break') => void;
 }
 
 export function useTimer({
@@ -121,7 +121,7 @@ export function useTimer({
     secondsElapsedRef.current = 0;
     
     if (onSessionComplete) {
-      onSessionComplete();
+      onSessionComplete('focus');
     }
     
     setState(prev => ({
@@ -164,8 +164,9 @@ export function useTimer({
             const newType = prev.type === 'focus' ? 'break' : 'focus';
             const newSessions = prev.type === 'focus' ? prev.sessionsCompleted + 1 : prev.sessionsCompleted;
             
-            if (prev.type === 'focus' && onSessionComplete) {
-              onSessionComplete();
+            // Call session complete with the current type before switching
+            if (onSessionComplete) {
+              onSessionComplete(prev.type);
             }
 
             secondsElapsedRef.current = 0;

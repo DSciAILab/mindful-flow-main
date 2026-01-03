@@ -10,10 +10,14 @@ import {
   Sparkles,
   Monitor,
   Brain,
-  Type
+  Type,
+  Bot,
+  Volume2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LLMSettings } from "./LLMSettings";
+import { AIPersonaSettings } from "./AIPersonaSettings";
+import { TimerSoundSettings } from "./TimerSoundSettings";
 
 interface ThemePreset {
   id: string;
@@ -383,6 +387,30 @@ export function Settings({ onThemeChange }: SettingsProps) {
           Configure qual provedor de IA será usado como "cérebro" da aplicação
         </p>
         <LLMSettings />
+      </div>
+
+      {/* AI Persona Configuration Section */}
+      <div className="animate-fade-in rounded-2xl border border-border/50 bg-card p-6 shadow-card" style={{ animationDelay: '350ms' }}>
+        <h3 className="mb-4 flex items-center gap-2 font-semibold text-foreground">
+          <Bot className="h-5 w-5 text-primary" />
+          Persona do Agente IA
+        </h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Configure a personalidade e comportamento do assistente IA (Jarvis)
+        </p>
+        <AIPersonaSettings />
+      </div>
+
+      {/* Timer Sounds Section */}
+      <div className="animate-fade-in rounded-2xl border border-border/50 bg-card p-6 shadow-card" style={{ animationDelay: '375ms' }}>
+        <h3 className="mb-4 flex items-center gap-2 font-semibold text-foreground">
+          <Volume2 className="h-5 w-5 text-primary" />
+          Sons do Timer
+        </h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Configure os sons de notificação do Pomodoro
+        </p>
+        <TimerSoundSettings />
       </div>
 
       {/* AI Features Section */}

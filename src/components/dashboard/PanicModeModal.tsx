@@ -123,23 +123,105 @@ export function PanicModeModal({ isOpen, onClose }: PanicModeModalProps) {
           </div>
         )}
 
-        {/* Breathing Stage */}
+        {/* Breathing Stage - Full screen immersive */}
         {stage === 'breathing' && (
-          <div className="text-center">
-            <div className={cn(
-              "mx-auto mb-6 flex h-32 w-32 items-center justify-center rounded-full bg-accent/20 transition-transform duration-1000",
-              isBreathing && breathingStep === 0 && "scale-125",
-              isBreathing && breathingStep === 1 && "scale-125",
-              isBreathing && breathingStep === 2 && "scale-100",
-            )}>
-              <Wind className="h-12 w-12 text-accent" />
+          <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-background">
+            {/* Background gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-background to-accent/10" />
+            
+            {/* Central breathing circle */}
+            <div className="relative flex items-center justify-center">
+              {/* Outer glow ring */}
+              <div 
+                className={cn(
+                  "absolute rounded-full bg-accent/20 blur-3xl transition-all",
+                  breathingStep === 0 && "w-[400px] h-[400px] opacity-60", // Inspire - expande
+                  breathingStep === 1 && "w-[400px] h-[400px] opacity-40", // Segure - mantém
+                  breathingStep === 2 && "w-[200px] h-[200px] opacity-20", // Expire - contrai
+                )}
+                style={{ 
+                  transitionDuration: breathingStep === 0 ? '4s' : breathingStep === 1 ? '0.5s' : '4s',
+                  transitionTimingFunction: 'ease-in-out'
+                }}
+              />
+              
+              {/* Middle ring */}
+              <div 
+                className={cn(
+                  "absolute rounded-full border-4 border-accent/30 transition-all",
+                  breathingStep === 0 && "w-64 h-64", // Inspire
+                  breathingStep === 1 && "w-64 h-64", // Segure
+                  breathingStep === 2 && "w-32 h-32", // Expire
+                )}
+                style={{ 
+                  transitionDuration: breathingStep === 0 ? '4s' : breathingStep === 1 ? '0.5s' : '4s',
+                  transitionTimingFunction: 'ease-in-out'
+                }}
+              />
+              
+              {/* Main breathing circle */}
+              <div 
+                className={cn(
+                  "relative rounded-full bg-gradient-to-br from-accent/40 to-accent/20 shadow-2xl",
+                  "flex items-center justify-center transition-all",
+                  breathingStep === 0 && "w-48 h-48 shadow-accent/30", // Inspire - expande
+                  breathingStep === 1 && "w-48 h-48 shadow-accent/20", // Segure - mantém
+                  breathingStep === 2 && "w-24 h-24 shadow-accent/10", // Expire - contrai
+                )}
+                style={{ 
+                  transitionDuration: breathingStep === 0 ? '4s' : breathingStep === 1 ? '0.5s' : '4s',
+                  transitionTimingFunction: 'ease-in-out',
+                  boxShadow: breathingStep === 1 
+                    ? '0 0 60px 20px rgba(var(--accent-rgb, 120, 200, 180), 0.3)' 
+                    : breathingStep === 0
+                      ? '0 0 80px 30px rgba(var(--accent-rgb, 120, 200, 180), 0.4)'
+                      : '0 0 30px 10px rgba(var(--accent-rgb, 120, 200, 180), 0.2)'
+                }}
+              >
+                <Wind className={cn(
+                  "text-accent transition-all",
+                  breathingStep === 2 ? "h-8 w-8" : "h-12 w-12"
+                )} 
+                style={{ transitionDuration: '4s' }}
+                />
+              </div>
             </div>
-            <h2 className="mb-2 font-display text-3xl font-semibold text-foreground">
-              {breathingSteps[breathingStep].text}
-            </h2>
-            <p className="text-muted-foreground">
-              Siga o ritmo do círculo
-            </p>
+
+            {/* Text instruction */}
+            <div className="mt-12 text-center">
+              <h2 className="font-display text-4xl font-semibold text-foreground mb-2">
+                {breathingSteps[breathingStep].text}
+              </h2>
+              <p className="text-muted-foreground">
+                Siga o ritmo do círculo
+              </p>
+            </div>
+
+            {/* Progress dots */}
+            <div className="absolute bottom-8 flex items-center gap-3">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "w-3 h-3 rounded-full transition-all duration-500",
+                    breathingStep === i ? "bg-accent scale-125" : "bg-muted"
+                  )}
+                />
+              ))}
+            </div>
+
+            {/* Skip button */}
+            <Button
+              variant="ghost"
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setIsBreathing(false);
+                setStage('grounding');
+              }}
+            >
+              <X className="h-5 w-5 mr-2" />
+              Pular
+            </Button>
           </div>
         )}
 

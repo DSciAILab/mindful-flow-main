@@ -5,6 +5,7 @@ export interface LLMConfig {
   provider: string;
   model: string;
   apiKey: string | null;
+  aiPersonaConfig: Record<string, any> | null;
 }
 
 export function useLLMConfig() {
@@ -29,6 +30,7 @@ export function useLLMConfig() {
           provider: 'lovable',
           model: 'gemini-2.5-flash',
           apiKey: null,
+          aiPersonaConfig: null,
         });
         setIsLoading(false);
         return;
@@ -36,7 +38,7 @@ export function useLLMConfig() {
 
       const { data: profile } = await supabase
         .from('mf_profiles')
-        .select('llm_provider, llm_api_key, llm_model')
+        .select('llm_provider, llm_api_key, llm_model, ai_persona_config')
         .eq('id', user.id)
         .single();
 
@@ -45,12 +47,14 @@ export function useLLMConfig() {
           provider: profile.llm_provider || 'lovable',
           model: profile.llm_model || 'gemini-2.5-flash',
           apiKey: profile.llm_api_key,
+          aiPersonaConfig: profile.ai_persona_config as Record<string, any> | null,
         });
       } else {
         setConfig({
           provider: 'lovable',
           model: 'gemini-2.5-flash',
           apiKey: null,
+          aiPersonaConfig: null,
         });
       }
     } catch (error) {
@@ -59,6 +63,7 @@ export function useLLMConfig() {
         provider: 'lovable',
         model: 'gemini-2.5-flash',
         apiKey: null,
+        aiPersonaConfig: null,
       });
     } finally {
       setIsLoading(false);
@@ -76,3 +81,4 @@ export function useLLMConfig() {
     reload: loadConfig,
   };
 }
+

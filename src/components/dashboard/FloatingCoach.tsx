@@ -2,9 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { useAICoach } from '@/hooks/useAICoach';
 import { useTasks } from '@/hooks/useTasks';
 import { useUserStats } from '@/hooks/useUserStats';
+import { useAIContext } from '@/hooks/useAIContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
 import { 
   Bot, 
   X, 
@@ -26,6 +28,7 @@ export function FloatingCoach() {
   const { messages, isLoading, sendMessage, clearMessages } = useAICoach();
   const { tasks, addTask } = useTasks();
   const { stats } = useUserStats();
+  const { getContextForAI, addInsight } = useAIContext();
   const { toast } = useToast();
 
   const scrollToBottom = () => {
@@ -45,10 +48,27 @@ export function FloatingCoach() {
     const userText = input;
     setInput('');
 
+    // Get unified context from all sources (tasks, habits, wheel of life)
+    const unifiedContext = getContextForAI();
+    
+    // Build context for AI Coach
     const context = {
-      tasksCount: tasks.length,
+      tasksCount: unifiedContext.tasksStats.total,
+      pendingTasksCount: unifiedContext.tasksStats.pending,
+      completedTasksCount: unifiedContext.tasksStats.completed,
+      urgentTasksCount: unifiedContext.tasksStats.urgent,
       completedToday: stats.tasksCompletedToday,
       focusMinutesToday: stats.focusMinutesToday,
+      // Pass actual tasks to AI
+      tasksList: unifiedContext.pendingTasks,
+      urgentTasksTitles: unifiedContext.urgentTasksTitles,
+      // New: Wheel of Life data
+      wheelOfLifeScores: unifiedContext.wheelOfLifeScores,
+      lowestAreas: unifiedContext.lowestAreas,
+      // New: Habits data
+      habitsStats: unifiedContext.habitsStats,
+      // New: Recent insights from other AI modules
+      recentInsights: unifiedContext.recentInsights,
     };
 
     await sendMessage(userText, context, async (taskData) => {
@@ -57,7 +77,6 @@ export function FloatingCoach() {
         priority: taskData.priority as any,
         status: 'next',
         tags: [],
-        category: taskData.category as any,
       });
 
       if (newTask) {
@@ -152,13 +171,21 @@ export function FloatingCoach() {
               >
                 <div
                   className={cn(
-                    "max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm",
+                    "max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm",
                     msg.role === 'user'
                       ? "rounded-br-none bg-primary text-primary-foreground"
                       : "rounded-bl-none border border-border bg-background text-foreground"
                   )}
                 >
-                  {msg.content}
+                  {msg.role === 'user' ? (
+                    msg.content
+                  ) : (
+                    <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:my-1 [&>ul]:my-1 [&>ol]:my-1 [&>li]:my-0.5 [&>h1]:text-base [&>h2]:text-sm [&>h3]:text-sm [&>h4]:text-xs [&>strong]:text-foreground [&>p]:leading-relaxed">
+                      <ReactMarkdown>
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -204,3 +231,4 @@ export function FloatingCoach() {
     </div>
   );
 }
+
