@@ -827,6 +827,7 @@ export default function Index() {
         onDone={handleTaskDone}
         onBreak={timer.goToBreak}
         onClearTask={handleClearTask}
+        onSkipToFocus={timer.skipToFocus}
       />
 
       <PanicModeModal 

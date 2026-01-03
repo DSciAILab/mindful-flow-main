@@ -4,15 +4,17 @@ import { cn } from "@/lib/utils";
 import { 
   Play, 
   Pause, 
-  X, 
+  Check,
   Minimize2,
-  Maximize2,
   Coffee,
-  CheckCircle,
+  Target,
   Timer,
-  ChevronUp
+  ChevronLeft,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 import type { Task } from "@/types";
+import { useTimerSounds } from "@/hooks/useTimerSounds";
 
 interface FocusTimerProps {
   formattedTime: string;
@@ -27,6 +29,7 @@ interface FocusTimerProps {
   onDone: () => void;
   onBreak: () => void;
   onClearTask: () => void;
+  onSkipToFocus?: () => void;
 }
 
 export function FocusTimer({
@@ -42,9 +45,24 @@ export function FocusTimer({
   onDone,
   onBreak,
   onClearTask,
+  onSkipToFocus,
 }: FocusTimerProps) {
   const [isMinimized, setIsMinimized] = useState(false);
-  const [showOptions, setShowOptions] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
+  const { settings, saveSettings } = useTimerSounds();
+
+  // Track when timer has been started
+  const handleStart = () => {
+    if (!hasStarted) setHasStarted(true);
+    onStart();
+  };
+
+  // Show side buttons only when paused AFTER having started
+  const showSideButtons = isPaused && hasStarted;
+
+  // Calculate circular progress
+  const circumference = 2 * Math.PI * 140;
+  const strokeDashoffset = circumference - (progress * circumference);
 
   // Prevent body scroll when fullscreen
   useEffect(() => {
@@ -58,33 +76,27 @@ export function FocusTimer({
     };
   }, [selectedTask, isMinimized]);
 
-  // Close options when clicking outside or after action
-  const handleAction = (action: () => void) => {
-    action();
-    setShowOptions(false);
-  };
-
   if (!selectedTask) return null;
 
   // Minimized floating widget
   if (isMinimized) {
     return (
       <div className="fixed bottom-4 right-4 z-[100] animate-scale-in">
-        <div className="rounded-2xl border border-border/50 bg-card/95 backdrop-blur-xl shadow-lg p-3">
-          <div className="flex items-center gap-3">
+        <div className="rounded-2xl border border-border/50 bg-card/95 backdrop-blur-xl shadow-2xl p-4">
+          <div className="flex items-center gap-4">
             <div className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-xl",
+              "flex h-12 w-12 items-center justify-center rounded-xl",
               type === 'focus' ? "bg-primary/20" : "bg-accent/20"
             )}>
               {type === 'focus' ? (
-                <Timer className="h-5 w-5 text-primary" />
+                <Target className="h-6 w-6 text-primary" />
               ) : (
-                <Coffee className="h-5 w-5 text-accent" />
+                <Coffee className="h-6 w-6 text-accent" />
               )}
             </div>
             
             <div>
-              <p className="text-xl font-bold tabular-nums text-foreground">
+              <p className="text-2xl font-bold tabular-nums text-foreground">
                 {formattedTime}
               </p>
               <p className="text-xs text-muted-foreground truncate max-w-[120px]">
@@ -94,33 +106,33 @@ export function FocusTimer({
 
             <div className="flex items-center gap-1 ml-2">
               {!isRunning ? (
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onStart}>
-                  <Play className="h-4 w-4" />
+                <Button size="icon" variant="ghost" className="h-10 w-10" onClick={handleStart}>
+                  <Play className="h-5 w-5" />
                 </Button>
               ) : (
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onPause}>
-                  <Pause className="h-4 w-4" />
+                <Button size="icon" variant="ghost" className="h-10 w-10" onClick={onPause}>
+                  <Pause className="h-5 w-5" />
                 </Button>
               )}
               <Button 
                 size="icon" 
                 variant="ghost" 
-                className="h-8 w-8" 
+                className="h-10 w-10" 
                 onClick={() => setIsMinimized(false)}
               >
-                <Maximize2 className="h-4 w-4" />
+                <Target className="h-5 w-5" />
               </Button>
             </div>
           </div>
           
           {/* Mini progress bar */}
-          <div className="h-1 w-full rounded-full bg-muted mt-2 overflow-hidden">
+          <div className="h-1.5 w-full rounded-full bg-muted mt-3 overflow-hidden">
             <div 
               className={cn(
                 "h-full rounded-full transition-all duration-1000",
                 type === 'focus' ? "bg-primary" : "bg-accent"
               )}
-              style={{ width: `${progress}%` }}
+              style={{ width: `${progress * 100}%` }}
             />
           </div>
         </div>
@@ -142,177 +154,227 @@ export function FocusTimer({
       {/* Animated circles background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className={cn(
-          "absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse",
+          "absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full blur-3xl opacity-20 animate-pulse",
           type === 'focus' ? "bg-primary" : "bg-accent"
         )} style={{ animationDuration: '4s' }} />
         <div className={cn(
-          "absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-3xl opacity-15 animate-pulse",
+          "absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full blur-3xl opacity-15 animate-pulse",
           type === 'focus' ? "bg-primary" : "bg-accent"
         )} style={{ animationDuration: '6s', animationDelay: '2s' }} />
       </div>
 
-      {/* Top bar - only minimize button */}
-      <div className="absolute top-4 left-4">
+      {/* Top bar - z-50 to be above content */}
+      <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-50">
         <Button 
           variant="ghost" 
-          size="sm"
-          onClick={() => setIsMinimized(true)}
-          className="text-muted-foreground hover:text-foreground"
+          onClick={onClearTask}
+          className="text-muted-foreground hover:text-foreground hover:bg-foreground/10"
         >
-          <Minimize2 className="h-4 w-4 mr-2" />
-          Minimizar
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Sair
         </Button>
+        
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => saveSettings({ enabled: !settings.enabled })}
+            className="text-muted-foreground hover:text-foreground hover:bg-foreground/10"
+          >
+            {settings.enabled ? (
+              <Volume2 className="h-4 w-4" />
+            ) : (
+              <VolumeX className="h-4 w-4" />
+            )}
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setIsMinimized(true)}
+            className="text-muted-foreground hover:text-foreground hover:bg-foreground/10"
+          >
+            <Minimize2 className="h-4 w-4 mr-2" />
+            Minimizar
+          </Button>
+        </div>
       </div>
 
       {/* Main content */}
       <div className="relative h-full flex flex-col items-center justify-center px-4">
         {/* Task title */}
         <div className="text-center mb-8 animate-fade-in" style={{ animationDelay: '100ms' }}>
-          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            {type === 'focus' ? 'Focando em' : 'Pausa'}
-          </p>
+          <div className={cn(
+            "inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4",
+            type === 'focus' ? "bg-primary/20 text-primary" : "bg-accent/20 text-accent"
+          )}>
+            {type === 'focus' ? (
+              <Target className="h-5 w-5" />
+            ) : (
+              <Coffee className="h-5 w-5" />
+            )}
+            <span className="font-semibold">
+              {type === 'focus' ? 'Focando em' : 'Pausa'}
+            </span>
+          </div>
           <h1 className="text-2xl md:text-3xl font-display font-semibold text-foreground max-w-lg">
             {selectedTask.title}
           </h1>
+          <p className="text-muted-foreground mt-2">
+            {sessionsCompleted} sessões completadas
+          </p>
         </div>
 
         {/* Circular progress */}
         <div className="relative mb-8 animate-scale-in" style={{ animationDelay: '200ms' }}>
-          <svg className="w-64 h-64 md:w-80 md:h-80 transform -rotate-90">
+          <svg 
+            className="w-72 h-72 md:w-96 md:h-96" 
+            viewBox="0 0 320 320"
+            style={{ transform: 'rotate(-90deg)' }}
+          >
             {/* Background circle */}
             <circle
-              cx="50%"
-              cy="50%"
-              r="45%"
+              cx="160"
+              cy="160"
+              r="140"
               fill="none"
-              stroke="currentColor"
-              strokeWidth="4"
-              className="text-muted/30"
+              strokeWidth="16"
+              className="stroke-muted/30"
             />
             {/* Progress circle */}
             <circle
-              cx="50%"
-              cy="50%"
-              r="45%"
+              cx="160"
+              cy="160"
+              r="140"
               fill="none"
-              stroke="currentColor"
-              strokeWidth="6"
+              strokeWidth="20"
               strokeLinecap="round"
               className={cn(
                 "transition-all duration-1000",
-                type === 'focus' ? "text-primary" : "text-accent"
+                type === 'focus' ? "stroke-primary" : "stroke-accent"
               )}
               style={{ 
-                strokeDasharray: '283%',
-                strokeDashoffset: `${283 * (1 - progress / 100)}%`
+                strokeDasharray: circumference,
+                strokeDashoffset: strokeDashoffset
               }}
             />
           </svg>
           
           {/* Time display */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-6xl md:text-7xl font-bold tabular-nums text-foreground">
+            <span className="text-7xl md:text-8xl font-bold tabular-nums text-foreground">
               {formattedTime}
             </span>
-            <span className="text-sm text-muted-foreground mt-2">
-              {sessionsCompleted} sessões hoje
+            <span className="text-sm text-muted-foreground mt-2 uppercase tracking-wider">
+              {type === 'focus' ? 'Focus Time' : 'Break Time'}
             </span>
           </div>
         </div>
 
-        {/* Single main button + expandable options */}
-        <div className="relative animate-fade-in" style={{ animationDelay: '300ms' }}>
-          {/* Options menu - appears above the main button */}
-          {showOptions && (
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 animate-fade-in">
-              <div className="flex items-center gap-3 bg-card/90 backdrop-blur-xl rounded-2xl p-3 border border-border/50 shadow-lg">
-                {type === 'focus' && (
-                  <>
-                    <Button 
-                      onClick={() => handleAction(onBreak)} 
-                      variant="outline"
-                      className="rounded-xl"
-                    >
-                      <Coffee className="mr-2 h-4 w-4" />
-                      Pausa
-                    </Button>
-                    
-                    <Button 
-                      onClick={() => handleAction(onDone)} 
-                      variant="outline"
-                      className="rounded-xl text-green-500 border-green-500/30 hover:bg-green-500/10"
-                    >
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      Concluir
-                    </Button>
-                  </>
-                )}
-
-                <Button 
-                  onClick={() => handleAction(onClearTask)} 
-                  variant="outline"
-                  className="rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Sair
-                </Button>
-              </div>
-              
-              {/* Arrow pointing down */}
-              <div className="flex justify-center">
-                <ChevronUp className="h-5 w-5 text-muted-foreground rotate-180" />
-              </div>
-            </div>
-          )}
-
-          {/* Main action button */}
-          <Button 
-            onClick={() => {
-              if (showOptions) {
-                setShowOptions(false);
-              } else if (!isRunning) {
-                onStart();
-              } else {
-                setShowOptions(true);
-              }
-            }}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              setShowOptions(!showOptions);
-            }}
-            size="lg"
-            className={cn(
-              "h-20 w-20 rounded-full text-lg shadow-xl transition-all duration-300",
-              "hover:scale-105 active:scale-95",
-              showOptions && "ring-4 ring-primary/30",
-              type === 'focus' 
-                ? "bg-primary hover:bg-primary/90" 
-                : "bg-accent hover:bg-accent/90"
-            )}
-          >
-            {!isRunning ? (
-              <Play className="h-8 w-8 ml-1" />
-            ) : showOptions ? (
-              <X className="h-8 w-8" />
-            ) : (
-              <Pause className="h-8 w-8" />
-            )}
-          </Button>
-
-          {/* Hint text */}
-          <p className="text-center text-xs text-muted-foreground mt-4">
-            {!isRunning 
-              ? (isPaused ? 'Toque para continuar' : 'Toque para iniciar')
-              : (showOptions ? 'Toque para fechar' : 'Toque para ver opções')
-            }
-          </p>
+        {/* Session indicators */}
+        <div className="flex items-center gap-2 mb-8 animate-fade-in" style={{ animationDelay: '250ms' }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div 
+              key={i}
+              className={cn(
+                "w-3 h-3 rounded-full transition-all",
+                i < sessionsCompleted % 4
+                  ? type === 'focus' ? "bg-primary" : "bg-accent"
+                  : "bg-muted"
+              )}
+            />
+          ))}
         </div>
 
-        {/* Motivational message */}
-        <p className="mt-8 text-muted-foreground text-center max-w-md animate-fade-in" style={{ animationDelay: '400ms' }}>
-          {type === 'focus' 
-            ? "Mantenha o foco. Você está fazendo um ótimo trabalho!"
-            : "Aproveite sua pausa. Levante, alongue-se, respire fundo."
+        {/* Controls - Single button with expanding side buttons */}
+        <div className="relative flex items-center justify-center gap-12 min-h-[120px] animate-fade-in" style={{ animationDelay: '300ms' }}>
+          
+          {/* Break/Focus Button (Left) - appears when paused after starting */}
+          <div className={cn(
+            "transition-all duration-500 transform",
+            showSideButtons 
+              ? "opacity-100 translate-y-0" 
+              : "opacity-0 translate-y-10 pointer-events-none absolute left-0"
+          )}>
+            <button 
+              onClick={type === 'focus' ? onBreak : (onSkipToFocus || onStart)}
+              className="flex flex-col items-center gap-3 group"
+            >
+              <div className={cn(
+                "w-14 h-14 rounded-full border flex items-center justify-center transition-all",
+                "bg-card border-border",
+                type === 'focus' ? "text-accent" : "text-primary",
+                type === 'focus' 
+                  ? "group-hover:border-accent/50 group-hover:bg-accent/10"
+                  : "group-hover:border-primary/50 group-hover:bg-primary/10"
+              )}>
+                {type === 'focus' ? (
+                  <Coffee className="h-5 w-5" />
+                ) : (
+                  <Target className="h-5 w-5" />
+                )}
+              </div>
+              <span className={cn(
+                "text-[10px] font-bold uppercase tracking-widest text-muted-foreground transition-colors",
+                type === 'focus' ? "group-hover:text-accent" : "group-hover:text-primary"
+              )}>
+                {type === 'focus' ? 'Break' : 'Focus'}
+              </span>
+            </button>
+          </div>
+
+          {/* Main Play/Pause Button (Center) */}
+          <button 
+            onClick={isRunning ? onPause : handleStart}
+            className={cn(
+              "relative z-20 w-20 h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 active:scale-95",
+              isRunning 
+                ? "bg-transparent border-2 border-foreground/20 text-foreground hover:bg-foreground/10" 
+                : type === 'focus'
+                  ? "bg-primary text-primary-foreground hover:scale-105 shadow-primary/20"
+                  : "bg-accent text-accent-foreground hover:scale-105 shadow-accent/20"
+            )}
+          >
+            {isRunning ? (
+              <Pause className="h-8 w-8 animate-in fade-in zoom-in duration-300" />
+            ) : (
+              <Play className="h-8 w-8 ml-1 animate-in fade-in zoom-in duration-300" />
+            )}
+          </button>
+
+          {/* Done Button (Right) - appears when paused after starting */}
+          <div className={cn(
+            "transition-all duration-500 transform",
+            showSideButtons 
+              ? "opacity-100 translate-y-0" 
+              : "opacity-0 translate-y-10 pointer-events-none absolute right-0"
+          )}>
+            <button 
+              onClick={onDone}
+              className="flex flex-col items-center gap-3 group"
+            >
+              <div className={cn(
+                "w-14 h-14 rounded-full border flex items-center justify-center transition-all",
+                "bg-card border-border text-green-500",
+                "group-hover:border-green-500/50 group-hover:bg-green-500/10"
+              )}>
+                <Check className="h-5 w-5" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-green-500 transition-colors">
+                Done
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Hint text */}
+        <p className="mt-6 text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '350ms' }}>
+          {isRunning 
+            ? "Mantenha o foco. Você está indo muito bem!"
+            : showSideButtons
+              ? "Escolha uma ação ou continue"
+              : isPaused 
+                ? "Toque para continuar"
+                : "Pronto para começar? Clique no play."
           }
         </p>
       </div>

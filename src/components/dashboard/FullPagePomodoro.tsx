@@ -159,12 +159,12 @@ export function FullPagePomodoro({ onExit, onMinimize }: FullPagePomodoroProps) 
         )} style={{ animationDuration: '6s', animationDelay: '2s' }} />
       </div>
 
-      {/* Top bar */}
-      <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+      {/* Top bar - z-50 to be above content */}
+      <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-50">
         <Button 
           variant="ghost" 
           onClick={onExit}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground hover:bg-foreground/10"
         >
           <ChevronLeft className="h-4 w-4 mr-2" />
           Voltar
@@ -175,7 +175,7 @@ export function FullPagePomodoro({ onExit, onMinimize }: FullPagePomodoroProps) 
             variant="ghost" 
             size="icon"
             onClick={() => saveSettings({ enabled: !settings.enabled })}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground hover:bg-foreground/10"
           >
             {settings.enabled ? (
               <Volume2 className="h-4 w-4" />
@@ -187,7 +187,7 @@ export function FullPagePomodoro({ onExit, onMinimize }: FullPagePomodoroProps) 
             variant="ghost" 
             size="sm"
             onClick={() => setIsMinimized(true)}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground hover:bg-foreground/10"
           >
             <Minimize2 className="h-4 w-4 mr-2" />
             Minimizar
@@ -219,23 +219,27 @@ export function FullPagePomodoro({ onExit, onMinimize }: FullPagePomodoroProps) 
 
         {/* Circular timer */}
         <div className="relative mb-8 animate-scale-in" style={{ animationDelay: '200ms' }}>
-          <svg className="w-72 h-72 md:w-96 md:h-96 transform -rotate-90">
+          <svg 
+            className="w-72 h-72 md:w-96 md:h-96" 
+            viewBox="0 0 320 320"
+            style={{ transform: 'rotate(-90deg)' }}
+          >
             {/* Background circle */}
             <circle
-              cx="50%"
-              cy="50%"
+              cx="160"
+              cy="160"
               r="140"
               fill="none"
-              strokeWidth="8"
+              strokeWidth="16"
               className="stroke-muted/30"
             />
             {/* Progress circle */}
             <circle
-              cx="50%"
-              cy="50%"
+              cx="160"
+              cy="160"
               r="140"
               fill="none"
-              strokeWidth="10"
+              strokeWidth="20"
               strokeLinecap="round"
               className={cn(
                 "transition-all duration-1000",
