@@ -59,6 +59,8 @@ export const useCaptureItems = () => {
   const addItem = useCallback(async (type: CaptureItem['type'], content: string, audioUrl?: string): Promise<CaptureItem | null> => {
     if (!user) return null;
 
+    console.log('Adding capture item:', { type, content, audioUrl });
+
     try {
       const { data, error } = await supabase
         .from('mf_capture_items')
@@ -72,7 +74,12 @@ export const useCaptureItems = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase insert error:', error);
+        throw error;
+      }
+
+      console.log('Capture item added successfully:', data);
 
       const newItem: CaptureItem = {
         id: data.id,
@@ -84,6 +91,7 @@ export const useCaptureItems = () => {
       };
 
       setItems((prev) => [newItem, ...prev]);
+      return newItem;
       return newItem;
     } catch (error) {
       console.error('Error adding capture item:', error);

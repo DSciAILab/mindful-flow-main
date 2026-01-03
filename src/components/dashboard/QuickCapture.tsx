@@ -62,7 +62,10 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
     try {
       if (audioBlob) {
         const url = await uploadAudio(audioBlob);
-        if (url) audioUrl = url;
+        if (!url) {
+          throw new Error("Upload failed");
+        }
+        audioUrl = url;
       }
 
       let finalContent = prefix ? `${prefix}: ${inputText}` : inputText;
@@ -72,17 +75,21 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
       }
 
       // If it's just audio, ensure we have a fallback title
-      if (!finalContent && audioUrl) {
+      if (!finalContent.trim() && audioUrl) {
         finalContent = `Audio Note - ${new Date().toLocaleString()}`;
-        type = "Note"; // Force type to Note for audio
+        if (type === "text") type = "audio"; // Switch type to audio if it was default
       }
 
-      onCapture(type, finalContent, audioUrl);
+      await onCapture(type, finalContent, audioUrl);
       
       // Reset state
       setInputText("");
       setSelectedProjectId(null);
       discardRecording();
+      
+    } catch (error) {
+       console.error("Error in handleCapture:", error);
+       // Toast is likely handled in uploadAudio or onCapture, but we ensure we don't clear form if it failed
     } finally {
       setIsUploading(false);
     }
