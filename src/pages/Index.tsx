@@ -56,7 +56,8 @@ import {
   Lightbulb, 
   BarChart3,
   Plus,
-  Trash2
+  Trash2,
+  ListTodo
 } from "lucide-react";
 import type { Task, CaptureItem, JournalEntry, Project } from "@/types";
 
@@ -123,6 +124,7 @@ export default function Index() {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
+  const [projectViewMode, setProjectViewMode] = useState<'cards' | 'minimal'>('minimal');
   
   const handleEditProject = (project: Project) => {
     setProjectToEdit(project);
@@ -522,12 +524,26 @@ export default function Index() {
               </p>
             </div>
             
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="text-lg font-semibold">Seus Projetos</h2>
-              <Button onClick={() => setIsProjectModalOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Novo Projeto
-              </Button>
+              <div className="flex items-center gap-2">
+                {/* View mode toggle - single icon */}
+                <button
+                  onClick={() => setProjectViewMode(projectViewMode === 'minimal' ? 'cards' : 'minimal')}
+                  className="p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  title={projectViewMode === 'minimal' ? 'Visualizar cards' : 'Visualizar lista'}
+                >
+                  {projectViewMode === 'minimal' ? (
+                    <FolderKanban className="h-4 w-4" />
+                  ) : (
+                    <ListTodo className="h-4 w-4" />
+                  )}
+                </button>
+                <Button onClick={() => setIsProjectModalOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Novo Projeto
+                </Button>
+              </div>
             </div>
 
             <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
@@ -546,6 +562,7 @@ export default function Index() {
                   setCreateTaskProjectId(projectId);
                   setIsCreateModalOpen(true);
                 }}
+                viewMode={projectViewMode}
               />
             </div>
 

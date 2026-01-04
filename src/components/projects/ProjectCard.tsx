@@ -214,6 +214,152 @@ export function ProjectCard({
   );
 }
 
+// Minimal Project Item - clean list view with task count on left, expandable
+interface MinimalProjectItemProps {
+  project: Project;
+  tasks: Task[];
+  isSelected: boolean;
+  onSelect: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onTaskClick?: (task: Task) => void;
+}
+
+export function MinimalProjectItem({
+  project,
+  tasks,
+  isSelected,
+  onSelect,
+  onEdit,
+  onDelete,
+  onTaskClick,
+}: MinimalProjectItemProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const projectTasks = tasks.filter(t => t.projectId === project.id);
+  const completedTasks = projectTasks.filter(t => t.status === 'done');
+
+  const handleClick = () => {
+    setIsExpanded(!isExpanded);
+    onSelect();
+  };
+
+  return (
+    <div
+      className={cn(
+        "group rounded-xl transition-all duration-200 cursor-pointer",
+        "bg-card/50 border border-border/50",
+        "hover:bg-card hover:border-border",
+        isExpanded && "bg-card border-border shadow-sm"
+      )}
+    >
+      {/* Header row */}
+      <div 
+        className="flex items-center gap-4 py-3 px-4"
+        onClick={handleClick}
+      >
+        {/* Task count on the left */}
+        <div 
+          className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0"
+          style={{ 
+            backgroundColor: `${project.color}20`,
+            color: project.color 
+          }}
+        >
+          {projectTasks.length}
+        </div>
+
+        {/* Project name */}
+        <div className="flex-1 min-w-0">
+          <span className="font-medium text-foreground">
+            {project.name}
+          </span>
+        </div>
+
+        {/* Area badge */}
+        {project.areaId && (
+          <LifeAreaBadge areaId={project.areaId} className="scale-90" />
+        )}
+
+        {/* Action buttons - appear on hover */}
+        <div className="flex items-center gap-1 opacity-100 pointer-events-auto md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto transition-all">
+          {onEdit && (
+            <Button 
+              variant="ghost" 
+              size="icon-sm" 
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button 
+              variant="ghost" 
+              size="icon-sm" 
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+
+        {/* Expand indicator */}
+        <div className="text-muted-foreground">
+          {isExpanded ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </div>
+      </div>
+
+      {/* Expanded task list */}
+      {isExpanded && (
+        <div className="px-4 pb-3 pt-1 border-t border-border/30 animate-fade-in">
+          {projectTasks.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic py-2">
+              Nenhuma tarefa neste projeto.
+            </p>
+          ) : (
+            <div className="space-y-1.5">
+              {projectTasks.map(task => (
+                <div 
+                  key={task.id}
+                  className="flex items-center gap-2 text-sm py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTaskClick?.(task);
+                  }}
+                >
+                  <div className={cn(
+                    "h-2.5 w-2.5 rounded-full border-2 flex-shrink-0",
+                    task.status === 'done' 
+                      ? "bg-primary border-primary" 
+                      : "border-muted-foreground"
+                  )} />
+                  <span className={cn(
+                    "flex-1 truncate",
+                    task.status === 'done' && "line-through text-muted-foreground"
+                  )}>
+                    {task.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Progress indicator */}
+          <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            <span>{completedTasks.length}/{projectTasks.length} concluídas</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface ProjectListProps {
   projects: Project[];
   tasks: Task[];
@@ -223,6 +369,7 @@ interface ProjectListProps {
   onDeleteProject: (projectId: string) => void;
   onEditTask?: (task: Task) => void;
   onAddTask?: (projectId: string) => void;
+  viewMode?: 'cards' | 'minimal';
 }
 
 export function ProjectList({
@@ -234,6 +381,7 @@ export function ProjectList({
   onDeleteProject,
   onEditTask,
   onAddTask,
+  viewMode = 'cards',
 }: ProjectListProps) {
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
@@ -249,12 +397,31 @@ export function ProjectList({
     );
   }
 
+  // Helper to get task counts for a project
+  const getProjectTaskCounts = (projectId: string) => {
+    const projectTasks = tasks.filter(t => t.projectId === projectId);
+    const completedTasks = projectTasks.filter(t => t.status === 'done');
+    return { total: projectTasks.length, completed: completedTasks.length };
+  };
+
   return (
-    <div className="space-y-3">
+    <div className={viewMode === 'minimal' ? "space-y-3" : "space-y-3"}>
+      {/* Minimal view */}
+      {viewMode === 'minimal' && projects.map((project) => (
+        <MinimalProjectItem
+          key={project.id}
+          project={project}
+          tasks={tasks}
+          isSelected={selectedProjectId === project.id}
+          onSelect={() => onSelectProject(selectedProjectId === project.id ? null : project.id)}
+          onEdit={() => onEditProject(project)}
+          onDelete={() => setProjectToDelete(project)}
+          onTaskClick={onEditTask}
+        />
+      ))}
 
-
-      {/* Project cards */}
-      {projects.map((project) => (
+      {/* Card view */}
+      {viewMode === 'cards' && projects.map((project) => (
         <ProjectCard
           key={project.id}
           project={project}

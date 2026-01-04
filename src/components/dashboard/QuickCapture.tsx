@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   CheckCircle2, 
@@ -10,12 +10,15 @@ import {
   Eraser,
   Mic,
   Square,
-  Loader2
+  Loader2,
+  Image as ImageIcon,
+  Camera
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProjects } from "@/hooks/useProjects";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useNotes } from "@/hooks/useNotes";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Popover,
   PopoverContent,
@@ -32,6 +35,9 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isProjectOpen, setIsProjectOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const { projects } = useProjects();
   const { 
     isRecording, 
@@ -92,6 +98,8 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
       setInputText("");
       setSelectedProjectId(null);
       discardRecording();
+      setImageFile(null);
+      setImagePreview(null);
       
     } catch (error) {
        console.error("Error in handleCapture:", error);
@@ -101,10 +109,54 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+    
+    const { error } = await supabase.storage
+      .from('capture-media')
+      .upload(fileName, file);
+
+    if (error) {
+      console.error('Image upload error:', error);
+      return null;
+    }
+
+    const { data } = supabase.storage
+      .from('capture-media')
+      .getPublicUrl(fileName);
+
+    return data.publicUrl;
+  };
+
   const clearForm = () => {
     setInputText("");
     setSelectedProjectId(null);
     discardRecording();
+    removeImage();
   };
 
   const classificationOptions = [
@@ -171,12 +223,32 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
               </Button>
             </div>
           ) : (
-            <textarea
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="What's on your mind? Type your thought, idea, or to-do here..."
-              className="w-full min-h-[140px] p-6 bg-transparent border-0 resize-none text-lg placeholder:text-muted-foreground/50 focus:ring-0 focus:outline-none rounded-t-2xl"
-            />
+            <div className="w-full">
+              {/* Image preview */}
+              {imagePreview && (
+                <div className="p-4 border-b border-border/30">
+                  <div className="relative inline-block">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="max-h-32 rounded-lg object-cover"
+                    />
+                    <button
+                      onClick={removeImage}
+                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/80 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
+              <textarea
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="What's on your mind? Type your thought, idea, or to-do here..."
+                className="w-full min-h-[140px] p-6 bg-transparent border-0 resize-none text-lg placeholder:text-muted-foreground/50 focus:ring-0 focus:outline-none rounded-t-2xl"
+              />
+            </div>
           )}
           
           {/* Bottom Bar: Tools */}
@@ -194,7 +266,9 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
                     )}
                   >
                     <FolderPlus className="mr-1.5 h-3.5 w-3.5" />
-                    {selectedProject ? selectedProject.name : "Add to Project"}
+                    <span className="hidden sm:inline">
+                      {selectedProject ? selectedProject.name : "Add to Project"}
+                    </span>
                     {selectedProject && (
                       <span 
                         className="ml-2 hover:bg-black/5 rounded-full p-0.5 cursor-pointer"
@@ -249,8 +323,32 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
                   ) : (
                     <Mic className="mr-1.5 h-3.5 w-3.5" />
                   )}
-                  {permissionPending ? "Accessing Mic..." : "Record Audio"}
+                  <span className="hidden sm:inline">
+                    {permissionPending ? "Accessing Mic..." : "Record Audio"}
+                  </span>
                 </Button>
+              )}
+
+              {/* Image upload button */}
+              {!isRecording && (
+                <>
+                  <input
+                    type="file"
+                    ref={imageInputRef}
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => imageInputRef.current?.click()}
+                    className="h-8 text-xs font-medium rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  >
+                    <ImageIcon className="mr-1.5 h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Add Image</span>
+                  </Button>
+                </>
               )}
 
               {permissionDenied && (

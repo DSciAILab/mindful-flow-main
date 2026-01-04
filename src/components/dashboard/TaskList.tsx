@@ -374,7 +374,7 @@ export function TaskList({
                         e.stopPropagation();
                         onEditTask(task);
                       }}
-                      className="opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all"
+                      className="opacity-100 pointer-events-auto md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto transition-all"
                       title="Editar tarefa"
                     >
                       <Pencil className="h-4 w-4 text-muted-foreground" />
@@ -390,7 +390,7 @@ export function TaskList({
                         e.stopPropagation();
                         setDeletingTaskId(task.id);
                       }}
-                      className="opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all hover:bg-destructive/10"
+                      className="opacity-100 pointer-events-auto md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto transition-all hover:bg-destructive/10"
                       title="Excluir tarefa"
                     >
                       <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
@@ -408,7 +408,7 @@ export function TaskList({
                       }}
                       disabled={isSplitting}
                       className={cn(
-                        "opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all",
+                        "opacity-100 pointer-events-auto md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto transition-all",
                         isSplitting && "opacity-100 pointer-events-auto"
                       )}
                       title="Dividir tarefa com IA"
@@ -432,7 +432,7 @@ export function TaskList({
                       }}
                       className={cn(
                         "transition-all",
-                        !isSelected && "opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"
+                        !isSelected && "opacity-100 pointer-events-auto md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto"
                       )}
                     >
                       {isSelected ? (
