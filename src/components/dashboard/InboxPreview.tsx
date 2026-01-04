@@ -7,8 +7,14 @@ import {
   Camera,
   Sparkles,
   Clock,
-  Trash2
+  Trash2,
+  Pencil,
+  Save,
+  X
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import { useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { CaptureItem } from "@/types";
 
@@ -17,6 +23,7 @@ interface InboxPreviewProps {
   onViewAll: () => void;
   onProcess: (item: CaptureItem) => void;
   onDelete?: (id: string) => void;
+  onUpdate?: (id: string, content: string) => void;
 }
 
 const typeIcons: Record<string, React.ElementType> = {
@@ -27,8 +34,26 @@ const typeIcons: Record<string, React.ElementType> = {
   canvas: Type,
 };
 
-export function InboxPreview({ items, onViewAll, onProcess, onDelete }: InboxPreviewProps) {
+export function InboxPreview({ items, onViewAll, onProcess, onDelete, onUpdate }: InboxPreviewProps) {
   const unprocessedCount = items.filter(i => !i.processed).length;
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
+
+  const handleStartEdit = (item: CaptureItem) => {
+    setEditingId(item.id);
+    setEditContent(item.content);
+  };
+
+  const handleSaveEdit = (id: string) => {
+    if (onUpdate) {
+      onUpdate(id, editContent);
+    }
+    setEditingId(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+  };
 
   return (
     <div className="rounded-2xl border border-border/50 bg-card p-4 shadow-card">
@@ -74,12 +99,33 @@ export function InboxPreview({ items, onViewAll, onProcess, onDelete }: InboxPre
               </div>
 
               <div className="min-w-0 flex-1">
-                <p className={cn(
-                  "text-sm line-clamp-2",
+                <div className={cn(
+                  "text-sm",
                   item.processed ? "text-muted-foreground" : "text-foreground"
                 )}>
-                  {item.content}
-                </p>
+                  {editingId === item.id ? (
+                    <div className="space-y-2">
+                       <Textarea 
+                         value={editContent}
+                         onChange={(e) => setEditContent(e.target.value)}
+                         className="min-h-[80px] bg-background"
+                         onClick={(e) => e.stopPropagation()}
+                       />
+                       <div className="flex gap-2">
+                         <Button size="sm" onClick={() => handleSaveEdit(item.id)} className="h-7 px-2">
+                           <Save className="mr-1 h-3 w-3" /> Salvar
+                         </Button>
+                         <Button size="sm" variant="ghost" onClick={handleCancelEdit} className="h-7 px-2">
+                           <X className="mr-1 h-3 w-3" /> Cancelar
+                         </Button>
+                       </div>
+                    </div>
+                  ) : (
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown>{item.content}</ReactMarkdown>
+                    </div>
+                  )}
+                </div>
                 {item.audioUrl && (
                    <audio 
                      src={item.audioUrl} 
@@ -106,6 +152,19 @@ export function InboxPreview({ items, onViewAll, onProcess, onDelete }: InboxPre
                   >
                     <Sparkles className="h-4 w-4 text-primary" />
                   </Button>
+                  {!item.processed && onUpdate && !editingId && (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStartEdit(item);
+                      }}
+                      title="Editar"
+                    >
+                      <Pencil className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                    </Button>
+                  )}
                   {onDelete && (
                     <Button
                       variant="ghost"

@@ -160,12 +160,43 @@ export const useCaptureItems = () => {
     }
   }, [user, toast]);
 
+  // Update a capture item
+  const updateItem = useCallback(async (itemId: string, updates: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('mf_capture_items')
+        .update({ content: updates })
+        .eq('id', itemId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === itemId ? { ...item, content: updates } : item
+        )
+      );
+      return true;
+    } catch (error) {
+      console.error('Error updating capture item:', error);
+      toast({
+        title: 'Erro ao atualizar',
+        description: 'Não foi possível salvar as alterações.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  }, [user, toast]);
+
   return {
     items,
     loading,
     addItem,
     deleteItem,
     markAsProcessed,
+    updateItem,
     refetch: fetchItems,
   };
 };

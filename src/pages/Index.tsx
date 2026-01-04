@@ -40,6 +40,7 @@ import { useTaskSplitting } from "@/hooks/useTaskSplitting";
 import { useTasks } from "@/hooks/useTasks";
 import { useProjects } from "@/hooks/useProjects";
 import { useJournal } from "@/hooks/useJournal";
+import { useNotes } from "@/hooks/useNotes";
 import { useProfile } from "@/hooks/useProfile";
 import { useCaptureItems } from "@/hooks/useCaptureItems";
 import { useTimerSounds } from "@/hooks/useTimerSounds";
@@ -57,8 +58,17 @@ import {
   BarChart3,
   Plus,
   Trash2,
-  ListTodo
+  ListTodo,
+  Pencil,
+  Save,
+  X,
+  Type,
+  Mic,
+  Camera,
+  Clock
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import { Textarea } from "@/components/ui/textarea";
 import type { Task, CaptureItem, JournalEntry, Project } from "@/types";
 
 export default function Index() {
@@ -110,8 +120,24 @@ export default function Index() {
     updateTask, 
     completeTask: completeTaskInDb, 
     deleteTask: deleteTaskInDb,
-    addTimeToTask 
+    addTimeToTask,
+    completedTasks,
+    fetchCompletedTasks
   } = useTasks();
+
+  const [showCompletedTasks, setShowCompletedTasks] = useState(false);
+
+  const handleToggleCompletedTasks = () => {
+    const newValue = !showCompletedTasks;
+    setShowCompletedTasks(newValue);
+    if (newValue) {
+      fetchCompletedTasks();
+    }
+  };
+
+  const visibleTasks = showCompletedTasks 
+    ? [...tasks, ...completedTasks]
+    : tasks;
 
   const {
     projects,
@@ -152,13 +178,20 @@ export default function Index() {
     updateEntry: updateJournalEntry,
     deleteEntry: deleteJournalEntry,
   } = useJournal();
+
+  const { addNote } = useNotes();
   
+  // Inbox editing state
+  const [editingInboxId, setEditingInboxId] = useState<string | null>(null);
+  const [editInboxContent, setEditInboxContent] = useState("");
+
   const {
     items: inboxItems,
     loading: inboxLoading,
     addItem: addCaptureItem,
     deleteItem: deleteCaptureItem,
     markAsProcessed,
+    updateItem: updateCaptureItem,
   } = useCaptureItems();
   
 
@@ -383,7 +416,26 @@ export default function Index() {
       });
     }
   };
+  const handleStartEditInbox = (item: CaptureItem) => {
+    setEditingInboxId(item.id);
+    setEditInboxContent(item.content);
+  };
 
+  const handleSaveEditInbox = (id: string) => {
+    if (updateCaptureItem) {
+      updateCaptureItem(id, editInboxContent);
+    }
+    setEditingInboxId(null);
+  };
+
+  const handleCancelEditInbox = () => {
+    setEditingInboxId(null);
+  };
+  
+  const truncateText = (text: string, maxLength: number) => {
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength) + '...';
+  };
   const handleDeleteTask = async (taskId: string) => {
     const success = await deleteTaskInDb(taskId);
     if (success) {
@@ -434,27 +486,62 @@ export default function Index() {
                         item.processed ? "bg-muted/30 opacity-60" : "bg-muted/50"
                       )}
                     >
-                      <div className="flex-1">
-                        <p className="text-sm text-foreground">{item.content}</p>
+                      <div className="flex-1 min-w-0">
+                        {editingInboxId === item.id ? (
+                           <div className="space-y-2">
+                              <Textarea 
+                                value={editInboxContent}
+                                onChange={(e) => setEditInboxContent(e.target.value)}
+                                className="min-h-[100px] bg-background"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <div className="flex gap-2">
+                                <Button size="sm" onClick={() => handleSaveEditInbox(item.id)} className="h-7 px-2">
+                                  <Save className="mr-1 h-3 w-3" /> Salvar
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={handleCancelEditInbox} className="h-7 px-2">
+                                  <X className="mr-1 h-3 w-3" /> Cancelar
+                                </Button>
+                              </div>
+                           </div>
+                        ) : (
+                          <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown>{item.content}</ReactMarkdown>
+                          </div>
+                        )}
+                        
                         {item.audioUrl && (
                           <div className="mt-2">
                              <audio src={item.audioUrl} controls className="h-8 w-full max-w-[200px]" />
                           </div>
                         )}
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {item.createdAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        <p className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {item.createdAt.toLocaleDateString('pt-BR')} às {item.createdAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                       <div className="flex items-center gap-1">
                         {!item.processed && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setProcessingInboxItem(item)}
-                            title="Processar"
-                          >
-                            <Sparkles className="h-4 w-4 text-primary" />
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setProcessingInboxItem(item)}
+                              title="Processar"
+                            >
+                              <Sparkles className="h-4 w-4 text-primary" />
+                            </Button>
+                            {!editingInboxId && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleStartEditInbox(item)}
+                                title="Editar"
+                              >
+                                <Pencil className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                              </Button>
+                            )}
+                          </>
                         )}
                         <Button
                           size="sm"
@@ -488,7 +575,9 @@ export default function Index() {
             </div>
             <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
               <TaskList 
-                tasks={tasks}
+                tasks={visibleTasks}
+                showCompleted={showCompletedTasks}
+                onToggleCompleted={handleToggleCompletedTasks}
                 selectedTaskId={selectedTask?.id || null}
                 onComplete={handleTaskComplete}
                 onSelectTask={handleSelectTask}
@@ -801,6 +890,7 @@ export default function Index() {
                     onViewAll={() => setActiveView('inbox')}
                     onProcess={(item) => setProcessingInboxItem(item)}
                     onDelete={handleDeleteInboxItem}
+                    onUpdate={(id, content) => updateItem(id, content)}
                   />
                 </div>
               </div>
@@ -937,13 +1027,7 @@ export default function Index() {
             });
           }
         }}
-        onCreateNote={(title, content) => {
-          // TODO: Implement actual note creation in a notes table if needed
-          toast({ 
-            title: "Nota salva!", 
-            description: "A nota foi criada a partir do inbox (simulação)." 
-          });
-        }}
+
         onCreateProject={async (name, description) => {
           const newProject = await addProject({ name, description });
           if (newProject) {
@@ -955,6 +1039,24 @@ export default function Index() {
         }}
         onMarkProcessed={(id) => {
           markAsProcessed(id);
+        }}
+        projects={projects}
+        onCreateNote={async (title, content, projectId) => {
+          const newNote = await addNote({
+            title,
+            content,
+            area_id: 'default', // TODO: Handle area selection or default
+            project_id: projectId,
+            tags: [],
+          });
+          if (newNote) {
+            toast({
+              title: "Nota criada!",
+              description: projectId 
+                ? `Nota criada e vinculada ao projeto.` 
+                : "Nota criada com sucesso.",
+            });
+          }
         }}
       />
 

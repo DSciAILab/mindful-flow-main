@@ -135,8 +135,8 @@ export function PanicModeModal({ isOpen, onClose }: PanicModeModalProps) {
               <div 
                 className={cn(
                   "absolute rounded-full bg-accent/20 blur-3xl transition-all",
-                  breathingStep === 0 && "w-[400px] h-[400px] opacity-60", // Inspire - expande
-                  breathingStep === 1 && "w-[400px] h-[400px] opacity-40", // Segure - mantém
+                  breathingStep === 0 && "w-[400px] max-w-[90vw] h-[400px] max-h-[90vw] opacity-60", // Inspire - expande
+                  breathingStep === 1 && "w-[400px] max-w-[90vw] h-[400px] max-h-[90vw] opacity-40", // Segure - mantém
                   breathingStep === 2 && "w-[200px] h-[200px] opacity-20", // Expire - contrai
                 )}
                 style={{ 

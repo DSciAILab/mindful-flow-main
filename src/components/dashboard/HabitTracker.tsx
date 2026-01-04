@@ -145,6 +145,10 @@ export function HabitTracker() {
                           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
                             {habit.frequency === 'daily' ? 'Diário' : 'Semanal'}
                           </p>
+                          <span className="text-[10px] text-muted-foreground">•</span>
+                          <span className="text-[10px] text-muted-foreground" title="Data de criação">
+                             {new Date(habit.createdAt).toLocaleDateString('pt-BR')}
+                          </span>
                         </div>
                       </div>
                       <button

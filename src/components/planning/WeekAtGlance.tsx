@@ -151,58 +151,72 @@ export function WeekAtGlance() {
         </div>
       </div>
 
-      {/* Week grid */}
-      <div className="mb-6 grid grid-cols-7 gap-2">
-        {weekDays.map((day, i) => (
-          <button
-            key={i}
-            onClick={() => setSelectedDay(selectedDay === i ? null : i)}
-            className={cn(
-              "rounded-xl p-3 text-center transition-all duration-200",
-              day.isToday 
-                ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2" 
-                : selectedDay === i
-                  ? "bg-accent/20 ring-2 ring-accent"
-                  : "bg-muted/30 hover:bg-muted/50"
-            )}
-          >
-            <p className={cn(
-              "text-xs",
-              day.isToday ? "text-primary-foreground/80" : "text-muted-foreground"
-            )}>
-              {day.dayName}
-            </p>
-            <p className="text-xl font-bold">{day.dayNumber}</p>
-            <div className="mt-1 flex justify-center gap-0.5">
-              {day.blocks.slice(0, 3).map((block) => (
-                <span 
-                  key={block.id}
-                  className={cn(
-                    "h-1.5 w-1.5 rounded-full",
-                    block.completed ? "bg-status-completed" : 
-                    block.type === 'focus' ? "bg-primary" : 
-                    block.type === 'meeting' ? "bg-accent" : "bg-muted-foreground"
-                  )}
-                />
-              ))}
-            </div>
-          </button>
-        ))}
+      {/* Week grid - Premium Day Selector */}
+      <div className="mb-8 grid grid-cols-7 gap-2 md:gap-4">
+        {weekDays.map((day, i) => {
+          const isSelected = selectedDay === i;
+          return (
+            <button
+              key={i}
+              onClick={() => setSelectedDay(isSelected ? null : i)}
+              className={cn(
+                "group relative flex flex-col items-center justify-between overflow-hidden rounded-2xl p-2 transition-all duration-300",
+                "border border-transparent hover:border-white/10",
+                day.isToday && !isSelected && "bg-primary/10 border-primary/20",
+                isSelected 
+                  ? "h-28 bg-gradient-to-br from-primary to-primary/80 shadow-glow scale-105 z-10" 
+                  : "h-24 bg-muted/20 hover:bg-muted/30"
+              )}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <span className={cn(
+                  "text-xs font-medium uppercase tracking-wider",
+                  isSelected ? "text-primary-foreground/90" : "text-muted-foreground"
+                )}>
+                  {day.dayName}
+                </span>
+                <span className={cn(
+                  "text-2xl font-bold font-display",
+                  isSelected ? "text-primary-foreground" : "text-foreground"
+                )}>
+                  {day.dayNumber}
+                </span>
+              </div>
+              
+              <div className="flex gap-1 mb-2">
+                {day.blocks.slice(0, 3).map((block) => (
+                  <div
+                    key={block.id}
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full transition-colors",
+                      isSelected ? "bg-white/80" : 
+                      block.type === 'focus' ? "bg-primary" :
+                      block.type === 'meeting' ? "bg-accent" :
+                      "bg-muted-foreground/50"
+                    )}
+                  />
+                ))}
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Day detail view */}
+      {/* Selected Day Timeline */}
       {selectedDay !== null && (
-        <div className="mb-6 animate-fade-in rounded-xl bg-muted/20 p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h4 className="font-semibold text-foreground">
-              {fullDayNames[selectedDay]} - {weekDays[selectedDay].dayNumber}
+        <div className="mb-8 animate-fade-in space-y-4">
+          <div className="flex items-center justify-between">
+            <h4 className="flex items-center gap-2 text-lg font-semibold">
+              <span className="text-muted-foreground">{weekDays[selectedDay].dayName},</span>
+              <span className="text-foreground">{weekDays[selectedDay].dayNumber}</span>
             </h4>
-            <Button variant="ghost" size="sm">
-              <Plus className="mr-1 h-4 w-4" />
+            <Button variant="ghost" size="sm" className="hover:bg-primary/10 hover:text-primary">
+              <Plus className="mr-2 h-4 w-4" />
               Adicionar
             </Button>
           </div>
-          <div className="space-y-2">
+
+          <div className="space-y-3">
             {weekDays[selectedDay].blocks.length > 0 ? (
               weekDays[selectedDay].blocks.map((block) => {
                 const config = blockTypeConfig[block.type];
@@ -211,49 +225,76 @@ export function WeekAtGlance() {
                   <div
                     key={block.id}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg p-3",
-                      config.bg
+                      "group relative flex items-center gap-4 rounded-2xl border border-border/50 bg-card/50 p-4 transition-all hover:bg-card hover:border-border hover:shadow-lg hover:-translate-y-0.5",
+                      block.completed && "opacity-60"
                     )}
                   >
-                    <Icon className={cn("h-5 w-5", config.text)} />
-                    <div className="flex-1">
-                      <p className={cn(
-                        "text-sm font-medium",
+                    {/* Status Indicator Strip */}
+                    <div className={cn(
+                      "absolute left-0 top-3 bottom-3 w-1 rounded-r-full",
+                      block.type === 'focus' ? "bg-primary" :
+                      block.type === 'meeting' ? "bg-accent" :
+                      block.type === 'personal' ? "bg-reward-gold" :
+                      "bg-muted-foreground"
+                    )} />
+
+                    <div className={cn(
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                      block.completed ? "bg-muted text-muted-foreground" : config.bg
+                    )}>
+                      <Icon className={cn("h-5 w-5", block.completed ? "text-muted-foreground" : config.text)} />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h4 className={cn(
+                        "font-medium truncate",
                         block.completed ? "line-through text-muted-foreground" : "text-foreground"
                       )}>
                         {block.title}
-                      </p>
-                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        {formatHour(block.startHour)} - {formatHour(block.startHour + block.duration)}
-                        <span className="ml-1">({block.duration}h)</span>
-                      </p>
+                      </h4>
+                      <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5" />
+                          {formatHour(block.startHour)} - {formatHour(block.startHour + block.duration)}
+                          <span className="opacity-50">({block.duration}h)</span>
+                        </span>
+                      </div>
                     </div>
-                    {block.completed ? (
-                      <CheckCircle2 className="h-5 w-5 text-status-completed" />
-                    ) : (
-                      <Circle className="h-5 w-5 text-muted-foreground" />
-                    )}
+
+                    <div className="flex shrink-0 items-center gap-2">
+                       {/* Placeholder interactions */}
+                       <div className={cn(
+                         "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors",
+                         block.completed 
+                           ? "bg-status-completed border-status-completed" 
+                           : "border-muted-foreground/30 group-hover:border-primary/50"
+                       )}>
+                         {block.completed && <CheckCircle2 className="h-3.5 w-3.5 text-white" />}
+                       </div>
+                    </div>
                   </div>
                 );
               })
             ) : (
-              <p className="py-4 text-center text-sm text-muted-foreground">
-                Nenhum bloco planejado. Adicione atividades!
-              </p>
+              <div className="flex flex-col items-center justify-center py-12 rounded-2xl border border-dashed border-border/50 bg-muted/5">
+                <Sun className="h-10 w-10 text-muted-foreground/20 mb-3" />
+                <p className="text-muted-foreground">Dia livre! Aproveite para descansar ou planejar algo novo.</p>
+              </div>
             )}
           </div>
         </div>
       )}
 
       {/* Block type legend */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-4 border-t border-border/50 pt-4">
         {Object.entries(blockTypeConfig).map(([type, config]) => {
           const Icon = config.icon;
           return (
-            <div key={type} className="flex items-center gap-1.5">
-              <Icon className={cn("h-4 w-4", config.text)} />
-              <span className="text-xs capitalize text-muted-foreground">{type}</span>
+            <div key={type} className="flex items-center gap-2">
+              <div className={cn("p-1 rounded bg-muted/50")}>
+                <Icon className={cn("h-3.5 w-3.5", config.text)} />
+              </div>
+              <span className="text-xs font-medium capitalize text-muted-foreground">{type}</span>
             </div>
           );
         })}

@@ -11,13 +11,11 @@ import {
   Mic,
   Square,
   Loader2,
-  Image as ImageIcon,
-  Camera
+  Image as ImageIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProjects } from "@/hooks/useProjects";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
-import { useNotes } from "@/hooks/useNotes";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Popover,
@@ -35,8 +33,11 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isProjectOpen, setIsProjectOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  // Multi-image state
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  
   const imageInputRef = useRef<HTMLInputElement>(null);
   const { projects } = useProjects();
   const { 
@@ -59,8 +60,39 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const uploadImages = async (): Promise<string[]> => {
+    const uploadedUrls: string[] = [];
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    for (const file of imageFiles) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        const { error } = await supabase.storage
+          .from('capture-media')
+          .upload(fileName, file);
+
+        if (error) {
+          console.error('Image upload error:', error);
+          continue;
+        }
+
+        const { data } = supabase.storage
+          .from('capture-media')
+          .getPublicUrl(fileName);
+        
+        uploadedUrls.push(data.publicUrl);
+      } catch (err) {
+        console.error("Failed to upload image", err);
+      }
+    }
+    return uploadedUrls;
+  };
+
   const handleCapture = async (type: string = "text", prefix: string = "") => {
-    if ((!inputText.trim() && !audioBlob) || isUploading) return;
+    if ((!inputText.trim() && !audioBlob && imageFiles.length === 0) || isUploading) return;
     
     setIsUploading(true);
     let audioUrl: string | undefined;
@@ -74,89 +106,79 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
         audioUrl = url;
       }
 
+      // Upload images
+      const imageUrls = await uploadImages();
+
       let finalContent = prefix ? `${prefix}: ${inputText}` : inputText;
       
-      // If project selected, we might want to append it to content OR just pass the ID
-      // We'll proceed with keeping it in content for visibility but also pass the ID
+      // Append images as Markdown
+      if (imageUrls.length > 0) {
+        finalContent += "\n\n" + imageUrls.map(url => `![Image](${url})`).join("\n");
+      }
+      
+      // Append project info (optional visualization)
       if (selectedProject) {
         finalContent += ` [Project: ${selectedProject.name}]`;
       }
 
-      // If we have an audio URL, ensure the type is set to 'audio' so it passes DB constraints
+      // Determine type
       if (audioUrl && (type === "text" || !type)) {
         type = "audio";
+      } else if (imageUrls.length > 0 && (type === "text" || !type)) {
+        type = "photo";
       }
 
-      // If it's just audio, ensure we have a fallback title
+      // Default title if empty
       if (!finalContent.trim() && audioUrl) {
         finalContent = `Audio Note - ${new Date().toLocaleString()}`;
+      } else if (!finalContent.trim() && imageUrls.length > 0) {
+        finalContent = `Image Note - ${new Date().toLocaleString()}`;
       }
 
       await onCapture(type, finalContent, audioUrl, selectedProjectId || undefined);
       
       // Reset state
-      setInputText("");
-      setSelectedProjectId(null);
-      discardRecording();
-      setImageFile(null);
-      setImagePreview(null);
+      clearForm();
       
     } catch (error) {
        console.error("Error in handleCapture:", error);
-       // Toast is likely handled in uploadAudio or onCapture, but we ensure we don't clear form if it failed
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setImageFiles(prev => [...prev, ...files]);
+      
+      // Generate previews
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string') {
+             setImagePreviews(prev => [...prev, reader.result as string]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     }
+    // Reset input so same files can be selected again if needed (though unlikely)
+    if (imageInputRef.current) imageInputRef.current.value = '';
   };
 
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    if (imageInputRef.current) {
-      imageInputRef.current.value = '';
-    }
-  };
-
-  const uploadImage = async (file: File): Promise<string | null> => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-    
-    const { error } = await supabase.storage
-      .from('capture-media')
-      .upload(fileName, file);
-
-    if (error) {
-      console.error('Image upload error:', error);
-      return null;
-    }
-
-    const { data } = supabase.storage
-      .from('capture-media')
-      .getPublicUrl(fileName);
-
-    return data.publicUrl;
+  const removeImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const clearForm = () => {
     setInputText("");
     setSelectedProjectId(null);
     discardRecording();
-    removeImage();
+    setImageFiles([]);
+    setImagePreviews([]);
+    if (imageInputRef.current) imageInputRef.current.value = '';
   };
 
   const classificationOptions = [
@@ -224,22 +246,24 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
             </div>
           ) : (
             <div className="w-full">
-              {/* Image preview */}
-              {imagePreview && (
-                <div className="p-4 border-b border-border/30">
-                  <div className="relative inline-block">
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
-                      className="max-h-32 rounded-lg object-cover"
-                    />
-                    <button
-                      onClick={removeImage}
-                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/80 transition-colors"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
+              {/* Image previews grid */}
+              {imagePreviews.length > 0 && (
+                <div className="p-4 border-b border-border/30 flex flex-wrap gap-2">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative inline-block group">
+                      <img 
+                        src={preview} 
+                        alt={`Preview ${index}`} 
+                        className="h-24 w-24 rounded-lg object-cover border border-border"
+                      />
+                      <button
+                        onClick={() => removeImage(index)}
+                        className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5 hover:bg-destructive/80 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
               <textarea
@@ -336,6 +360,7 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
                     type="file"
                     ref={imageInputRef}
                     accept="image/*"
+                    multiple // Enabled multiple
                     onChange={handleImageSelect}
                     className="hidden"
                   />
@@ -365,7 +390,7 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
         </div>
 
         {/* Classification Section */}
-        {(inputText.trim() || audioBlob) && (
+        {(inputText.trim() || audioBlob || imageFiles.length > 0) && (
           <div className="space-y-4 pt-4 animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="text-center">
               <h4 className="text-sm font-semibold text-foreground mb-4">Classify this thought</h4>

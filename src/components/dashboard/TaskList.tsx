@@ -29,7 +29,9 @@ import {
   FolderKanban,
   Layers,
   Calendar,
-  ArrowUpDown
+  ArrowUpDown,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Task, Priority, Project } from "@/types";
@@ -48,6 +50,8 @@ interface TaskListProps {
   onEditTask?: (task: Task) => void;
   isSplitting?: boolean;
   subtasks?: Record<string, string[]>;
+  showCompleted?: boolean;
+  onToggleCompleted?: () => void;
 }
 
 const priorityConfig: Record<Priority, { color: string; label: string; bgColor: string; icon: React.ElementType }> = {
@@ -80,6 +84,8 @@ export function TaskList({
   onEditTask,
   isSplitting,
   subtasks = {},
+  showCompleted = false,
+  onToggleCompleted,
 }: TaskListProps) {
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
@@ -187,6 +193,24 @@ export function TaskList({
           Próximas Tarefas
         </h3>
         <div className="flex items-center gap-2">
+          {onToggleCompleted && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggleCompleted}
+              className={cn(
+                "text-muted-foreground hover:text-foreground",
+                showCompleted && "text-primary bg-primary/10 hover:bg-primary/20"
+              )}
+              title={showCompleted ? "Ocultar concluídas" : "Mostrar concluídas"}
+            >
+              {showCompleted ? (
+                <Eye className="h-4 w-4" />
+              ) : (
+                <EyeOff className="h-4 w-4" />
+              )}
+            </Button>
+          )}
           <Button 
             variant="ghost" 
             size="sm" 
@@ -237,7 +261,7 @@ export function TaskList({
             {group.tasks.map((task, index) => {
           const priority = priorityConfig[task.priority];
           const isCompleting = completingId === task.id;
-          const isCompleted = task.status === 'done';
+          const isCompleted = task.status === 'done' || !!task.completedAt;
           const isSelected = selectedTaskId === task.id;
           const PriorityIcon = priority.icon;
           const taskSubtasks = subtasks[task.id] || [];
@@ -250,9 +274,8 @@ export function TaskList({
               <div
                 className={cn(
                   "group flex items-start gap-3 rounded-xl p-3 transition-all duration-300 cursor-pointer",
-                  priority.bgColor,
+                  isCompleted ? "bg-muted/40" : priority.bgColor,
                   isCompleting && "scale-95 opacity-50",
-                  isCompleted && "opacity-60",
                   isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background"
                 )}
                 style={{ animationDelay: `${index * 50}ms` }}
@@ -263,7 +286,7 @@ export function TaskList({
                   disabled={isCompleted}
                 >
                   {isCompleted ? (
-                    <CheckCircle2 className="h-5 w-5 text-status-completed" />
+                    <CheckCircle2 className="h-5 w-5 text-muted-foreground/70" />
                   ) : (
                     <Circle className={cn("h-5 w-5 transition-colors", priority.color, "group-hover:text-status-completed")} />
                   )}
@@ -271,8 +294,8 @@ export function TaskList({
 
                 <div className="min-w-0 flex-1">
                   <p className={cn(
-                    "text-sm font-medium text-foreground",
-                    isCompleted && "line-through"
+                    "text-sm font-medium",
+                    isCompleted ? "text-muted-foreground line-through decoration-muted-foreground/50" : "text-foreground"
                   )}>
                     {task.title}
                   </p>

@@ -29,17 +29,19 @@ import {
   Flag,
   Leaf
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
-import type { CaptureItem, Priority } from "@/types";
+import type { CaptureItem, Priority, Project } from "@/types";
 
 interface ProcessInboxModalProps {
   item: CaptureItem | null;
   isOpen: boolean;
   onClose: () => void;
   onCreateTask: (title: string, description: string, priority: Priority) => void;
-  onCreateNote?: (title: string, content: string) => void;
+  onCreateNote?: (title: string, content: string, projectId?: string) => void;
   onCreateProject?: (title: string, description: string) => void;
   onMarkProcessed: (id: string) => void;
+  projects?: Project[];
 }
 
 type SuggestionType = "task" | "note" | "project";
@@ -78,6 +80,7 @@ export function ProcessInboxModal({
   onCreateNote,
   onCreateProject,
   onMarkProcessed,
+  projects = [],
 }: ProcessInboxModalProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [suggestion, setSuggestion] = useState<AISuggestion | null>(null);
@@ -85,6 +88,7 @@ export function ProcessInboxModal({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("none");
 
   // Analyze content when modal opens
   useEffect(() => {
@@ -160,7 +164,7 @@ export function ProcessInboxModal({
     if (selectedType === "task") {
       onCreateTask(title, description, priority);
     } else if (selectedType === "note" && onCreateNote) {
-      onCreateNote(title, description);
+      onCreateNote(title, description, selectedProjectId === "none" ? undefined : selectedProjectId);
     } else if (selectedType === "project" && onCreateProject) {
       onCreateProject(title, description);
     }
@@ -174,6 +178,7 @@ export function ProcessInboxModal({
     setTitle("");
     setDescription("");
     setPriority("medium");
+    setSelectedProjectId("none");
     setSelectedType("task");
     onClose();
   };
@@ -203,7 +208,9 @@ export function ProcessInboxModal({
             {/* Original content preview */}
             <div className="rounded-lg bg-muted/50 p-3">
               <p className="text-xs font-medium text-muted-foreground mb-1">Conteúdo original:</p>
-              <p className="text-sm text-foreground">{item?.content}</p>
+              <div className="prose prose-sm dark:prose-invert max-w-none text-foreground text-sm">
+                <ReactMarkdown>{item?.content || ""}</ReactMarkdown>
+              </div>
             </div>
 
             {/* Type selection */}
@@ -242,6 +249,26 @@ export function ProcessInboxModal({
                 placeholder="Título..."
               />
             </div>
+
+            {/* Project Selection (for Notes) */}
+            {selectedType === "note" && projects.length > 0 && (
+              <div className="space-y-2">
+                <Label>Projeto (Opcional)</Label>
+                <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um projeto..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem projeto</SelectItem>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Description (for tasks) */}
             {selectedType === "task" && (
