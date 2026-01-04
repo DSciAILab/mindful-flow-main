@@ -27,8 +27,8 @@ export function useLLMConfig() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setConfig({
-          provider: 'lovable',
-          model: 'gemini-2.5-flash',
+          provider: 'google',
+          model: 'gemini-2.0-flash-exp', // Newer model fallback
           apiKey: null,
           aiPersonaConfig: null,
         });
@@ -43,16 +43,21 @@ export function useLLMConfig() {
         .single();
 
       if (profile) {
+        console.log('=== LLM Config Debug ===');
+        console.log('Raw profile.llm_provider:', profile.llm_provider);
+        console.log('Raw profile.llm_model:', profile.llm_model);
+        console.log('Raw profile.llm_api_key present:', !!profile.llm_api_key);
+        
         setConfig({
-          provider: profile.llm_provider || 'lovable',
-          model: profile.llm_model || 'gemini-2.5-flash',
+          provider: profile.llm_provider || 'google',
+          model: profile.llm_model || 'gemini-2.0-flash-exp', // Use newer model as fallback
           apiKey: profile.llm_api_key,
           aiPersonaConfig: profile.ai_persona_config as Record<string, any> | null,
         });
       } else {
         setConfig({
-          provider: 'lovable',
-          model: 'gemini-2.5-flash',
+          provider: 'google',
+          model: 'gemini-2.0-flash-exp', // Newer model fallback
           apiKey: null,
           aiPersonaConfig: null,
         });
@@ -60,8 +65,8 @@ export function useLLMConfig() {
     } catch (error) {
       console.error('Error loading LLM config:', error);
       setConfig({
-        provider: 'lovable',
-        model: 'gemini-2.5-flash',
+        provider: 'google',
+        model: 'gemini-2.0-flash-exp', // Newer model fallback
         apiKey: null,
         aiPersonaConfig: null,
       });

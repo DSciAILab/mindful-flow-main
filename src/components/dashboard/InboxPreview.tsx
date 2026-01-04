@@ -90,7 +90,9 @@ export function InboxPreview({ items, onViewAll, onProcess, onDelete }: InboxPre
                 )}
                 <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
-                  {timeAgo}
+                  <span>{timeAgo}</span>
+                  <span className="opacity-60">•</span>
+                  <span className="opacity-60">{formatCaptureDate(item.createdAt)}</span>
                 </div>
               </div>
 
@@ -140,4 +142,20 @@ function getTimeAgo(date: Date): string {
   if (seconds < 3600) return `${Math.floor(seconds / 60)}min`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
   return `${Math.floor(seconds / 86400)}d`;
+}
+
+function formatCaptureDate(date: Date): string {
+  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  
+  const currentYear = new Date().getFullYear();
+  
+  if (year === currentYear) {
+    return `${day} ${month}, ${hours}:${minutes}`;
+  }
+  return `${day} ${month} ${year}`;
 }

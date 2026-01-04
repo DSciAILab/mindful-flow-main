@@ -36,12 +36,14 @@ const providers: LLMProvider[] = [
   {
     id: 'lovable',
     name: 'Lovable AI (Padrão)',
-    description: 'IA integrada, sem necessidade de chave API',
+    description: 'Requer chave API do Google AI (gratuita)',
     models: [
-      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Rápido)' },
-      { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Avançado)' },
+      { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash (Rápido)' },
+      { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro (Avançado)' },
+      { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash (Experimental)' },
     ],
-    apiKeyPlaceholder: '',
+    apiKeyUrl: 'https://aistudio.google.com/app/apikey',
+    apiKeyPlaceholder: 'AIza...',
   },
   {
     id: 'openrouter',
@@ -129,7 +131,7 @@ const providers: LLMProvider[] = [
 
 export function LLMSettings() {
   const [selectedProvider, setSelectedProvider] = useState('lovable');
-  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
+  const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash');
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -137,10 +139,11 @@ export function LLMSettings() {
   const [isTesting, setIsTesting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [connectionMessage, setConnectionMessage] = useState('');
+  const [dynamicModels, setDynamicModels] = useState<{ id: string; name: string }[] | null>(null);
   const { toast} = useToast();
 
   const currentProvider = providers.find(p => p.id === selectedProvider);
-  const requiresApiKey = selectedProvider !== 'lovable' && selectedProvider !== 'ollama' && selectedProvider !== 'lm-studio';
+  const requiresApiKey = selectedProvider !== 'ollama' && selectedProvider !== 'lm-studio';
 
   useEffect(() => {
     loadSettings();
@@ -162,7 +165,7 @@ export function LLMSettings() {
 
       if (profile) {
         setSelectedProvider(profile.llm_provider || 'lovable');
-        setSelectedModel(profile.llm_model || 'gemini-2.5-flash');
+        setSelectedModel(profile.llm_model || 'gemini-1.5-flash');
         setApiKey(profile.llm_api_key || '');
       }
     } catch (error) {
@@ -174,10 +177,13 @@ export function LLMSettings() {
 
   const handleProviderChange = async (providerId: string) => {
     setSelectedProvider(providerId);
+    setDynamicModels(null); // Reset dynamic models when changing provider
+    setConnectionStatus('idle');
+    setConnectionMessage('');
     const provider = providers.find(p => p.id === providerId);
     
-    // Clear API key for local providers
-    if (providerId === 'lovable' || providerId === 'ollama' || providerId === 'lm-studio') {
+    // Clear API key for local providers only
+    if (providerId === 'ollama' || providerId === 'lm-studio') {
       setApiKey('');
     }
     
@@ -260,14 +266,21 @@ export function LLMSettings() {
         
         const data = await response.json();
         const models = data.models || [];
-        const modelExists = models.some((m: any) => m.name === selectedModel || m.name.startsWith(selectedModel.split(':')[0]));
         
-        if (!modelExists) {
-          setConnectionStatus('error');
-          setConnectionMessage(`❌ Modelo "${selectedModel}" não encontrado. Execute: ollama pull ${selectedModel}`);
-        } else {
+        // Update dynamic models list
+        const availableModels = models.map((m: any) => ({
+          id: m.name,
+          name: m.name.split(':')[0],
+        }));
+        setDynamicModels(availableModels);
+        
+        if (availableModels.length > 0) {
+          setSelectedModel(availableModels[0].id);
           setConnectionStatus('success');
-          setConnectionMessage(`✅ Ollama online! Modelo "${selectedModel}" disponível`);
+          setConnectionMessage(`✅ Ollama online! ${availableModels.length} modelo(s) disponível(is)`);
+        } else {
+          setConnectionStatus('error');
+          setConnectionMessage('❌ Nenhum modelo instalado. Execute: ollama pull llama3.2');
         }
       } else if (selectedProvider === 'google') {
         if (!apiKey) throw new Error('API key necessária');
@@ -276,11 +289,109 @@ export function LLMSettings() {
         const response = await fetch(testUrl);
         
         if (!response.ok) {
-          throw new Error('API key inválida ou serviço offline');
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData?.error?.message || 'API key inválida ou serviço offline');
         }
         
-        setConnectionStatus('success');
-        setConnectionMessage('✅ Google AI online! API key válida');
+        const data = await response.json();
+        const models = data.models || [];
+        
+        // Filter only generative models that support generateContent
+        const generativeModels = models
+          .filter((m: any) => 
+            m.name && 
+            m.supportedGenerationMethods?.includes('generateContent') &&
+            !m.name.includes('embedding') &&
+            !m.name.includes('aqa')
+          )
+          .map((m: any) => {
+            const modelId = m.name.replace('models/', '');
+            const displayName = m.displayName || modelId;
+            return {
+              id: modelId,
+              name: displayName,
+            };
+          })
+          // Sort by name, prioritizing newer versions
+          .sort((a: any, b: any) => {
+            if (a.name.includes('2.0') && !b.name.includes('2.0')) return -1;
+            if (!a.name.includes('2.0') && b.name.includes('2.0')) return 1;
+            if (a.name.includes('1.5') && !b.name.includes('1.5')) return -1;
+            if (!a.name.includes('1.5') && b.name.includes('1.5')) return 1;
+            return a.name.localeCompare(b.name);
+          });
+        
+        setDynamicModels(generativeModels);
+        
+        if (generativeModels.length > 0) {
+          // Select first available model
+          setSelectedModel(generativeModels[0].id);
+          setConnectionStatus('success');
+          setConnectionMessage(`✅ Google AI online! ${generativeModels.length} modelo(s) disponível(is)`);
+        } else {
+          setConnectionStatus('error');
+          setConnectionMessage('❌ Nenhum modelo generativo disponível para esta API key');
+        }
+      } else if (selectedProvider === 'openai') {
+        if (!apiKey) throw new Error('API key necessária');
+        
+        const response = await fetch('https://api.openai.com/v1/models', {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error('API key inválida');
+        }
+        
+        const data = await response.json();
+        const models = data.data || [];
+        
+        // Filter chat models
+        const chatModels = models
+          .filter((m: any) => m.id.includes('gpt'))
+          .map((m: any) => ({
+            id: m.id,
+            name: m.id,
+          }))
+          .sort((a: any, b: any) => b.id.localeCompare(a.id));
+        
+        setDynamicModels(chatModels);
+        
+        if (chatModels.length > 0) {
+          setSelectedModel(chatModels[0].id);
+          setConnectionStatus('success');
+          setConnectionMessage(`✅ OpenAI online! ${chatModels.length} modelo(s) disponível(is)`);
+        } else {
+          setConnectionStatus('error');
+          setConnectionMessage('❌ Nenhum modelo GPT disponível');
+        }
+      } else if (selectedProvider === 'lm-studio') {
+        const lmStudioUrl = apiKey || 'http://localhost:1234';
+        const response = await fetch(`${lmStudioUrl}/v1/models`);
+        
+        if (!response.ok) {
+          throw new Error('LM Studio não está rodando');
+        }
+        
+        const data = await response.json();
+        const models = data.data || [];
+        
+        const availableModels = models.map((m: any) => ({
+          id: m.id,
+          name: m.id,
+        }));
+        setDynamicModels(availableModels);
+        
+        if (availableModels.length > 0) {
+          setSelectedModel(availableModels[0].id);
+          setConnectionStatus('success');
+          setConnectionMessage(`✅ LM Studio online! ${availableModels.length} modelo(s) disponível(is)`);
+        } else {
+          setConnectionStatus('error');
+          setConnectionMessage('❌ Nenhum modelo carregado no LM Studio');
+        }
       } else {
         setConnectionStatus('success');
         setConnectionMessage('✅ Configuração salva. Teste no chat para validar');
@@ -294,6 +405,7 @@ export function LLMSettings() {
       setConnectionStatus('error');
       const errorMsg = error.message || 'Erro ao conectar';
       setConnectionMessage(`❌ ${errorMsg}`);
+      setDynamicModels(null);
       
       toast({
         title: 'Erro de conexão',
@@ -327,6 +439,11 @@ export function LLMSettings() {
         return;
       }
 
+      console.log('=== Saving LLM Settings ===');
+      console.log('Provider to save:', selectedProvider);
+      console.log('Model to save:', selectedModel);
+      console.log('API Key to save:', requiresApiKey ? '(present)' : '(none)');
+
       const { error } = await supabase
         .from('mf_profiles')
         .update({
@@ -337,6 +454,8 @@ export function LLMSettings() {
         .eq('id', user.id);
 
       if (error) throw error;
+
+      console.log('Settings saved successfully!');
 
       toast({
         title: "Configurações salvas",
@@ -391,21 +510,33 @@ export function LLMSettings() {
       {/* Model Selection */}
       {currentProvider && (
         <div className="space-y-3">
-          <Label className="text-sm font-medium text-foreground">
-            Modelo
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium text-foreground">
+              Modelo
+            </Label>
+            {dynamicModels && dynamicModels.length > 0 && (
+              <span className="text-xs text-primary font-medium">
+                {dynamicModels.length} modelo(s) detectado(s)
+              </span>
+            )}
+          </div>
           <Select value={selectedModel} onValueChange={setSelectedModel}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecione um modelo" />
             </SelectTrigger>
             <SelectContent>
-              {currentProvider.models.map((model) => (
+              {(dynamicModels && dynamicModels.length > 0 ? dynamicModels : currentProvider.models).map((model) => (
                 <SelectItem key={model.id} value={model.id}>
                   {model.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {!dynamicModels && (selectedProvider === 'google' || selectedProvider === 'openai' || selectedProvider === 'ollama' || selectedProvider === 'lm-studio') && (
+            <p className="text-xs text-muted-foreground">
+              💡 Clique em "Testar Conexão" para detectar modelos disponíveis
+            </p>
+          )}
         </div>
       )}
 
@@ -463,12 +594,12 @@ export function LLMSettings() {
       {selectedProvider === 'lovable' && (
         <div className="rounded-xl bg-primary/10 p-4">
           <div className="flex items-start gap-3">
-            <Check className="mt-0.5 h-5 w-5 text-primary" />
+            <Brain className="mt-0.5 h-5 w-5 text-primary" />
             <div>
-              <p className="font-medium text-foreground">Lovable AI Ativo</p>
+              <p className="font-medium text-foreground">Lovable AI (Google Gemini)</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Você está usando a IA integrada do Lovable. Não é necessário 
-                configurar chaves de API externas.
+                Use sua chave API do Google AI Studio (gratuita). Clique em "Testar Conexão" 
+                para detectar os modelos disponíveis.
               </p>
             </div>
           </div>

@@ -169,9 +169,16 @@ Responda sempre em português brasileiro. Seja conciso e motivador.`;
 
       const systemPrompt = buildSystemPrompt(context);
       
-      const provider = config?.provider || 'lovable';
-      const model = config?.model || 'gemini-1.5-flash';
+      const provider = config?.provider || 'google';
+      const model = config?.model || 'gemini-2.0-flash-exp';
       const apiKey = config?.apiKey;
+
+      // Debug logging
+      console.log('=== AI Coach Debug ===');
+      console.log('Provider:', provider);
+      console.log('Model:', model);
+      console.log('API Key present:', !!apiKey);
+      console.log('API Key prefix:', apiKey?.substring(0, 10) + '...');
 
       let aiResponse = '';
 
@@ -233,11 +240,13 @@ Responda sempre em português brasileiro. Seja conciso e motivador.`;
       // Google AI
       else if (provider === 'google') {
         if (!apiKey) {
-          throw new Error('API key not configured');
+          throw new Error('API key não configurada para Google AI');
         }
 
         const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
         const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
+
+        console.log('Calling Google AI with model:', model);
 
         const response = await fetch(url, {
           method: 'POST',
@@ -267,20 +276,27 @@ Responda sempre em português brasileiro. Seja conciso e motivador.`;
         });
 
         if (!response.ok) {
-          throw new Error('Failed to get AI response');
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData?.error?.message || `Erro ${response.status}: ${response.statusText}`;
+          console.error('Google AI error:', errorData);
+          throw new Error(`Google AI: ${errorMessage}`);
         }
 
         const data = await response.json();
         aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Desculpe, não consegui processar sua mensagem.';
       }
-      // Lovable (default fallback)
+      // Lovable (default fallback) - requires Google AI key
       else {
+        // Lovable uses Google Generative AI under the hood, so it needs a Google API key
         if (!apiKey) {
-          throw new Error('API key not configured');
+          throw new Error('Para usar o Coach IA, configure uma chave de API nas configurações. Vá em Configurações > IA e escolha um provedor (recomendado: Google AI ou Ollama local).');
         }
         
+        // Use the model selected by user directly (already validated by auto-detection)
         const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
         const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
+
+        console.log('Calling Lovable (Google) AI with model:', model);
 
         const response = await fetch(url, {
           method: 'POST',
@@ -310,7 +326,10 @@ Responda sempre em português brasileiro. Seja conciso e motivador.`;
         });
 
         if (!response.ok) {
-          throw new Error('Failed to get AI response');
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData?.error?.message || `Erro ${response.status}: ${response.statusText}`;
+          console.error('Lovable (Google) AI error:', errorData);
+          throw new Error(`Google AI: ${errorMessage}`);
         }
 
         const data = await response.json();
@@ -345,12 +364,14 @@ Responda sempre em português brasileiro. Seja conciso e motivador.`;
       };
       setMessages(prev => [...prev, assistantMsg]);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('AI Coach error:', error);
+      const errorDetails = error?.message || String(error);
+      console.error('Error details:', errorDetails);
       const errorMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Desculpe, tive um problema ao processar sua mensagem. Tente novamente.',
+        content: `❌ Erro: ${errorDetails}`,
         timestamp: Date.now(),
       };
       setMessages(prev => [...prev, errorMsg]);

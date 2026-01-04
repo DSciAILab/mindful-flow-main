@@ -26,7 +26,10 @@ import {
   Loader2,
   Pencil,
   Trash2,
-  FolderKanban
+  FolderKanban,
+  Layers,
+  Calendar,
+  ArrowUpDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Task, Priority, Project } from "@/types";
@@ -54,6 +57,17 @@ const priorityConfig: Record<Priority, { color: string; label: string; bgColor: 
   low: { color: 'text-priority-low', label: 'Baixa', bgColor: 'bg-priority-low/10', icon: Leaf },
 };
 
+type GroupMode = 'list' | 'project' | 'priority' | 'date';
+
+const groupModeConfig: Record<GroupMode, { label: string; icon: React.ElementType }> = {
+  list: { label: 'Lista', icon: CheckCircle2 },
+  project: { label: 'Projeto', icon: FolderKanban },
+  priority: { label: 'Prioridade', icon: ArrowUpDown },
+  date: { label: 'Data', icon: Calendar },
+};
+
+const priorityOrder: Priority[] = ['urgent', 'high', 'medium', 'low'];
+
 export function TaskList({ 
   tasks, 
   selectedTaskId, 
@@ -70,7 +84,79 @@ export function TaskList({
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
+  const [groupMode, setGroupMode] = useState<GroupMode>('list');
   const { projects } = useProjects();
+
+  const cycleGroupMode = () => {
+    const modes: GroupMode[] = ['list', 'project', 'priority', 'date'];
+    const currentIndex = modes.indexOf(groupMode);
+    const nextIndex = (currentIndex + 1) % modes.length;
+    setGroupMode(modes[nextIndex]);
+  };
+
+  const groupTasks = (taskList: Task[]): { groupName: string; tasks: Task[]; color?: string }[] => {
+    if (groupMode === 'list') {
+      return [{ groupName: '', tasks: taskList }];
+    }
+
+    if (groupMode === 'project') {
+      const grouped: Record<string, Task[]> = { 'Sem Projeto': [] };
+      taskList.forEach(task => {
+        const project = projects.find(p => p.id === task.projectId);
+        const groupKey = project?.name || 'Sem Projeto';
+        if (!grouped[groupKey]) grouped[groupKey] = [];
+        grouped[groupKey].push(task);
+      });
+      return Object.entries(grouped)
+        .filter(([_, tasks]) => tasks.length > 0)
+        .map(([name, tasks]) => {
+          const project = projects.find(p => p.name === name);
+          return { groupName: name, tasks, color: project?.color };
+        });
+    }
+
+    if (groupMode === 'priority') {
+      return priorityOrder.map(priority => ({
+        groupName: priorityConfig[priority].label,
+        tasks: taskList.filter(t => t.priority === priority),
+        color: undefined,
+      })).filter(g => g.tasks.length > 0);
+    }
+
+    if (groupMode === 'date') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const weekEnd = new Date(today);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+
+      const groups: { groupName: string; tasks: Task[] }[] = [
+        { groupName: 'Hoje', tasks: [] },
+        { groupName: 'Esta Semana', tasks: [] },
+        { groupName: 'Mais Tarde', tasks: [] },
+      ];
+
+      taskList.forEach(task => {
+        const taskDate = new Date(task.createdAt);
+        taskDate.setHours(0, 0, 0, 0);
+        
+        if (taskDate.getTime() === today.getTime()) {
+          groups[0].tasks.push(task);
+        } else if (taskDate < weekEnd) {
+          groups[1].tasks.push(task);
+        } else {
+          groups[2].tasks.push(task);
+        }
+      });
+
+      return groups.filter(g => g.tasks.length > 0);
+    }
+
+    return [{ groupName: '', tasks: taskList }];
+  };
+
+  const groupedTasks = groupTasks(tasks);
 
   const handleComplete = (taskId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -100,14 +186,55 @@ export function TaskList({
           <CheckCircle2 className="h-5 w-5 text-primary" />
           Próximas Tarefas
         </h3>
-        <Button variant="ghost" size="sm" onClick={onAddTask}>
-          <Plus className="mr-1 h-4 w-4" />
-          Nova
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={cycleGroupMode}
+            className="text-muted-foreground hover:text-foreground"
+            title="Mudar agrupamento"
+          >
+            {(() => {
+              const config = groupModeConfig[groupMode];
+              const Icon = config.icon;
+              return (
+                <>
+                  <Icon className="mr-1.5 h-4 w-4" />
+                  {config.label}
+                </>
+              );
+            })()}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={onAddTask}>
+            <Plus className="mr-1 h-4 w-4" />
+            Nova
+          </Button>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        {tasks.map((task, index) => {
+      <div className="space-y-4">
+        {groupedTasks.map((group, groupIndex) => (
+          <div key={group.groupName || 'default'} className="space-y-2">
+            {/* Group Header */}
+            {group.groupName && (
+              <div className="flex items-center gap-2 pt-2 first:pt-0">
+                {group.color && (
+                  <div 
+                    className="h-3 w-3 rounded-full" 
+                    style={{ backgroundColor: group.color }}
+                  />
+                )}
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  {group.groupName}
+                </h4>
+                <span className="text-xs text-muted-foreground/50">
+                  ({group.tasks.length})
+                </span>
+              </div>
+            )}
+            
+            {/* Tasks in this group */}
+            {group.tasks.map((task, index) => {
           const priority = priorityConfig[task.priority];
           const isCompleting = completingId === task.id;
           const isCompleted = task.status === 'done';
@@ -218,6 +345,10 @@ export function TaskList({
                       <Star className="h-3 w-3" />
                       +{task.points}
                     </span>
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground/60">
+                      <span>•</span>
+                      {formatTaskDate(task.createdAt)}
+                    </span>
                   </div>
                   
                   {/* Subtasks preview */}
@@ -243,7 +374,7 @@ export function TaskList({
                         e.stopPropagation();
                         onEditTask(task);
                       }}
-                      className="opacity-0 group-hover:opacity-100 transition-all"
+                      className="opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all"
                       title="Editar tarefa"
                     >
                       <Pencil className="h-4 w-4 text-muted-foreground" />
@@ -259,7 +390,7 @@ export function TaskList({
                         e.stopPropagation();
                         setDeletingTaskId(task.id);
                       }}
-                      className="opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive/10"
+                      className="opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all hover:bg-destructive/10"
                       title="Excluir tarefa"
                     >
                       <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
@@ -277,8 +408,8 @@ export function TaskList({
                       }}
                       disabled={isSplitting}
                       className={cn(
-                        "opacity-0 group-hover:opacity-100 transition-all",
-                        isSplitting && "opacity-100"
+                        "opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all",
+                        isSplitting && "opacity-100 pointer-events-auto"
                       )}
                       title="Dividir tarefa com IA"
                     >
@@ -301,7 +432,7 @@ export function TaskList({
                       }}
                       className={cn(
                         "transition-all",
-                        !isSelected && "opacity-0 group-hover:opacity-100"
+                        !isSelected && "opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"
                       )}
                     >
                       {isSelected ? (
@@ -360,6 +491,8 @@ export function TaskList({
             </div>
           );
         })}
+          </div>
+        ))}
       </div>
 
       {tasks.length === 0 && (
@@ -407,4 +540,20 @@ export function TaskList({
       </Dialog>
     </div>
   );
+}
+
+function formatTaskDate(date: Date): string {
+  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  
+  const currentYear = new Date().getFullYear();
+  
+  if (year === currentYear) {
+    return `${day} ${month}, ${hours}:${minutes}`;
+  }
+  return `${day} ${month} ${year}`;
 }
