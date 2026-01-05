@@ -27,6 +27,18 @@ export const useTasks = () => {
     estimatedMinutes: task.estimated_minutes || undefined,
     projectId: task.project_id || undefined,
     activityLog: [],
+    isBig3: task.is_big3 || false,
+    big3Date: task.big3_date ? new Date(task.big3_date) : undefined,
+  });
+
+  // Get today's date string for Big 3 comparison
+  const getTodayString = () => new Date().toISOString().split('T')[0];
+
+  // Get Big 3 tasks for today
+  const big3Tasks = tasks.filter((task) => {
+    if (!task.isBig3 || !task.big3Date) return false;
+    const taskDateStr = task.big3Date.toISOString().split('T')[0];
+    return taskDateStr === getTodayString();
   });
 
   // Fetch active tasks from Supabase
@@ -162,6 +174,8 @@ export const useTasks = () => {
       if (updates.projectId !== undefined) dbUpdates.project_id = updates.projectId || null;
       if (updates.dueDate !== undefined) dbUpdates.due_date = updates.dueDate?.toISOString() || null;
       if (updates.completedAt !== undefined) dbUpdates.completed_at = updates.completedAt?.toISOString() || null;
+      if (updates.isBig3 !== undefined) dbUpdates.is_big3 = updates.isBig3;
+      if (updates.big3Date !== undefined) dbUpdates.big3_date = updates.big3Date?.toISOString().split('T')[0] || null;
 
       const { error } = await supabase
         .from('mf_tasks')
@@ -251,15 +265,59 @@ export const useTasks = () => {
     });
   }, [tasks, updateTask]);
 
+  // Toggle Big 3 status for a task
+  const toggleBig3 = useCallback(async (taskId: string): Promise<boolean> => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return false;
+
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    // Check if task is already Big 3 today
+    const isCurrentlyBig3 = task.isBig3 && task.big3Date && 
+      task.big3Date.toISOString().split('T')[0] === todayStr;
+
+    if (isCurrentlyBig3) {
+      // Remove from Big 3
+      return updateTask(taskId, {
+        isBig3: false,
+        big3Date: undefined,
+      });
+    }
+
+    // Check if we already have 3 Big 3 tasks for today
+    const todayBig3Count = tasks.filter((t) => {
+      if (!t.isBig3 || !t.big3Date) return false;
+      return t.big3Date.toISOString().split('T')[0] === todayStr;
+    }).length;
+
+    if (todayBig3Count >= 3) {
+      toast({
+        title: 'Limite atingido',
+        description: 'Você já tem 3 tarefas Big 3 para hoje. Remova uma antes de adicionar outra.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    // Add to Big 3
+    return updateTask(taskId, {
+      isBig3: true,
+      big3Date: today,
+    });
+  }, [tasks, updateTask]);
+
   return {
     tasks,
     completedTasks,
+    big3Tasks,
     loading,
     addTask,
     updateTask,
     completeTask,
     deleteTask,
     addTimeToTask,
+    toggleBig3,
     refetch: fetchTasks,
     fetchCompletedTasks,
   };

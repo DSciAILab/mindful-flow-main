@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { DndContext, DragEndEvent, useSensor, useSensors, MouseSensor, TouchSensor } from "@dnd-kit/core";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { QuickCapture } from "@/components/dashboard/QuickCapture";
@@ -19,6 +20,7 @@ import { FocusMode } from "@/components/dashboard/FocusMode";
 import { TimerDashboard } from "@/components/dashboard/TimerDashboard";
 import { FullPagePomodoro } from "@/components/dashboard/FullPagePomodoro";
 import { QuoteDisplay } from "@/components/dashboard/QuoteDisplay";
+import { Big3Widget } from "@/components/dashboard/Big3Widget";
 import { ProjectCreateModal } from "@/components/projects/ProjectCreateModal";
 import { ProjectList } from "@/components/projects/ProjectCard";
 import { WheelOfLife } from "@/components/planning/WheelOfLife";
@@ -95,6 +97,7 @@ export default function Index() {
   
   // Task selector dialog state
   const [isTaskSelectorOpen, setIsTaskSelectorOpen] = useState(false);
+  const [isSelectingForBig3, setIsSelectingForBig3] = useState(false);
   
   // Profile hook - must be before useEffect that uses it
   const { greetingName, needsWelcome, profile, updateDisplayName } = useProfile();
@@ -122,7 +125,9 @@ export default function Index() {
     deleteTask: deleteTaskInDb,
     addTimeToTask,
     completedTasks,
-    fetchCompletedTasks
+    fetchCompletedTasks,
+    big3Tasks,
+    toggleBig3
   } = useTasks();
 
   const [showCompletedTasks, setShowCompletedTasks] = useState(false);
@@ -239,6 +244,43 @@ export default function Index() {
       splitTask(task);
     }
   }, [tasks, splitTask]);
+
+  // Drag and Drop sensors
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    })
+  );
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && over.id === 'big3-droppable') {
+      const taskId = active.id as string;
+      const task = tasks.find(t => t.id === taskId);
+      
+      // Check if already Big 3
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isBig3Today = task?.isBig3 && task?.big3Date && 
+        new Date(task.big3Date).toISOString().split('T')[0] === todayStr;
+
+      if (!isBig3Today) {
+        toggleBig3(taskId);
+        toast({
+          title: "Adicionado ao Big 3!",
+          description: "Tarefa definida como prioridade do dia.",
+        });
+      }
+    }
+  }, [tasks, toggleBig3, toast]);
 
   const handleConvertSubtask = useCallback(async (parentTaskId: string, subtaskTitle: string, subtaskIndex: number) => {
     const parentTask = tasks.find(t => t.id === parentTaskId);
@@ -861,6 +903,7 @@ export default function Index() {
             </div>
 
             {/* Main grid */}
+            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <div className="grid gap-4 lg:grid-cols-3">
               {/* Left column */}
               <div className="space-y-4 lg:col-span-2">
@@ -868,6 +911,18 @@ export default function Index() {
                   <QuickCapture onCapture={handleCapture} />
                 </div>
                 
+                <div className="animate-fade-in" style={{ animationDelay: '150ms' }}>
+                  <Big3Widget 
+                    big3Tasks={big3Tasks} 
+                    onSelectTask={handleSelectTask}
+                    onToggleBig3={toggleBig3}
+                    onAddBig3={() => {
+                      setIsSelectingForBig3(true);
+                      setIsTaskSelectorOpen(true);
+                    }}
+                  />
+                </div>
+
                 <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
                   <TaskList 
                     tasks={tasks}
@@ -879,6 +934,7 @@ export default function Index() {
                     onSplitTask={handleSplitTask}
                     onConvertSubtask={handleConvertSubtask}
                     onEditTask={handleEditTask}
+                    onToggleBig3={toggleBig3}
                     isSplitting={isSplitting}
                     subtasks={subtasks}
                   />
@@ -890,7 +946,7 @@ export default function Index() {
                     onViewAll={() => setActiveView('inbox')}
                     onProcess={(item) => setProcessingInboxItem(item)}
                     onDelete={handleDeleteInboxItem}
-                    onUpdate={(id, content) => updateItem(id, content)}
+                    onUpdate={(id, content) => updateCaptureItem && updateCaptureItem(id, content)}
                   />
                 </div>
               </div>
@@ -929,6 +985,7 @@ export default function Index() {
                 </div>
               </div>
             </div>
+            </DndContext>
           </>
         );
     }
@@ -1073,9 +1130,24 @@ export default function Index() {
       {/* Task Selector Dialog */}
       <TaskSelectorDialog
         isOpen={isTaskSelectorOpen}
-        onClose={() => setIsTaskSelectorOpen(false)}
+        onClose={() => {
+          setIsTaskSelectorOpen(false);
+          setIsSelectingForBig3(false);
+        }}
         tasks={tasks}
-        onSelectTask={handleSelectTask}
+        onSelectTask={(task) => {
+          if (isSelectingForBig3) {
+            toggleBig3(task.id);
+            toast({
+              title: "Adicionado ao Big 3!",
+              description: "Foque no que é importante.",
+            });
+          } else {
+            handleSelectTask(task);
+          }
+          setIsTaskSelectorOpen(false);
+          setIsSelectingForBig3(false);
+        }}
       />
 
       {/* Welcome Dialog */}

@@ -36,6 +36,9 @@ export interface Task {
   estimatedMinutes?: number;
   // Activity log
   activityLog?: ActivityLogEntry[];
+  // Big 3 - As 3 tarefas mais importantes do dia
+  isBig3?: boolean;
+  big3Date?: Date;
 }
 
 export interface Project {
