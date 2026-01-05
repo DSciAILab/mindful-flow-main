@@ -50,6 +50,28 @@ export function FocusTimer({
   const [isMinimized, setIsMinimized] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const { settings, saveSettings } = useTimerSounds();
+  const [showControls, setShowControls] = useState(true);
+
+  // Auto-hide controls after 3 seconds of inactivity
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    
+    const handleActivity = () => {
+      setShowControls(true);
+      clearTimeout(timeout);
+      timeout = setTimeout(() => setShowControls(false), 3000);
+    };
+
+    handleActivity();
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('touchstart', handleActivity);
+
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+    };
+  }, []);
 
   // Track when timer has been started
   const handleStart = () => {
@@ -164,7 +186,10 @@ export function FocusTimer({
       </div>
 
       {/* Top bar - z-50 to be above content */}
-      <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-50">
+      <div className={cn(
+        "absolute top-4 left-4 right-4 flex items-center justify-between z-50 transition-opacity duration-300",
+        showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+      )}>
         <Button 
           variant="ghost" 
           onClick={onClearTask}
