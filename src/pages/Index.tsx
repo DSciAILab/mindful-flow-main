@@ -31,6 +31,7 @@ import { Settings } from "@/components/settings/Settings";
 import { KanbanBoard } from "@/components/projects/KanbanBoard";
 import { JournalEditor } from "@/components/journal/JournalEditor";
 import { JournalList } from "@/components/journal/JournalList";
+import { NotesPage } from "@/pages/Notes";
 import { TaskSelectorDialog } from "@/components/dashboard/TaskSelectorDialog";
 import { TaskCompleteDialog } from "@/components/dashboard/TaskCompleteDialog";
 import { WelcomeDialog } from "@/components/onboarding/WelcomeDialog";
@@ -350,6 +351,30 @@ export default function Index() {
         toast({
           title: "Tarefa criada!",
           description: `"${newTask.title}" foi adicionada às suas tarefas.`,
+        });
+      }
+      return;
+    }
+
+    // Check for Note: prefix - redirect directly to notes (not inbox)
+    if (content.startsWith("Note:")) {
+      const cleanTitle = content
+        .replace("Note:", "")
+        .replace(/\[Project: .*?\]/, "")
+        .trim();
+        
+      const newNote = await addNote({
+        title: cleanTitle || `Nota - ${new Date().toLocaleString()}`,
+        content: audioUrl ? `Áudio anexado: ${audioUrl}` : undefined,
+        area_id: "personal",
+        audio_url: audioUrl,
+        project_id: projectId,
+      });
+
+      if (newNote) {
+        toast({
+          title: "Nota criada!",
+          description: `"${newNote.title}" foi salva nas suas notas.`,
         });
       }
       return;
@@ -768,6 +793,13 @@ export default function Index() {
                 <YearAtGlance />
               </div>
             </div>
+          </div>
+        );
+
+      case 'notes':
+        return (
+          <div className="animate-fade-in">
+            <NotesPage />
           </div>
         );
 

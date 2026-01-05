@@ -14,7 +14,8 @@ import {
   Lightbulb,
   X,
   Flame,
-  Timer
+  Timer,
+  FileText
 } from "lucide-react";
 
 interface SidebarProps {
@@ -33,6 +34,7 @@ const menuItems = [
   { id: 'projects', label: 'Projetos', icon: FolderKanban },
   { id: 'goals', label: 'Objetivos', icon: Target },
   { id: 'calendar', label: 'Agenda', icon: Calendar },
+  { id: 'notes', label: 'Notas', icon: FileText },
   { id: 'journal', label: 'Diário', icon: BookOpen },
   { id: 'reflection', label: 'Reflexões', icon: Brain },
   { id: 'ideas', label: 'Ideias', icon: Lightbulb },
