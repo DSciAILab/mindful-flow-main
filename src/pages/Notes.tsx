@@ -12,6 +12,7 @@ import {
 import { NoteCard } from "@/components/notes/NoteCard";
 import { NoteCreateModal } from "@/components/notes/NoteCreateModal";
 import { NoteEditModal } from "@/components/notes/NoteEditModal";
+import { NoteViewModal } from "@/components/notes/NoteViewModal";
 import { useNotes, Note, NoteInput } from "@/hooks/useNotes";
 import { useProjects } from "@/hooks/useProjects";
 import { useTasks } from "@/hooks/useTasks";
@@ -21,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 export function NotesPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [viewingNote, setViewingNote] = useState<Note | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterAreaId, setFilterAreaId] = useState<string>("all");
   const [filterProjectId, setFilterProjectId] = useState<string>("all");
@@ -218,6 +220,7 @@ export function NotesPage() {
                 projectName={getProjectName(note.project_id)}
                 taskTitle={getTaskTitle(note.task_id)}
                 areaName={getAreaName(note.area_id)}
+                onClick={setViewingNote}
                 onEdit={setEditingNote}
                 onDelete={handleDeleteNote}
                 onTogglePin={handleTogglePin}
@@ -244,6 +247,19 @@ export function NotesPage() {
         note={editingNote}
         projects={projects}
         tasks={tasks}
+      />
+
+      {/* View Modal */}
+      <NoteViewModal
+        isOpen={!!viewingNote}
+        onClose={() => setViewingNote(null)}
+        note={viewingNote}
+        projectName={viewingNote ? getProjectName(viewingNote.project_id) : undefined}
+        taskTitle={viewingNote ? getTaskTitle(viewingNote.task_id) : undefined}
+        areaName={viewingNote ? getAreaName(viewingNote.area_id) : undefined}
+        onEdit={setEditingNote}
+        onDelete={handleDeleteNote}
+        onTogglePin={handleTogglePin}
       />
     </div>
   );

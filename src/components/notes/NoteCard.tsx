@@ -10,6 +10,7 @@ interface NoteCardProps {
   projectName?: string;
   taskTitle?: string;
   areaName?: string;
+  onClick?: (note: Note) => void;
   onEdit: (note: Note) => void;
   onDelete: (id: string) => void;
   onTogglePin: (id: string, currentStatus: boolean) => void;
@@ -20,14 +21,16 @@ export function NoteCard({
   projectName,
   taskTitle,
   areaName,
+  onClick,
   onEdit,
   onDelete,
   onTogglePin,
 }: NoteCardProps) {
   return (
     <div
+      onClick={() => onClick?.(note)}
       className={cn(
-        "group relative rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md",
+        "group relative rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md cursor-pointer",
         note.is_pinned && "border-primary/30 bg-primary/5"
       )}
     >
@@ -47,7 +50,7 @@ export function NoteCard({
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => onTogglePin(note.id, note.is_pinned)}
+            onClick={(e) => { e.stopPropagation(); onTogglePin(note.id, note.is_pinned); }}
             className="h-7 w-7 p-0"
             title={note.is_pinned ? "Desafixar" : "Fixar"}
           >
@@ -56,7 +59,7 @@ export function NoteCard({
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => onEdit(note)}
+            onClick={(e) => { e.stopPropagation(); onEdit(note); }}
             className="h-7 w-7 p-0"
             title="Editar"
           >
@@ -65,7 +68,7 @@ export function NoteCard({
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => onDelete(note.id)}
+            onClick={(e) => { e.stopPropagation(); onDelete(note.id); }}
             className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
             title="Excluir"
           >
