@@ -32,6 +32,7 @@ import { KanbanBoard } from "@/components/projects/KanbanBoard";
 import { JournalEditor } from "@/components/journal/JournalEditor";
 import { JournalList } from "@/components/journal/JournalList";
 import { NotesPage } from "@/pages/Notes";
+import { SketchPage } from "@/components/canvas/SketchPage";
 import { TaskSelectorDialog } from "@/components/dashboard/TaskSelectorDialog";
 import { TaskCompleteDialog } from "@/components/dashboard/TaskCompleteDialog";
 import { WelcomeDialog } from "@/components/onboarding/WelcomeDialog";
@@ -800,6 +801,13 @@ export default function Index() {
         return (
           <div className="animate-fade-in">
             <NotesPage />
+          </div>
+        );
+
+      case 'canvas':
+        return (
+          <div className="animate-fade-in">
+            <SketchPage />
           </div>
         );
 

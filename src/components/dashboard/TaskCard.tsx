@@ -204,9 +204,18 @@ export function TaskCard({
             </span>
           )}
           {task.dueDate && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <span className={cn(
+              "flex items-center gap-1 text-xs",
+              new Date(task.dueDate).toISOString().split('T')[0] < todayStr 
+                ? "text-red-500 font-medium" 
+                : new Date(task.dueDate).toISOString().split('T')[0] === todayStr
+                ? "text-amber-500 font-medium"
+                : "text-muted-foreground"
+            )}>
               <Clock className="h-3 w-3" />
-              Hoje
+              {new Date(task.dueDate).toISOString().split('T')[0] === todayStr 
+                ? "Hoje" 
+                : new Date(task.dueDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
             </span>
           )}
           {task.timeSpentMinutes > 0 && (

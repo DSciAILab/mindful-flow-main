@@ -60,6 +60,7 @@ export function TaskCreateModal({ isOpen, onClose, onSave, defaultProjectId }: T
   const [status, setStatus] = useState<TaskStatus>('next');
   const [tagsInput, setTagsInput] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | undefined>();
+  const [dueDate, setDueDate] = useState('');
   const [projectId, setProjectId] = useState<string | undefined>(defaultProjectId);
   const [isSaving, setIsSaving] = useState(false);
   const { projects } = useProjects();
@@ -79,6 +80,7 @@ export function TaskCreateModal({ isOpen, onClose, onSave, defaultProjectId }: T
     setTagsInput('');
     setEstimatedMinutes(undefined);
     setProjectId(defaultProjectId);
+    setDueDate('');
   };
 
   const handleClose = () => {
@@ -104,6 +106,7 @@ export function TaskCreateModal({ isOpen, onClose, onSave, defaultProjectId }: T
       estimatedMinutes,
       projectId,
       points: priority === 'urgent' ? 25 : priority === 'high' ? 20 : priority === 'medium' ? 15 : 10,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
     });
 
     setIsSaving(false);
@@ -232,16 +235,28 @@ export function TaskCreateModal({ isOpen, onClose, onSave, defaultProjectId }: T
           </div>
 
           {/* Estimated time */}
-          <div className="space-y-2">
-            <Label htmlFor="estimated">Tempo estimado (minutos)</Label>
-            <Input
-              id="estimated"
-              type="number"
-              value={estimatedMinutes || ''}
-              onChange={(e) => setEstimatedMinutes(e.target.value ? parseInt(e.target.value) : undefined)}
-              placeholder="30"
-              min={1}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="estimated">Tempo estimado (minutos)</Label>
+              <Input
+                id="estimated"
+                type="number"
+                value={estimatedMinutes || ''}
+                onChange={(e) => setEstimatedMinutes(e.target.value ? parseInt(e.target.value) : undefined)}
+                placeholder="30"
+                min={1}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="dueDate">Data de Vencimento</Label>
+              <Input
+                id="dueDate"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
           </div>
         </div>
 

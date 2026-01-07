@@ -134,3 +134,13 @@ export interface HabitLog {
   date: Date;
   completed: boolean;
 }
+
+export interface Sketch {
+  id: string;
+  user_id: string;
+  title: string;
+  canvas_data: string; // Base64 encoded canvas image data
+  thumbnail?: string;  // Small preview image
+  created_at: Date;
+  updated_at: Date;
+}

@@ -15,7 +15,8 @@ import {
   X,
   Flame,
   Timer,
-  FileText
+  FileText,
+  PenTool
 } from "lucide-react";
 
 interface SidebarProps {
@@ -35,6 +36,7 @@ const menuItems = [
   { id: 'goals', label: 'Objetivos', icon: Target },
   { id: 'calendar', label: 'Agenda', icon: Calendar },
   { id: 'notes', label: 'Notas', icon: FileText },
+  { id: 'canvas', label: 'Canvas', icon: PenTool },
   { id: 'journal', label: 'Diário', icon: BookOpen },
   { id: 'reflection', label: 'Reflexões', icon: Brain },
   { id: 'ideas', label: 'Ideias', icon: Lightbulb },

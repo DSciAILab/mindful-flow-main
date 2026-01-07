@@ -66,6 +66,7 @@ export function TaskEditModal({ task, isOpen, onClose, onSave, onDelete }: TaskE
   const [tagsInput, setTagsInput] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | undefined>();
   const [projectId, setProjectId] = useState<string | undefined>();
+  const [dueDate, setDueDate] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const { projects } = useProjects();
@@ -87,6 +88,7 @@ export function TaskEditModal({ task, isOpen, onClose, onSave, onDelete }: TaskE
       setTagsInput(task.tags?.join(', ') || '');
       setEstimatedMinutes(task.estimatedMinutes);
       setProjectId(task.projectId);
+      setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
       setShowDeleteConfirm(false);
     }
   }, [task]);
@@ -108,6 +110,7 @@ export function TaskEditModal({ task, isOpen, onClose, onSave, onDelete }: TaskE
       tags,
       estimatedMinutes,
       projectId,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
     });
     onClose();
   };
@@ -235,16 +238,28 @@ export function TaskEditModal({ task, isOpen, onClose, onSave, onDelete }: TaskE
           </div>
 
           {/* Estimated time */}
-          <div className="space-y-2">
-            <Label htmlFor="estimated">Tempo estimado (minutos)</Label>
-            <Input
-              id="estimated"
-              type="number"
-              value={estimatedMinutes || ''}
-              onChange={(e) => setEstimatedMinutes(e.target.value ? parseInt(e.target.value) : undefined)}
-              placeholder="30"
-              min={1}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="estimated">Tempo estimado (minutos)</Label>
+              <Input
+                id="estimated"
+                type="number"
+                value={estimatedMinutes || ''}
+                onChange={(e) => setEstimatedMinutes(e.target.value ? parseInt(e.target.value) : undefined)}
+                placeholder="30"
+                min={1}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dueDate">Data de Vencimento</Label>
+              <Input
+                id="dueDate"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
           </div>
 
           {/* File Attachments */}
