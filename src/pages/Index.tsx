@@ -77,6 +77,12 @@ import type { Task, CaptureItem, JournalEntry, Project } from "@/types";
 
 export default function Index() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarMode, setSidebarMode] = useState<'fixed' | 'auto-hide'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('app-sidebar-mode') as 'fixed' | 'auto-hide') || 'fixed';
+    }
+    return 'fixed';
+  });
   const [activeView, setActiveView] = useState('dashboard');
   const [panicModeOpen, setPanicModeOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -113,6 +119,22 @@ export default function Index() {
       setShowWelcome(true);
     }
   }, [needsWelcome, showWelcome]);
+  
+  // Listen for sidebar mode changes from Settings
+  useEffect(() => {
+    const handleSidebarModeChange = (event: CustomEvent<'fixed' | 'auto-hide'>) => {
+      setSidebarMode(event.detail);
+      // If switching to auto-hide, close the sidebar
+      if (event.detail === 'auto-hide') {
+        setSidebarOpen(false);
+      }
+    };
+    
+    window.addEventListener('sidebar-mode-change', handleSidebarModeChange as EventListener);
+    return () => {
+      window.removeEventListener('sidebar-mode-change', handleSidebarModeChange as EventListener);
+    };
+  }, []);
   
   // Task complete celebration state
   const [showTaskComplete, setShowTaskComplete] = useState(false);
@@ -1044,9 +1066,13 @@ export default function Index() {
         onClose={() => setSidebarOpen(false)}
         activeView={activeView}
         onViewChange={setActiveView}
+        mode={sidebarMode}
       />
 
-      <main className="pt-16 md:pl-64">
+      <main className={cn(
+        "pt-16 transition-all duration-300",
+        sidebarMode === 'fixed' ? "md:pl-64" : "md:pl-0"
+      )}>
         <div className="container mx-auto max-w-6xl p-4 md:p-6">
           {renderContent()}
         </div>

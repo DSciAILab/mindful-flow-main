@@ -12,6 +12,8 @@ import {
   Brain,
   Type,
   Bot,
+  PanelLeftClose,
+  PanelLeft,
   Volume2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -155,6 +157,7 @@ export function Settings({ onThemeChange }: SettingsProps) {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [highContrast, setHighContrast] = useState(false);
   const [selectedFont, setSelectedFont] = useState('jakarta');
+  const [sidebarMode, setSidebarMode] = useState<'fixed' | 'auto-hide'>('fixed');
 
   useEffect(() => {
     // Load saved dark mode preference
@@ -191,6 +194,12 @@ export function Settings({ onThemeChange }: SettingsProps) {
     if (savedReducedMotion === 'true') {
       setReducedMotion(true);
       document.documentElement.classList.add('reduce-motion');
+    }
+    
+    // Load sidebar mode preference
+    const savedSidebarMode = localStorage.getItem('app-sidebar-mode') as 'fixed' | 'auto-hide' | null;
+    if (savedSidebarMode) {
+      setSidebarMode(savedSidebarMode);
     }
   }, []);
 
@@ -234,6 +243,13 @@ export function Settings({ onThemeChange }: SettingsProps) {
       document.documentElement.style.setProperty('--font-family', font.family);
       localStorage.setItem('app-font', fontId);
     }
+  };
+
+  const handleSidebarModeChange = (mode: 'fixed' | 'auto-hide') => {
+    setSidebarMode(mode);
+    localStorage.setItem('app-sidebar-mode', mode);
+    // Dispatch custom event for real-time updates
+    window.dispatchEvent(new CustomEvent('sidebar-mode-change', { detail: mode }));
   };
 
   return (
@@ -373,6 +389,53 @@ export function Settings({ onThemeChange }: SettingsProps) {
               checked={highContrast}
               onCheckedChange={setHighContrast}
             />
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar Mode Section */}
+      <div className="animate-fade-in rounded-2xl border border-border/50 bg-card p-6 shadow-card" style={{ animationDelay: '250ms' }}>
+        <h3 className="mb-4 flex items-center gap-2 font-semibold text-foreground">
+          {sidebarMode === 'fixed' ? (
+            <PanelLeft className="h-5 w-5 text-primary" />
+          ) : (
+            <PanelLeftClose className="h-5 w-5 text-primary" />
+          )}
+          Menu Lateral
+        </h3>
+
+        <div className="flex items-center justify-between rounded-xl bg-muted/30 p-4">
+          <div>
+            <Label className="text-sm font-medium text-foreground">Comportamento do Menu</Label>
+            <p className="text-xs text-muted-foreground">
+              {sidebarMode === 'fixed' ? 'Menu sempre visível no desktop' : 'Menu aparece ao passar o mouse'}
+            </p>
+          </div>
+          <div className="flex gap-1 rounded-lg bg-muted/50 p-1">
+            <button
+              onClick={() => handleSidebarModeChange('fixed')}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+                sidebarMode === 'fixed'
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <PanelLeft className="h-3.5 w-3.5" />
+              Fixo
+            </button>
+            <button
+              onClick={() => handleSidebarModeChange('auto-hide')}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+                sidebarMode === 'auto-hide'
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <PanelLeftClose className="h-3.5 w-3.5" />
+              Auto
+            </button>
           </div>
         </div>
       </div>
