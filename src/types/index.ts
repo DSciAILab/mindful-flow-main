@@ -39,6 +39,8 @@ export interface Task {
   // Big 3 - As 3 tarefas mais importantes do dia
   isBig3?: boolean;
   big3Date?: Date;
+  // Custom sort order from comparison prioritization
+  sortOrder?: number;
 }
 
 export interface Project {

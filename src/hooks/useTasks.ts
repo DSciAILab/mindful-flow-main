@@ -307,6 +307,68 @@ export const useTasks = () => {
     });
   }, [tasks, updateTask]);
 
+  // Reorder tasks by priority (from comparison modal)
+  const reorderTasksByPriority = useCallback(async (sortedTaskIds: string[]): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      // Update each task with its new sort order
+      const updates = sortedTaskIds.map((taskId, index) => ({
+        id: taskId,
+        sort_order: index,
+      }));
+
+      // Batch update all tasks
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('mf_tasks')
+          .update({ sort_order: update.sort_order })
+          .eq('id', update.id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      }
+
+      // Update local state
+      setTasks((prev) => {
+        const taskMap = new Map(prev.map(t => [t.id, t]));
+        const sortedTasks: Task[] = [];
+        
+        // Add sorted tasks first
+        for (let i = 0; i < sortedTaskIds.length; i++) {
+          const task = taskMap.get(sortedTaskIds[i]);
+          if (task) {
+            sortedTasks.push({ ...task, sortOrder: i });
+          }
+        }
+        
+        // Add remaining tasks (not in sorted list)
+        for (const task of prev) {
+          if (!sortedTaskIds.includes(task.id)) {
+            sortedTasks.push(task);
+          }
+        }
+        
+        return sortedTasks;
+      });
+
+      toast({
+        title: 'Tarefas priorizadas!',
+        description: 'A ordem das tarefas foi atualizada.',
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error reordering tasks:', error);
+      toast({
+        title: 'Erro ao reordenar',
+        description: 'Não foi possível salvar a nova ordem.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  }, [user, toast]);
+
   return {
     tasks,
     completedTasks,
@@ -318,6 +380,7 @@ export const useTasks = () => {
     deleteTask,
     addTimeToTask,
     toggleBig3,
+    reorderTasksByPriority,
     refetch: fetchTasks,
     fetchCompletedTasks,
   };

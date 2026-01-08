@@ -21,6 +21,7 @@ import { TimerDashboard } from "@/components/dashboard/TimerDashboard";
 import { FullPagePomodoro } from "@/components/dashboard/FullPagePomodoro";
 import { QuoteDisplay } from "@/components/dashboard/QuoteDisplay";
 import { Big3Widget } from "@/components/dashboard/Big3Widget";
+import { TaskPriorityCompareModal } from "@/components/dashboard/TaskPriorityCompareModal";
 import { ProjectCreateModal } from "@/components/projects/ProjectCreateModal";
 import { ProjectList } from "@/components/projects/ProjectCard";
 import { WheelOfLife } from "@/components/planning/WheelOfLife";
@@ -69,7 +70,8 @@ import {
   Type,
   Mic,
   Camera,
-  Clock
+  Clock,
+  Scale
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Textarea } from "@/components/ui/textarea";
@@ -151,8 +153,12 @@ export default function Index() {
     completedTasks,
     fetchCompletedTasks,
     big3Tasks,
-    toggleBig3
+    toggleBig3,
+    reorderTasksByPriority
   } = useTasks();
+
+  // Priority comparison modal state
+  const [isPriorityCompareOpen, setIsPriorityCompareOpen] = useState(false);
 
   const [showCompletedTasks, setShowCompletedTasks] = useState(false);
 
@@ -653,17 +659,45 @@ export default function Index() {
 
       case 'tasks':
         return (
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="space-y-6">
-            <div className="animate-fade-in">
-              <h1 className="mb-2 flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
-                <CheckSquare className="h-8 w-8 text-primary" />
-                Tarefas
-              </h1>
-              <p className="text-muted-foreground">
-                Gerencie suas tarefas e subtarefas
-              </p>
+            <div className="animate-fade-in flex items-start justify-between">
+              <div>
+                <h1 className="mb-2 flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
+                  <CheckSquare className="h-8 w-8 text-primary" />
+                  Tarefas
+                </h1>
+                <p className="text-muted-foreground">
+                  Gerencie suas tarefas e subtarefas
+                </p>
+              </div>
+              {tasks.filter(t => !t.completedAt).length >= 2 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsPriorityCompareOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Scale className="h-4 w-4" />
+                  Priorizar
+                </Button>
+              )}
             </div>
+            
+            {/* Big 3 Widget - espelho do dashboard */}
             <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
+              <Big3Widget 
+                big3Tasks={big3Tasks} 
+                onSelectTask={handleSelectTask}
+                onToggleBig3={toggleBig3}
+                onAddBig3={() => {
+                  setIsSelectingForBig3(true);
+                  setIsTaskSelectorOpen(true);
+                }}
+              />
+            </div>
+            
+            <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
               <TaskList 
                 tasks={visibleTasks}
                 showCompleted={showCompletedTasks}
@@ -680,7 +714,16 @@ export default function Index() {
                 subtasks={subtasks}
               />
             </div>
+
+            {/* Priority Compare Modal */}
+            <TaskPriorityCompareModal
+              isOpen={isPriorityCompareOpen}
+              onClose={() => setIsPriorityCompareOpen(false)}
+              tasks={tasks.filter(t => !t.completedAt)}
+              onComplete={reorderTasksByPriority}
+            />
           </div>
+          </DndContext>
         );
 
       case 'habits':
