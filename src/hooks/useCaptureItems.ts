@@ -130,7 +130,7 @@ export const useCaptureItems = () => {
     }
   }, [user, toast]);
 
-  // Mark item as processed
+  // Mark item as processed and remove from local list
   const markAsProcessed = useCallback(async (itemId: string): Promise<boolean> => {
     if (!user) return false;
 
@@ -143,11 +143,8 @@ export const useCaptureItems = () => {
 
       if (error) throw error;
 
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === itemId ? { ...item, processed: true } : item
-        )
-      );
+      // Remove item from local state so it disappears from the inbox
+      setItems((prev) => prev.filter((item) => item.id !== itemId));
       return true;
     } catch (error) {
       console.error('Error marking item as processed:', error);
