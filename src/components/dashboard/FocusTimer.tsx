@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { Task } from "@/types";
 import { useTimerSounds } from "@/hooks/useTimerSounds";
+import { QuickDistractionCapture } from "@/components/distractions/QuickDistractionCapture";
 
 interface FocusTimerProps {
   formattedTime: string;
@@ -24,12 +25,14 @@ interface FocusTimerProps {
   type: 'focus' | 'break';
   sessionsCompleted: number;
   selectedTask: Task | null;
+  focusSessionId?: string;
   onStart: () => void;
   onPause: () => void;
   onDone: () => void;
   onBreak: () => void;
   onClearTask: () => void;
   onSkipToFocus?: () => void;
+  onCaptureDistraction?: (content: string) => void;
 }
 
 export function FocusTimer({
@@ -40,12 +43,14 @@ export function FocusTimer({
   type,
   sessionsCompleted,
   selectedTask,
+  focusSessionId,
   onStart,
   onPause,
   onDone,
   onBreak,
   onClearTask,
   onSkipToFocus,
+  onCaptureDistraction,
 }: FocusTimerProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
@@ -403,6 +408,16 @@ export function FocusTimer({
           }
         </p>
       </div>
+
+      {/* Quick Distraction Capture - Parking Lot */}
+      {onCaptureDistraction && (
+        <QuickDistractionCapture
+          isVisible={type === 'focus' && !isMinimized}
+          currentTaskId={selectedTask?.id}
+          focusSessionId={focusSessionId}
+          onCapture={onCaptureDistraction}
+        />
+      )}
     </div>
   );
 }

@@ -25,12 +25,15 @@ import {
   Zap,
   Flag,
   Leaf,
-  Tag
+  Tag,
+  Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskAttachments } from "./TaskAttachments";
-import type { Task, Priority, TaskStatus } from "@/types";
+import { EnergySelector } from "@/components/energy/EnergySelector";
+import { ContextSelector } from "@/components/energy/ContextSelector";
+import type { Task, Priority, TaskStatus, EnergyLevel, TaskContext } from "@/types";
 import { useProjects } from "@/hooks/useProjects";
 import { FolderKanban } from "lucide-react";
 
@@ -69,6 +72,10 @@ export function TaskEditModal({ task, isOpen, onClose, onSave, onDelete }: TaskE
   const [dueDate, setDueDate] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  // Energy and Context fields
+  const [energyRequired, setEnergyRequired] = useState<EnergyLevel>('medium');
+  const [contexts, setContexts] = useState<TaskContext[]>([]);
+  const [timeRequiredMinutes, setTimeRequiredMinutes] = useState<number | undefined>();
   const { projects } = useProjects();
 
   useEffect(() => {
@@ -90,6 +97,10 @@ export function TaskEditModal({ task, isOpen, onClose, onSave, onDelete }: TaskE
       setProjectId(task.projectId);
       setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
       setShowDeleteConfirm(false);
+      // Energy and Context fields
+      setEnergyRequired(task.energyRequired || 'medium');
+      setContexts(task.contexts || []);
+      setTimeRequiredMinutes(task.timeRequiredMinutes);
     }
   }, [task]);
 
@@ -111,6 +122,10 @@ export function TaskEditModal({ task, isOpen, onClose, onSave, onDelete }: TaskE
       estimatedMinutes,
       projectId,
       dueDate: dueDate ? new Date(dueDate) : undefined,
+      // Energy and Context fields
+      energyRequired,
+      contexts,
+      timeRequiredMinutes,
     });
     onClose();
   };
@@ -258,6 +273,37 @@ export function TaskEditModal({ task, isOpen, onClose, onSave, onDelete }: TaskE
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Energy and Context Section */}
+          <div className="border-t pt-4 space-y-4">
+            <EnergySelector
+              value={energyRequired}
+              onChange={setEnergyRequired}
+              size="sm"
+            />
+
+            <ContextSelector
+              value={contexts}
+              onChange={setContexts}
+            />
+
+            {/* Time Required */}
+            <div className="space-y-2">
+              <Label htmlFor="timeRequired" className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                Tempo mínimo necessário (minutos)
+              </Label>
+              <Input
+                id="timeRequired"
+                type="number"
+                value={timeRequiredMinutes || ''}
+                onChange={(e) => setTimeRequiredMinutes(e.target.value ? parseInt(e.target.value) : undefined)}
+                placeholder="Ex: 30"
+                min={1}
+                className="max-w-[200px]"
               />
             </div>
           </div>

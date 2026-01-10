@@ -14,12 +14,17 @@ import {
   Bot,
   PanelLeftClose,
   PanelLeft,
-  Volume2
+  Volume2,
+  Heart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LLMSettings } from "./LLMSettings";
 import { AIPersonaSettings } from "./AIPersonaSettings";
 import { TimerSoundSettings } from "./TimerSoundSettings";
+import { DailyMissionSettings } from "@/components/daily-mission/DailyMissionSettings";
+import { WellnessSettings as WellnessSettingsComponent } from "@/components/wellness";
+import { useDailyMission } from "@/hooks/useDailyMission";
+import { useWellnessReminders } from "@/hooks/useWellnessReminders";
 
 interface ThemePreset {
   id: string;
@@ -158,6 +163,12 @@ export function Settings({ onThemeChange }: SettingsProps) {
   const [highContrast, setHighContrast] = useState(false);
   const [selectedFont, setSelectedFont] = useState('jakarta');
   const [sidebarMode, setSidebarMode] = useState<'fixed' | 'auto-hide'>('fixed');
+
+  // Daily Mission hook
+  const { config: missionConfig, loading: missionLoading, updateConfig: updateMissionConfig } = useDailyMission();
+
+  // Wellness Reminders hook
+  const { config: wellnessConfig, loading: wellnessLoading, updateConfig: updateWellnessConfig } = useWellnessReminders();
 
   useEffect(() => {
     // Load saved dark mode preference
@@ -438,6 +449,29 @@ export function Settings({ onThemeChange }: SettingsProps) {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Daily Mission Settings Section */}
+      {missionConfig && (
+        <div className="animate-fade-in rounded-2xl border border-border/50 bg-card p-6 shadow-card" style={{ animationDelay: '275ms' }}>
+          <DailyMissionSettings
+            config={missionConfig}
+            onSave={updateMissionConfig}
+          />
+        </div>
+      )}
+
+      {/* Wellness Settings Section */}
+      <div className="animate-fade-in rounded-2xl border border-border/50 bg-card p-6 shadow-card" style={{ animationDelay: '285ms' }}>
+        <h3 className="mb-4 flex items-center gap-2 font-semibold text-foreground">
+          <Heart className="h-5 w-5 text-primary" />
+          Bem-estar
+        </h3>
+        <WellnessSettingsComponent
+          config={wellnessConfig}
+          onSave={updateWellnessConfig}
+          loading={wellnessLoading}
+        />
       </div>
 
       {/* LLM Configuration Section */}

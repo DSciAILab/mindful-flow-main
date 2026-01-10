@@ -8,6 +8,17 @@ export type TaskStatus =
   | "someday"
   | "done";
 
+// Energy and Context types for smart task filtering
+export type EnergyLevel = 'low' | 'medium' | 'high';
+
+export type TaskContext = 
+  | '@home' 
+  | '@work' 
+  | '@phone' 
+  | '@computer' 
+  | '@errands' 
+  | '@anywhere';
+
 // Task Category removed
 // export type TaskCategory = "red" | "yellow" | "purple" | "green";
 
@@ -41,6 +52,10 @@ export interface Task {
   big3Date?: Date;
   // Custom sort order from comparison prioritization
   sortOrder?: number;
+  // Energy and Context system
+  energyRequired: EnergyLevel;
+  contexts: TaskContext[];
+  timeRequiredMinutes?: number;
 }
 
 export interface Project {
@@ -122,9 +137,13 @@ export interface Habit {
   id: string;
   title: string;
   description?: string;
-  frequency: "daily" | "weekly";
-  daysOfWeek?: number[]; // 0-6 for weekly habits
+  icon: string;
+  frequency: 'daily' | 'weekly' | 'specific_days';
+  specificDays?: number[]; // [0-6] for days of week (0=Sunday)
+  daysOfWeek?: number[]; // Legacy compatibility
   color: string;
+  reminderTime?: string;
+  isActive: boolean;
   projectId?: string;
   createdAt: Date;
   completedDays: Record<string, boolean>; // date string "YYYY-MM-DD" -> completed
@@ -133,8 +152,26 @@ export interface Habit {
 export interface HabitLog {
   id: string;
   habitId: string;
-  date: Date;
-  completed: boolean;
+  userId: string;
+  completedAt: Date;
+  notes?: string;
+  createdAt: Date;
+}
+
+export interface HabitStreak {
+  id: string;
+  habitId: string;
+  userId: string;
+  currentStreak: number;
+  longestStreak: number;
+  lastCompletedAt?: Date;
+  updatedAt: Date;
+}
+
+export interface HabitWithStats extends Habit {
+  streak: HabitStreak;
+  completedToday: boolean;
+  completionRate: number; // Last 30 days percentage
 }
 
 export interface Sketch {

@@ -19,11 +19,20 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
-  GripVertical
+  GripVertical,
+  Battery,
+  BatteryMedium,
+  BatteryFull,
+  Home,
+  Briefcase,
+  Phone,
+  Laptop,
+  ShoppingCart,
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { Task, Priority, Project } from "@/types";
+import type { Task, Priority, Project, EnergyLevel, TaskContext } from "@/types";
 import { LifeAreaBadge } from "@/components/ui/LifeAreaBadge";
 
 interface TaskCardProps {
@@ -84,6 +93,25 @@ export function TaskCard({
   const todayStr = new Date().toISOString().split('T')[0];
   const isBig3Today = task.isBig3 && task.big3Date && 
     task.big3Date.toISOString().split('T')[0] === todayStr;
+
+  // Energy and Context configs
+  const energyConfig: Record<EnergyLevel, { icon: typeof Battery; color: string; label: string }> = {
+    low: { icon: Battery, color: 'text-amber-500', label: 'Baixa' },
+    medium: { icon: BatteryMedium, color: 'text-blue-500', label: 'Média' },
+    high: { icon: BatteryFull, color: 'text-emerald-500', label: 'Alta' },
+  };
+
+  const contextIcons: Record<TaskContext, typeof Home> = {
+    '@home': Home,
+    '@work': Briefcase,
+    '@phone': Phone,
+    '@computer': Laptop,
+    '@errands': ShoppingCart,
+    '@anywhere': Globe,
+  };
+
+  const energyLevel = task.energyRequired || 'medium';
+  const EnergyIcon = energyConfig[energyLevel].icon;
 
   const formatTimeSpent = (minutes: number) => {
     if (minutes < 60) return `${minutes}min`;
@@ -194,6 +222,26 @@ export function TaskCard({
             <PriorityIcon className="h-3 w-3" />
             {priority.label}
           </span>
+          {/* Energy Badge */}
+          <span className={cn(
+            "inline-flex items-center gap-1 rounded-md bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium",
+            energyConfig[energyLevel].color
+          )}>
+            <EnergyIcon className="h-3 w-3" />
+            {energyConfig[energyLevel].label}
+          </span>
+          {/* Context Badges */}
+          {task.contexts && task.contexts.length > 0 && task.contexts.slice(0, 2).map((ctx) => {
+            const CtxIcon = contextIcons[ctx];
+            return (
+              <span key={ctx} className="inline-flex items-center gap-0.5 rounded-md bg-muted/50 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                <CtxIcon className="h-2.5 w-2.5" />
+              </span>
+            );
+          })}
+          {task.contexts && task.contexts.length > 2 && (
+            <span className="text-[10px] text-muted-foreground">+{task.contexts.length - 2}</span>
+          )}
           {project?.areaId && (
             <LifeAreaBadge areaId={project.areaId} />
           )}

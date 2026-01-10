@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
-import type { Task } from '@/types';
+import type { Task, EnergyLevel, TaskContext } from '@/types';
 
 export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -29,6 +29,10 @@ export const useTasks = () => {
     activityLog: [],
     isBig3: task.is_big3 || false,
     big3Date: task.big3_date ? new Date(task.big3_date) : undefined,
+    // Energy and Context fields
+    energyRequired: (task.energy_required as EnergyLevel) || 'medium',
+    contexts: (task.contexts as TaskContext[]) || [],
+    timeRequiredMinutes: task.time_required_minutes || undefined,
   });
 
   // Get today's date string for Big 3 comparison
@@ -121,6 +125,10 @@ export const useTasks = () => {
           estimated_minutes: taskData.estimatedMinutes || null,
           project_id: taskData.projectId || null,
           due_date: taskData.dueDate?.toISOString() || null,
+          // Energy and Context fields
+          energy_required: taskData.energyRequired || 'medium',
+          contexts: taskData.contexts || [],
+          time_required_minutes: taskData.timeRequiredMinutes || null,
         })
         .select()
         .single();
@@ -141,6 +149,10 @@ export const useTasks = () => {
         estimatedMinutes: data.estimated_minutes || undefined,
         projectId: data.project_id || undefined,
         activityLog: [],
+        // Energy and Context fields
+        energyRequired: (data.energy_required as EnergyLevel) || 'medium',
+        contexts: (data.contexts as TaskContext[]) || [],
+        timeRequiredMinutes: data.time_required_minutes || undefined,
       };
 
       setTasks((prev) => [newTask, ...prev]);
@@ -176,6 +188,10 @@ export const useTasks = () => {
       if (updates.completedAt !== undefined) dbUpdates.completed_at = updates.completedAt?.toISOString() || null;
       if (updates.isBig3 !== undefined) dbUpdates.is_big3 = updates.isBig3;
       if (updates.big3Date !== undefined) dbUpdates.big3_date = updates.big3Date?.toISOString().split('T')[0] || null;
+      // Energy and Context fields
+      if (updates.energyRequired !== undefined) dbUpdates.energy_required = updates.energyRequired;
+      if (updates.contexts !== undefined) dbUpdates.contexts = updates.contexts;
+      if (updates.timeRequiredMinutes !== undefined) dbUpdates.time_required_minutes = updates.timeRequiredMinutes || null;
 
       const { error } = await supabase
         .from('mf_tasks')

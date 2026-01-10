@@ -22,6 +22,8 @@ import { FullPagePomodoro } from "@/components/dashboard/FullPagePomodoro";
 import { QuoteDisplay } from "@/components/dashboard/QuoteDisplay";
 import { Big3Widget } from "@/components/dashboard/Big3Widget";
 import { TaskPriorityCompareModal } from "@/components/dashboard/TaskPriorityCompareModal";
+import { MorningCheckinModal, DailyMissionCard } from "@/components/daily-mission";
+import { WellnessReminderToast, StretchGuide, EyeRestTimer } from "@/components/wellness";
 import { ProjectCreateModal } from "@/components/projects/ProjectCreateModal";
 import { ProjectList } from "@/components/projects/ProjectCard";
 import { WheelOfLife } from "@/components/planning/WheelOfLife";
@@ -49,6 +51,11 @@ import { useNotes } from "@/hooks/useNotes";
 import { useProfile } from "@/hooks/useProfile";
 import { useCaptureItems } from "@/hooks/useCaptureItems";
 import { useTimerSounds } from "@/hooks/useTimerSounds";
+import { useDailyMission } from "@/hooks/useDailyMission";
+import { useHabits } from "@/hooks/useHabits";
+import { useWellnessReminders } from "@/hooks/useWellnessReminders";
+import { useDistractions } from '@/hooks/useDistractions';
+import { DistractionReviewModal } from '@/components/distractions/DistractionReviewModal';
 import { cn } from "@/lib/utils";
 import { 
   Sparkles, 
@@ -108,6 +115,14 @@ export default function Index() {
   // Task selector dialog state
   const [isTaskSelectorOpen, setIsTaskSelectorOpen] = useState(false);
   const [isSelectingForBig3, setIsSelectingForBig3] = useState(false);
+  
+  // Daily mission check-in skipped state (persisted in sessionStorage)
+  const [checkinSkipped, setCheckinSkipped] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('checkin-skipped-today') === 'true';
+    }
+    return false;
+  });
   
   // Profile hook - must be before useEffect that uses it
   const { greetingName, needsWelcome, profile, updateDisplayName } = useProfile();
@@ -229,6 +244,36 @@ export default function Index() {
     updateItem: updateCaptureItem,
   } = useCaptureItems();
   
+  // Daily Mission hook
+  const {
+    config: missionConfig,
+    dailyMission,
+    shouldShowCheckinModal,
+    saveMorningCheckin,
+    updateConfig: updateMissionConfig,
+  } = useDailyMission();
+  
+  // Habits hook for habit completion in daily mission
+  const { toggleHabit } = useHabits();
+
+  // Distractions hook for Parking Lot feature
+  const {
+    distractions,
+    captureDistraction,
+    convertToTask: convertDistractionToTask,
+    moveToInbox: moveDistractionToInbox,
+    markAsProcessed: markDistractionProcessed,
+    deleteDistraction,
+    getSessionDistractions,
+  } = useDistractions();
+  
+  // Focus session tracking for distractions
+  const [focusSessionId, setFocusSessionId] = useState<string | undefined>();
+  const [showDistractionReview, setShowDistractionReview] = useState(false);
+
+  // State for wellness modals
+  const [showStretchGuide, setShowStretchGuide] = useState(false);
+  const [showEyeRest, setShowEyeRest] = useState(false);
 
   const { stats, completeTask: addPointsForTask, addFocusTime } = useUserStats();
   const { toast } = useToast();
@@ -345,6 +390,16 @@ export default function Index() {
     // Play appropriate sound based on session type
     if (type === 'focus') {
       playFocusEndSound();
+      
+      // Check if there are unprocessed distractions from this session
+      const sessionDistractions = focusSessionId 
+        ? getSessionDistractions(focusSessionId).filter(d => !d.processed)
+        : distractions.filter(d => !d.processed);
+      
+      if (sessionDistractions.length > 0) {
+        // Trigger review modal after a short delay
+        setTimeout(() => setShowDistractionReview(true), 500);
+      }
     } else {
       playBreakEndSound();
     }
@@ -353,12 +408,20 @@ export default function Index() {
       title: type === 'focus' ? "Sessão completa!" : "Pausa terminada!",
       description: type === 'focus' ? "Ótimo trabalho! Hora de uma pausa." : "Vamos voltar ao foco!",
     });
-  }, [toast, playFocusEndSound, playBreakEndSound]);
+  }, [toast, playFocusEndSound, playBreakEndSound, focusSessionId, getSessionDistractions, distractions]);
 
   const timer = useTimer({
     onMinutePassed: handleMinutePassed,
     onSessionComplete: handleSessionComplete,
   });
+
+  // Wellness reminders hook - pass timer.isRunning to pause during focus
+  const {
+    activeReminder,
+    handleComplete: handleWellnessComplete,
+    handleSnooze: handleWellnessSnooze,
+    handleDismiss: handleWellnessDismiss,
+  } = useWellnessReminders({ isFocusRunning: timer.isRunning });
 
   const handleCapture = async (type: string, content: string, audioUrl?: string, projectId?: string) => {
     // Check for direct conversion intents
@@ -1012,6 +1075,19 @@ export default function Index() {
             <div className="grid gap-4 lg:grid-cols-3">
               {/* Left column */}
               <div className="space-y-4 lg:col-span-2">
+                {/* Daily Mission Card - shows at top if enabled */}
+                {missionConfig?.showOnStartup && (
+                  <div className="animate-fade-in" style={{ animationDelay: '50ms' }}>
+                    <DailyMissionCard
+                      mission={dailyMission}
+                      onTaskComplete={handleTaskComplete}
+                      onHabitComplete={(habitId) => toggleHabit(habitId, new Date())}
+                      onViewAll={() => setActiveView('tasks')}
+                      onSelectTask={handleSelectTask}
+                    />
+                  </div>
+                )}
+                
                 <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
                   <QuickCapture onCapture={handleCapture} />
                 </div>
@@ -1130,17 +1206,33 @@ export default function Index() {
         type={timer.type}
         sessionsCompleted={timer.sessionsCompleted}
         selectedTask={selectedTask}
+        focusSessionId={focusSessionId}
         onStart={timer.start}
         onPause={timer.pause}
         onDone={handleTaskDone}
         onBreak={timer.goToBreak}
         onClearTask={handleClearTask}
         onSkipToFocus={timer.skipToFocus}
+        onCaptureDistraction={async (content) => {
+          await captureDistraction(content, selectedTask?.id, focusSessionId);
+        }}
       />
 
       <PanicModeModal 
         isOpen={panicModeOpen} 
         onClose={() => setPanicModeOpen(false)} 
+      />
+
+      {/* Morning Check-in Modal */}
+      <MorningCheckinModal
+        isOpen={shouldShowCheckinModal && !checkinSkipped}
+        onComplete={async (energy, mood, sleep, notes) => {
+          await saveMorningCheckin(energy, mood, sleep, notes);
+        }}
+        onSkip={() => {
+          setCheckinSkipped(true);
+          sessionStorage.setItem('checkin-skipped-today', 'true');
+        }}
       />
 
       <TaskEditModal
@@ -1294,6 +1386,65 @@ export default function Index() {
         onPause={timer.pause}
         onDone={handleTaskDone}
         onBreak={timer.goToBreak}
+      />
+
+      {/* Wellness Reminder Toast */}
+      {activeReminder && (
+        <WellnessReminderToast
+          reminder={activeReminder}
+          onComplete={() => {
+            // Open specific modal if it's stretch or eyes
+            if (activeReminder.type === 'stretch') {
+              setShowStretchGuide(true);
+            } else if (activeReminder.type === 'eyes') {
+              setShowEyeRest(true);
+            }
+            handleWellnessComplete();
+          }}
+          onSnooze={handleWellnessSnooze}
+          onDismiss={handleWellnessDismiss}
+        />
+      )}
+
+      {/* Stretch Guide Modal */}
+      <StretchGuide
+        isOpen={showStretchGuide}
+        onComplete={() => setShowStretchGuide(false)}
+        onSkip={() => setShowStretchGuide(false)}
+      />
+
+      {/* Eye Rest Timer Modal */}
+      <EyeRestTimer
+        isOpen={showEyeRest}
+        onComplete={() => setShowEyeRest(false)}
+      />
+
+      {/* Distraction Review Modal - shown after focus session with captured thoughts */}
+      <DistractionReviewModal
+        isOpen={showDistractionReview}
+        distractions={distractions}
+        onClose={() => setShowDistractionReview(false)}
+        onProcessAll={async (actions) => {
+          for (const [id, action] of actions) {
+            if (action === 'task') {
+              await convertDistractionToTask(id, async (title) => {
+                const newTask = await addTask({
+                  title,
+                  priority: 'medium',
+                  status: 'inbox',
+                });
+                return newTask;
+              });
+            } else if (action === 'inbox') {
+              await moveDistractionToInbox(id, addCaptureItem);
+            } else if (action === 'delete') {
+              await deleteDistraction(id);
+            } else if (action === 'processed') {
+              await markDistractionProcessed(id);
+            }
+          }
+          setShowDistractionReview(false);
+        }}
       />
     </div>
   );
