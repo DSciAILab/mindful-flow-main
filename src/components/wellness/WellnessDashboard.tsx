@@ -124,7 +124,7 @@ export function WellnessDashboard({ todayLogs, getWeekLogs }: WellnessDashboardP
   return (
     <div className="space-y-6">
       {/* Today's Summary */}
-      <div className="rounded-xl border border-border/50 bg-card p-4">
+      <div className="rounded-2xl border border-border/50 bg-card p-4">
         <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
           Resumo de Hoje
@@ -158,7 +158,7 @@ export function WellnessDashboard({ todayLogs, getWeekLogs }: WellnessDashboardP
       </div>
 
       {/* Week Chart */}
-      <div className="rounded-xl border border-border/50 bg-card p-4">
+      <div className="rounded-2xl border border-border/50 bg-card p-4">
         <h3 className="font-semibold text-foreground mb-4">Últimos 7 Dias</h3>
 
         {loading ? (
@@ -192,7 +192,7 @@ export function WellnessDashboard({ todayLogs, getWeekLogs }: WellnessDashboardP
       </div>
 
       {/* Streak & Achievements */}
-      <div className="rounded-xl border border-border/50 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-4">
+      <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-4">
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/20">
             <Award className="h-7 w-7 text-amber-500" />

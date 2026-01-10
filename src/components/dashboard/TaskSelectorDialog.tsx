@@ -22,8 +22,17 @@ export function TaskSelectorDialog({
   const availableTasks = tasks.filter(t => t.status !== 'done');
 
   const handleTaskSelect = (task: Task) => {
-    onSelectTask(task);
     onClose();
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent': return 'text-red-500 bg-red-500/10 border-red-500/20';
+      case 'high': return 'text-orange-500 bg-orange-500/10 border-orange-500/20';
+      case 'medium': return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
+      case 'low': return 'text-slate-500 bg-slate-500/10 border-slate-500/20';
+      default: return 'text-muted-foreground bg-muted border-transparent';
+    }
   };
 
   return (
@@ -73,7 +82,10 @@ export function TaskSelectorDialog({
                             {task.estimatedMinutes} min
                           </span>
                         )}
-                        <span className="rounded-md bg-primary/20 px-1.5 py-0.5 text-[10px] font-semibold text-primary uppercase">
+                        <span className={cn(
+                          "rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase border",
+                          getPriorityColor(task.priority)
+                        )}>
                           {task.priority}
                         </span>
                       </div>

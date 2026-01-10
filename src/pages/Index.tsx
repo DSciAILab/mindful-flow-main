@@ -653,7 +653,7 @@ export default function Index() {
               {inboxItems.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">Inbox vazio! 🎉</p>
               ) : (
-                <div className="space-y-3">
+                <div className="grid gap-3 md:grid-cols-2">
                   {inboxItems.map((item) => (
                     <div 
                       key={item.id}

@@ -248,7 +248,7 @@ export function MinimalProjectItem({
   return (
     <div
       className={cn(
-        "group rounded-xl transition-all duration-200 cursor-pointer",
+        "group rounded-2xl transition-all duration-200 cursor-pointer",
         "bg-card/50 border border-border/50",
         "hover:bg-card hover:border-border",
         isExpanded && "bg-card border-border shadow-sm"
@@ -405,7 +405,7 @@ export function ProjectList({
 
   if (projects.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border/50 p-8 text-center">
+      <div className="rounded-2xl border border-dashed border-border/50 p-8 text-center">
         <FolderKanban className="mx-auto h-12 w-12 text-muted-foreground/30 mb-3" />
         <p className="text-muted-foreground">Nenhum projeto criado ainda.</p>
         <p className="text-xs text-muted-foreground mt-1">
@@ -423,7 +423,10 @@ export function ProjectList({
   };
 
   return (
-    <div className={viewMode === 'minimal' ? "space-y-3" : "space-y-3"}>
+    <div className={viewMode === 'minimal' 
+      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" 
+      : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+    }>
       {/* Minimal view */}
       {viewMode === 'minimal' && projects.map((project) => (
         <MinimalProjectItem

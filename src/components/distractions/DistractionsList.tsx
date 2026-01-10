@@ -110,7 +110,7 @@ export function DistractionsList({
                   <div
                     key={distraction.id}
                     className={cn(
-                      "flex items-start gap-3 p-3 rounded-lg border transition-colors",
+                      "flex items-start gap-3 p-3 rounded-xl border transition-colors",
                       distraction.processed
                         ? "bg-muted/30 border-muted"
                         : "bg-card border-border hover:border-amber-500/50"

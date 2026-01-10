@@ -178,6 +178,7 @@ export interface HabitWithStats extends Habit {
   streak: HabitStreak;
   completedToday: boolean;
   completionRate: number; // Last 30 days percentage
+  isDueToday?: boolean;
 }
 
 export interface Sketch {

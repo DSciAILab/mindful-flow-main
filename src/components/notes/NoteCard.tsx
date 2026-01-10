@@ -30,7 +30,7 @@ export function NoteCard({
     <div
       onClick={() => onClick?.(note)}
       className={cn(
-        "group relative rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md cursor-pointer",
+        "group relative rounded-2xl border bg-card p-4 shadow-sm transition-all hover:shadow-md cursor-pointer",
         note.is_pinned && "border-primary/30 bg-primary/5"
       )}
     >

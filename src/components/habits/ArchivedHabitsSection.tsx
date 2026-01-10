@@ -134,7 +134,7 @@ export function ArchivedHabitsSection({
                 <div
                   key={habit.id}
                   className={cn(
-                    "relative p-4 rounded-xl border cursor-pointer transition-all",
+                    "relative p-4 rounded-2xl border cursor-pointer transition-all",
                     "bg-card/50 border-border/50 hover:bg-card hover:border-border"
                   )}
                   onClick={() => setSelectedHabit(habit)}

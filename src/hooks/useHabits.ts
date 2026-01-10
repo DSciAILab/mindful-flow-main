@@ -185,13 +185,32 @@ export const useHabits = () => {
 
   // Computed habits with stats
   const habitsWithStats = useMemo((): HabitWithStats[] => {
-    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const today = new Date();
+    const todayStr = format(today, 'yyyy-MM-dd');
+    const dayOfWeek = today.getDay();
     
     return habits
       .filter(h => h.isActive)
       .map(habit => {
         const dbStreak = streaks[habit.id];
         const calculatedStreak = calculateStreak(habit);
+
+        // Calculate if habit is due today
+        let isDueToday = true;
+        if (habit.frequency === 'weekly') {
+          // If weekly, check if today is one of the allowed days
+          // Assuming daysOfWeek is [0-6] where 0 is Sunday
+          // If daysOfWeek is present, respect it. If not (legacy/default), it might mean 'every day' or logic needs check.
+          // The fetchHabits sets default to [0..6] so this logic needs care.
+          // BUT, if frequency is weekly, it SHOULD have a constrained set.
+          // If it's effectively "daily", it's daily.
+          // We rely on 'specificDays' for 'specific_days' frequency.
+          // For 'weekly', it is often used synonymously with specific days in some apps, 
+          // but here we check habit.daysOfWeek which comes from days_of_week col.
+          isDueToday = habit.daysOfWeek?.includes(dayOfWeek) ?? true;
+        } else if (habit.frequency === 'specific_days') {
+          isDueToday = habit.specificDays?.includes(dayOfWeek) ?? false;
+        }
         
         return {
           ...habit,
@@ -206,6 +225,7 @@ export const useHabits = () => {
           },
           completedToday: !!habit.completedDays[todayStr],
           completionRate: calculateCompletionRate(habit),
+          isDueToday,
         };
       });
   }, [habits, streaks, user, calculateStreak, calculateCompletionRate]);

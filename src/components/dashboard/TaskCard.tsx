@@ -141,14 +141,26 @@ export function TaskCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group flex items-start gap-3 rounded-xl p-3 transition-all duration-300",
-        isCompleted ? "bg-muted/40" : priority.bgColor,
+        "group relative flex items-start gap-3 rounded-2xl p-3 pl-4 transition-all duration-300 overflow-hidden",
+        isCompleted 
+          ? "bg-muted/40 border-transparent" 
+          : "bg-card border-border/50 hover:border-border border",
         isCompleting && "scale-95 opacity-50",
         isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
         isBig3Today && !isCompleted && "ring-2 ring-amber-500 ring-offset-1 shadow-[0_0_15px_rgba(245,158,11,0.15)]",
         isDragging && "opacity-50 z-50 shadow-xl scale-105 rotate-2 cursor-grabbing"
       )}
     >
+      {/* Priority Indicator Stripe */}
+      {!isCompleted && (
+        <div 
+          className={cn(
+            "absolute inset-y-0 left-0 w-1.5",
+            // Map text colors to background colors for the stripe
+            priority.color.replace('text-', 'bg-')
+          )} 
+        />
+      )}
       {/* Drag Handle */}
       <div 
         {...attributes} 

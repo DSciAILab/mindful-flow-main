@@ -118,7 +118,7 @@ export function JournalList({ entries, loading, onCreateNew, onEdit, onDelete }:
       {Object.entries(groupedEntries).map(([group, groupEntries]) => (
         <div key={group}>
           <h3 className="mb-3 text-sm font-medium text-muted-foreground">{group}</h3>
-          <div className="space-y-3">
+          <div className="grid gap-3 md:grid-cols-2">
             {groupEntries.map((entry) => (
               <JournalEntryCard
                 key={entry.id}

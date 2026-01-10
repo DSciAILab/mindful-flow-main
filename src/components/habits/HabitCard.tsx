@@ -67,18 +67,26 @@ export function HabitCard({ habit, onToggle, onEdit, onDelete }: HabitCardProps)
     specific_days: 'Dias específicos',
   }[habit.frequency];
 
+  const isDue = habit.isDueToday ?? true;
+  const isDimmed = !isDue && !habit.completedToday;
+
   return (
     <div 
       className={cn(
-        "group relative flex items-center gap-4 rounded-2xl border p-4 transition-all duration-300",
+        "group relative flex items-center gap-4 rounded-2xl border p-4 pl-5 transition-all duration-300 overflow-hidden",
         habit.completedToday 
           ? "border-primary/30 bg-primary/5" 
-          : "border-border/50 bg-card hover:border-border"
+          : isDimmed
+            ? "border-border/40 bg-muted/20 border-dashed opacity-75 hover:opacity-100" // Dimmed style
+            : "border-border/50 bg-card hover:border-border"
       )}
     >
-      {/* Color indicator */}
+      {/* Color indicator - now properly clips with parent's overflow-hidden */}
       <div 
-        className="absolute left-0 top-0 h-full w-1 rounded-l-2xl"
+        className={cn(
+          "absolute inset-y-0 left-0 w-1.5",
+          isDimmed ? "opacity-30" : "opacity-100"
+        )}
         style={{ backgroundColor: habit.color }}
       />
       
@@ -89,7 +97,9 @@ export function HabitCard({ habit, onToggle, onEdit, onDelete }: HabitCardProps)
           "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 transition-all duration-300",
           habit.completedToday
             ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-            : "border-muted-foreground/30 bg-muted/50 text-muted-foreground hover:border-primary hover:text-primary",
+            : isDimmed
+              ? "border-muted-foreground/20 bg-muted/30 text-muted-foreground/40 hover:border-primary/50 hover:text-primary"
+              : "border-muted-foreground/30 bg-muted/50 text-muted-foreground hover:border-primary hover:text-primary",
           isAnimating && "scale-110"
         )}
       >
@@ -101,14 +111,19 @@ export function HabitCard({ habit, onToggle, onEdit, onDelete }: HabitCardProps)
         <div className="flex items-center gap-2">
           <h3 className={cn(
             "font-semibold truncate transition-colors",
-            habit.completedToday ? "text-primary" : "text-foreground"
+            habit.completedToday ? "text-primary" : isDimmed ? "text-muted-foreground" : "text-foreground"
           )}>
             {habit.title}
           </h3>
           
           {/* Streak badge */}
           {habit.streak.currentStreak > 0 && (
-            <div className="flex items-center gap-1 rounded-full bg-orange-500/10 px-2 py-0.5 text-xs font-bold text-orange-500">
+            <div className={cn(
+              "flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold",
+              isDimmed 
+                ? "bg-slate-500/10 text-slate-500 grayscale opacity-70"
+                : "bg-orange-500/10 text-orange-500"
+            )}>
               <Flame className="h-3 w-3 fill-current" />
               {habit.streak.currentStreak}
             </div>
@@ -116,12 +131,19 @@ export function HabitCard({ habit, onToggle, onEdit, onDelete }: HabitCardProps)
         </div>
         
         <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="uppercase tracking-wider font-medium">{frequencyLabel}</span>
+          {isDimmed ? (
+             <span className="font-medium text-muted-foreground/70 flex items-center gap-1">
+               <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
+               Fora da agenda
+             </span>
+          ) : (
+            <span className="uppercase tracking-wider font-medium">{frequencyLabel}</span>
+          )}
           <span>•</span>
-          <span>{habit.completionRate}% nos últimos 30 dias</span>
+          <span>{habit.completionRate}% <span className="hidden sm:inline">nos últimos 30 dias</span></span>
         </div>
         
-        {habit.streak.currentStreak > 0 && (
+        {habit.streak.currentStreak > 0 && !isDimmed && (
           <p className="mt-1 text-xs text-muted-foreground/80">
             {getMotivationalMessage(habit.streak.currentStreak)}
           </p>
