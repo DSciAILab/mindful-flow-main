@@ -183,3 +183,6 @@ export interface Sketch {
   created_at: Date;
   updated_at: Date;
 }
+
+// Gamification types
+export * from './gamification';

@@ -55,7 +55,13 @@ import { useDailyMission } from "@/hooks/useDailyMission";
 import { useHabits } from "@/hooks/useHabits";
 import { useWellnessReminders } from "@/hooks/useWellnessReminders";
 import { useDistractions } from '@/hooks/useDistractions';
+import { GamificationProvider, useGamification } from '@/hooks/useGamification';
 import { DistractionReviewModal } from '@/components/distractions/DistractionReviewModal';
+import { 
+  AchievementUnlockedModal, 
+  LevelUpModal, 
+  GamificationDashboard 
+} from '@/components/gamification';
 import { cn } from "@/lib/utils";
 import { 
   Sparkles, 
@@ -78,7 +84,8 @@ import {
   Mic,
   Camera,
   Clock,
-  Scale
+  Scale,
+  Trophy
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Textarea } from "@/components/ui/textarea";
@@ -279,6 +286,16 @@ export default function Index() {
   const { toast } = useToast();
   const { isSplitting, subtasks, splitTask, removeSubtask } = useTaskSplitting();
   const { playFocusEndSound, playBreakEndSound } = useTimerSounds();
+  
+  // Gamification hook
+  const {
+    pendingAchievements,
+    pendingLevelUp,
+    showAchievementModal,
+    showLevelUpModal,
+    dismissAchievementModal,
+    dismissLevelUpModal,
+  } = useGamification();
 
   // Journal handlers
   const handleSaveJournalEntry = useCallback(async (entryData: Partial<JournalEntry>) => {
@@ -1045,6 +1062,26 @@ export default function Index() {
           />
         );
 
+      case 'achievements':
+        return (
+          <div className="space-y-6">
+            <div className="animate-fade-in">
+              <GamificationDashboard 
+                stats={{
+                  tasksCompleted: stats.tasksCompletedToday + (completedTasks?.length || 0),
+                  focusMinutesTotal: stats.focusMinutesToday,
+                  currentStreak: stats.currentStreak,
+                  longestStreak: stats.longestStreak,
+                  habitsCompletedStreak: 0, // TODO: Get from habits hook
+                  hasPanicModeSurvived: false,
+                  hasEarlyBirdTask: false,
+                  hasNightOwlTask: false,
+                }}
+              />
+            </div>
+          </div>
+        );
+
       case 'settings':
         return <Settings onThemeChange={() => toast({ title: "Tema atualizado!" })} />;
 
@@ -1446,7 +1483,21 @@ export default function Index() {
           setShowDistractionReview(false);
         }}
       />
+
+      {/* Achievement Unlocked Modal */}
+      <AchievementUnlockedModal
+        achievement={pendingAchievements[0] || null}
+        isOpen={showAchievementModal && pendingAchievements.length > 0}
+        onClose={dismissAchievementModal}
+      />
+
+      {/* Level Up Modal */}
+      <LevelUpModal
+        previousLevel={pendingLevelUp?.previousLevel || null}
+        newLevel={pendingLevelUp?.newLevel || null}
+        isOpen={showLevelUpModal && !!pendingLevelUp}
+        onClose={dismissLevelUpModal}
+      />
     </div>
   );
 }
-

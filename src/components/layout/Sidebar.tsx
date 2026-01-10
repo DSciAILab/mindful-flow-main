@@ -18,7 +18,8 @@ import {
   Timer,
   FileText,
   PenTool,
-  ChevronRight
+  ChevronRight,
+  Trophy
 } from "lucide-react";
 
 interface SidebarProps {
@@ -43,6 +44,7 @@ const menuItems = [
   { id: 'journal', label: 'Diário', icon: BookOpen },
   { id: 'reflection', label: 'Reflexões', icon: Brain },
   { id: 'ideas', label: 'Ideias', icon: Lightbulb },
+  { id: 'achievements', label: 'Conquistas', icon: Trophy },
   { id: 'reports', label: 'Relatórios', icon: BarChart3 },
 ];
 
