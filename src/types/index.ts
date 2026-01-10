@@ -133,6 +133,8 @@ export interface JournalEntry {
   updatedAt: Date;
 }
 
+export type HabitArchiveStatus = 'completed' | 'paused' | 'cancelled';
+
 export interface Habit {
   id: string;
   title: string;
@@ -147,6 +149,10 @@ export interface Habit {
   projectId?: string;
   createdAt: Date;
   completedDays: Record<string, boolean>; // date string "YYYY-MM-DD" -> completed
+  // Archive fields
+  archivedAt?: Date;
+  archiveReason?: string;
+  archiveStatus?: HabitArchiveStatus;
 }
 
 export interface HabitLog {

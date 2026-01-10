@@ -223,6 +223,7 @@ interface MinimalProjectItemProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onTaskClick?: (task: Task) => void;
+  onAddTask?: () => void;
 }
 
 export function MinimalProjectItem({
@@ -233,6 +234,7 @@ export function MinimalProjectItem({
   onEdit,
   onDelete,
   onTaskClick,
+  onAddTask,
 }: MinimalProjectItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const projectTasks = tasks.filter(t => t.projectId === project.id);
@@ -350,9 +352,25 @@ export function MinimalProjectItem({
           )}
           
           {/* Progress indicator */}
-          <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>{completedTasks.length}/{projectTasks.length} concluídas</span>
+          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span>{completedTasks.length}/{projectTasks.length} concluídas</span>
+            </div>
+            {onAddTask && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddTask();
+                }}
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Nova Tarefa
+              </Button>
+            )}
           </div>
         </div>
       )}
@@ -417,6 +435,7 @@ export function ProjectList({
           onEdit={() => onEditProject(project)}
           onDelete={() => setProjectToDelete(project)}
           onTaskClick={onEditTask}
+          onAddTask={onAddTask ? () => onAddTask(project.id) : undefined}
         />
       ))}
 

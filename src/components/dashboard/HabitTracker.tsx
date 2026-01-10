@@ -8,18 +8,24 @@ import { HabitCard } from "@/components/habits/HabitCard";
 import { HabitContributionGraph } from "@/components/habits/HabitContributionGraph";
 import { HabitStats } from "@/components/habits/HabitStats";
 import { HabitFormModal } from "@/components/habits/HabitFormModal";
-import type { Habit } from "@/types";
+import { ArchiveHabitModal } from "@/components/habits/ArchiveHabitModal";
+import { ArchivedHabitsSection } from "@/components/habits/ArchivedHabitsSection";
+import type { Habit, HabitArchiveStatus } from "@/types";
 
 export function HabitTracker() {
   const { 
     habits,
+    archivedHabits,
     habitsWithStats, 
     loading, 
     toggleHabit, 
     addHabit, 
     updateHabit,
     deleteHabit,
+    archiveHabit,
+    restoreHabit,
     getHabitStats,
+    getArchivedHabitStats,
     canAddHabit,
     remainingHabits,
     MAX_HABITS
@@ -27,6 +33,7 @@ export function HabitTracker() {
   
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | undefined>(undefined);
+  const [archivingHabit, setArchivingHabit] = useState<Habit | null>(null);
 
   // Get stats
   const stats = useMemo(() => getHabitStats(), [getHabitStats]);
@@ -42,12 +49,18 @@ export function HabitTracker() {
     setIsFormModalOpen(true);
   };
 
-  // Handle delete
-  const handleDelete = async (habitId: string) => {
-    const habit = habits.find(h => h.id === habitId);
-    if (habit && confirm(`Arquivar "${habit.title}"? O histórico será preservado.`)) {
-      await deleteHabit(habitId);
-    }
+  // Handle archive (opens modal instead of direct delete)
+  const handleArchive = (habit: Habit) => {
+    setArchivingHabit(habit);
+  };
+
+  // Handle archive confirm
+  const handleArchiveConfirm = async (
+    habitId: string, 
+    status: HabitArchiveStatus, 
+    reason?: string
+  ) => {
+    return await archiveHabit(habitId, status, reason);
   };
 
   // Handle save (create or update)
@@ -157,7 +170,7 @@ export function HabitTracker() {
                   habit={habit}
                   onToggle={handleToggle}
                   onEdit={handleEdit}
-                  onDelete={handleDelete}
+                  onDelete={() => handleArchive(habit)}
                 />
               ))}
             </div>
@@ -173,6 +186,14 @@ export function HabitTracker() {
         </>
       )}
 
+      {/* Archived Habits Section */}
+      <ArchivedHabitsSection
+        archivedHabits={archivedHabits}
+        getArchivedHabitStats={getArchivedHabitStats}
+        onRestore={restoreHabit}
+        canRestore={canAddHabit}
+      />
+
       {/* Form Modal */}
       <HabitFormModal
         isOpen={isFormModalOpen}
@@ -182,6 +203,15 @@ export function HabitTracker() {
         canAddHabit={canAddHabit}
         remainingHabits={remainingHabits}
       />
+
+      {/* Archive Modal */}
+      <ArchiveHabitModal
+        habit={archivingHabit}
+        isOpen={!!archivingHabit}
+        onClose={() => setArchivingHabit(null)}
+        onArchive={handleArchiveConfirm}
+      />
     </div>
   );
 }
+

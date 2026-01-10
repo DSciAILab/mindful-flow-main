@@ -112,28 +112,82 @@ export const useTasks = () => {
     if (!user) return null;
 
     try {
+      // Build insert data - energy/context fields are optional and require migration
+      const insertData: Record<string, unknown> = {
+        user_id: user.id,
+        title: taskData.title || 'Nova tarefa',
+        description: taskData.description || null,
+        priority: taskData.priority || 'medium',
+        status: taskData.status || 'next',
+        tags: taskData.tags || [],
+        points: taskData.points || 10,
+        estimated_minutes: taskData.estimatedMinutes || null,
+        project_id: taskData.projectId || null,
+        due_date: taskData.dueDate?.toISOString() || null,
+      };
+
+      // Try to include energy/context fields (will fail silently if columns don't exist)
+      // These require the 20260110_energy_context.sql migration to be applied
+      if (taskData.energyRequired) insertData.energy_required = taskData.energyRequired;
+      if (taskData.contexts && taskData.contexts.length > 0) insertData.contexts = taskData.contexts;
+      if (taskData.timeRequiredMinutes) insertData.time_required_minutes = taskData.timeRequiredMinutes;
+
       const { data, error } = await supabase
         .from('mf_tasks')
-        .insert({
-          user_id: user.id,
-          title: taskData.title || 'Nova tarefa',
-          description: taskData.description || null,
-          priority: taskData.priority || 'medium',
-          status: taskData.status || 'next',
-          tags: taskData.tags || [],
-          points: taskData.points || 10,
-          estimated_minutes: taskData.estimatedMinutes || null,
-          project_id: taskData.projectId || null,
-          due_date: taskData.dueDate?.toISOString() || null,
-          // Energy and Context fields
-          energy_required: taskData.energyRequired || 'medium',
-          contexts: taskData.contexts || [],
-          time_required_minutes: taskData.timeRequiredMinutes || null,
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // If error is about missing columns, retry without energy/context fields
+        if (error.code === 'PGRST204' && (error.message.includes('contexts') || error.message.includes('energy_required'))) {
+          console.warn('Energy/Context columns not found. Retrying without them. Please apply the 20260110_energy_context.sql migration.');
+          
+          const basicInsertData = {
+            user_id: user.id,
+            title: taskData.title || 'Nova tarefa',
+            description: taskData.description || null,
+            priority: taskData.priority || 'medium',
+            status: taskData.status || 'next',
+            tags: taskData.tags || [],
+            points: taskData.points || 10,
+            estimated_minutes: taskData.estimatedMinutes || null,
+            project_id: taskData.projectId || null,
+            due_date: taskData.dueDate?.toISOString() || null,
+          };
+
+          const { data: retryData, error: retryError } = await supabase
+            .from('mf_tasks')
+            .insert(basicInsertData)
+            .select()
+            .single();
+
+          if (retryError) throw retryError;
+
+          const newTask: Task = {
+            id: retryData.id,
+            title: retryData.title,
+            description: retryData.description || undefined,
+            priority: retryData.priority as Task['priority'],
+            status: retryData.status as Task['status'],
+            tags: retryData.tags || [],
+            points: retryData.points || 10,
+            createdAt: new Date(retryData.created_at),
+            dueDate: retryData.due_date ? new Date(retryData.due_date) : undefined,
+            timeSpentMinutes: retryData.time_spent_minutes || 0,
+            estimatedMinutes: retryData.estimated_minutes || undefined,
+            projectId: retryData.project_id || undefined,
+            activityLog: [],
+            energyRequired: 'medium',
+            contexts: [],
+            timeRequiredMinutes: undefined,
+          };
+
+          setTasks((prev) => [newTask, ...prev]);
+          return newTask;
+        }
+        throw error;
+      }
 
       const newTask: Task = {
         id: data.id,
@@ -149,7 +203,7 @@ export const useTasks = () => {
         estimatedMinutes: data.estimated_minutes || undefined,
         projectId: data.project_id || undefined,
         activityLog: [],
-        // Energy and Context fields
+        // Energy and Context fields (may not exist if migration not applied)
         energyRequired: (data.energy_required as EnergyLevel) || 'medium',
         contexts: (data.contexts as TaskContext[]) || [],
         timeRequiredMinutes: data.time_required_minutes || undefined,

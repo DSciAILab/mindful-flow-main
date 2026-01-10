@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
-import type { Habit, HabitStreak, HabitWithStats } from '@/types';
-import { format, subDays, isAfter, isSameDay } from 'date-fns';
+import type { Habit, HabitStreak, HabitWithStats, HabitArchiveStatus } from '@/types';
+import { format, subDays, isAfter, isSameDay, differenceInDays } from 'date-fns';
 
 const MAX_HABITS = 5;
 
 export const useHabits = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
+  const [archivedHabits, setArchivedHabits] = useState<Habit[]>([]);
   const [streaks, setStreaks] = useState<Record<string, HabitStreak>>({});
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -98,10 +99,19 @@ export const useHabits = () => {
           projectId: habit.project_id || undefined,
           createdAt: new Date(habit.created_at),
           completedDays,
+          // Archive fields
+          archivedAt: habit.archived_at ? new Date(habit.archived_at) : undefined,
+          archiveReason: habit.archive_reason || undefined,
+          archiveStatus: habit.archive_status as HabitArchiveStatus || undefined,
         };
       });
 
-      setHabits(mappedHabits);
+      // Separate active and archived habits
+      const active = mappedHabits.filter(h => !h.archivedAt);
+      const archived = mappedHabits.filter(h => h.archivedAt);
+
+      setHabits(active);
+      setArchivedHabits(archived);
     } catch (error) {
       console.error('Error fetching habits:', error);
       toast({
@@ -424,6 +434,180 @@ export const useHabits = () => {
     }
   };
 
+  // Archive habit with status and reason (preserves all data for insights)
+  const archiveHabit = async (
+    habitId: string, 
+    status: HabitArchiveStatus, 
+    reason?: string
+  ): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('mf_habits')
+        .update({ 
+          archived_at: new Date().toISOString(),
+          archive_status: status,
+          archive_reason: reason || null,
+          is_active: false,
+        })
+        .eq('id', habitId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Move habit from active to archived list
+      const habit = habits.find(h => h.id === habitId);
+      if (habit) {
+        const archivedHabit = {
+          ...habit,
+          archivedAt: new Date(),
+          archiveStatus: status,
+          archiveReason: reason,
+          isActive: false,
+        };
+        setHabits(prev => prev.filter(h => h.id !== habitId));
+        setArchivedHabits(prev => [...prev, archivedHabit]);
+      }
+
+      const statusMessages: Record<HabitArchiveStatus, { title: string; description: string }> = {
+        completed: {
+          title: 'Parabéns! 🎉',
+          description: 'Objetivo alcançado! O hábito foi arquivado com sucesso.',
+        },
+        paused: {
+          title: 'Hábito pausado',
+          description: 'O hábito foi pausado. Você pode reativar quando quiser.',
+        },
+        cancelled: {
+          title: 'Hábito encerrado',
+          description: 'O hábito foi encerrado. O histórico permanece disponível.',
+        },
+      };
+
+      toast(statusMessages[status]);
+      return true;
+    } catch (error) {
+      console.error('Error archiving habit:', error);
+      toast({
+        title: 'Erro ao arquivar hábito',
+        description: 'Não foi possível arquivar o hábito.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Restore an archived habit
+  const restoreHabit = async (habitId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    // Check habit limit
+    const activeHabits = habits.filter(h => h.isActive);
+    if (activeHabits.length >= MAX_HABITS) {
+      toast({
+        title: 'Limite atingido',
+        description: 'Remova um hábito ativo antes de restaurar este.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('mf_habits')
+        .update({ 
+          archived_at: null,
+          archive_status: null,
+          archive_reason: null,
+          is_active: true,
+        })
+        .eq('id', habitId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Move habit from archived to active list
+      const habit = archivedHabits.find(h => h.id === habitId);
+      if (habit) {
+        const restoredHabit = {
+          ...habit,
+          archivedAt: undefined,
+          archiveStatus: undefined,
+          archiveReason: undefined,
+          isActive: true,
+        };
+        setArchivedHabits(prev => prev.filter(h => h.id !== habitId));
+        setHabits(prev => [...prev, restoredHabit]);
+      }
+
+      toast({
+        title: 'Hábito restaurado! 🔄',
+        description: 'O hábito está ativo novamente.',
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error restoring habit:', error);
+      toast({
+        title: 'Erro ao restaurar hábito',
+        description: 'Não foi possível restaurar o hábito.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Get archived habit stats for insights
+  const getArchivedHabitStats = useCallback((habit: Habit) => {
+    const completedDates = Object.keys(habit.completedDays).sort();
+    const totalCompleted = completedDates.length;
+    
+    if (totalCompleted === 0) {
+      return {
+        totalDays: 0,
+        totalCompleted: 0,
+        completionRate: 0,
+        longestStreak: 0,
+        startDate: habit.createdAt,
+        endDate: habit.archivedAt || new Date(),
+        activeDays: 0,
+      };
+    }
+
+    const startDate = habit.createdAt;
+    const endDate = habit.archivedAt || new Date();
+    const activeDays = differenceInDays(endDate, startDate);
+
+    // Calculate longest streak from completed days
+    let longestStreak = 0;
+    let currentStreak = 0;
+    let lastDate: Date | null = null;
+
+    completedDates.forEach(dateStr => {
+      const currentDate = new Date(dateStr);
+      if (lastDate && differenceInDays(currentDate, lastDate) === 1) {
+        currentStreak++;
+      } else {
+        currentStreak = 1;
+      }
+      longestStreak = Math.max(longestStreak, currentStreak);
+      lastDate = currentDate;
+    });
+
+    const completionRate = activeDays > 0 ? Math.round((totalCompleted / activeDays) * 100) : 0;
+
+    return {
+      totalDays: activeDays,
+      totalCompleted,
+      completionRate: Math.min(completionRate, 100),
+      longestStreak,
+      startDate,
+      endDate,
+      activeDays,
+    };
+  }, []);
+
   // Get aggregated stats
   const getHabitStats = useCallback(() => {
     const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -480,6 +664,7 @@ export const useHabits = () => {
 
   return {
     habits,
+    archivedHabits,
     habitsWithStats,
     streaks,
     loading,
@@ -487,10 +672,14 @@ export const useHabits = () => {
     updateHabit,
     toggleHabit,
     deleteHabit,
+    archiveHabit,
+    restoreHabit,
     refetch: fetchHabits,
     getHabitStats,
+    getArchivedHabitStats,
     canAddHabit,
     remainingHabits,
     MAX_HABITS,
   };
 };
+
