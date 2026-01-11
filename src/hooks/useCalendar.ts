@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
+import {
+  isAuthenticated as isGoogleAuthenticated,
+  createGoogleEvent,
+  updateGoogleEvent,
+  deleteGoogleEvent,
+  toGoogleEvent,
+} from '@/lib/google-calendar';
 
 export type EventType = 'focus' | 'meeting' | 'break' | 'personal' | 'routine';
 
@@ -27,6 +34,41 @@ export interface CalendarEventInput {
   related_task_id?: string;
   related_project_id?: string;
 }
+
+// Helper to check if auto-sync is enabled
+const isAutoSyncEnabled = () => {
+  return localStorage.getItem('mf_google_auto_sync') === 'true';
+};
+
+// Sync mapping functions
+const getSyncMapping = async (localEventId: string) => {
+  const { data } = await supabase
+    .from('mf_google_calendar_sync')
+    .select('google_event_id')
+    .eq('local_event_id', localEventId)
+    .single();
+  return data?.google_event_id;
+};
+
+const createSyncMapping = async (localEventId: string, googleEventId: string) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase.from('mf_google_calendar_sync').insert({
+    user_id: user.id,
+    local_event_id: localEventId,
+    google_event_id: googleEventId,
+    google_calendar_id: 'primary',
+    sync_status: 'synced',
+  });
+};
+
+const deleteSyncMapping = async (localEventId: string) => {
+  await supabase
+    .from('mf_google_calendar_sync')
+    .delete()
+    .eq('local_event_id', localEventId);
+};
 
 export function useCalendar() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -85,6 +127,20 @@ export function useCalendar() {
         title: 'Evento criado',
         description: 'Agendado com sucesso.',
       });
+
+      // Auto-sync to Google Calendar if enabled
+      if (isAutoSyncEnabled() && isGoogleAuthenticated()) {
+        try {
+          const googleEvent = toGoogleEvent(data);
+          const result = await createGoogleEvent(googleEvent);
+          if (result.success && result.googleEventId) {
+            await createSyncMapping(data.id, result.googleEventId);
+          }
+        } catch (syncError) {
+          console.error('Google Calendar sync error:', syncError);
+        }
+      }
+
       return data;
     } catch (error) {
       console.error('Error adding event:', error);
@@ -115,6 +171,19 @@ export function useCalendar() {
       setEvents(events.map(e => e.id === id ? data : e).sort((a, b) => 
         new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
       ));
+
+      // Auto-sync to Google Calendar if enabled
+      if (isAutoSyncEnabled() && isGoogleAuthenticated()) {
+        try {
+          const googleEventId = await getSyncMapping(id);
+          if (googleEventId) {
+            const googleEvent = toGoogleEvent(data);
+            await updateGoogleEvent(googleEventId, googleEvent);
+          }
+        } catch (syncError) {
+          console.error('Google Calendar sync error:', syncError);
+        }
+      }
       
       return data;
     } catch (error) {
@@ -130,6 +199,19 @@ export function useCalendar() {
 
   const deleteEvent = async (id: string) => {
     try {
+      // Auto-sync to Google Calendar if enabled (do before local delete)
+      if (isAutoSyncEnabled() && isGoogleAuthenticated()) {
+        try {
+          const googleEventId = await getSyncMapping(id);
+          if (googleEventId) {
+            await deleteGoogleEvent(googleEventId);
+            await deleteSyncMapping(id);
+          }
+        } catch (syncError) {
+          console.error('Google Calendar sync error:', syncError);
+        }
+      }
+
       const { error } = await supabase
         .from('mf_calendar_events')
         .delete()
@@ -161,3 +243,4 @@ export function useCalendar() {
     refreshEvents: fetchEvents
   };
 }
+

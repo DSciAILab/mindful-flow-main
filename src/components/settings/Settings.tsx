@@ -15,12 +15,15 @@ import {
   PanelLeftClose,
   PanelLeft,
   Volume2,
-  Heart
+  Heart,
+  Calendar,
+  Link
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LLMSettings } from "./LLMSettings";
 import { AIPersonaSettings } from "./AIPersonaSettings";
 import { TimerSoundSettings } from "./TimerSoundSettings";
+import { GoogleCalendarSettings } from "./GoogleCalendarSettings";
 import { DailyMissionSettings } from "@/components/daily-mission/DailyMissionSettings";
 import { WellnessSettings as WellnessSettingsComponent } from "@/components/wellness";
 import { useDailyMission } from "@/hooks/useDailyMission";
@@ -472,6 +475,18 @@ export function Settings({ onThemeChange }: SettingsProps) {
           onSave={updateWellnessConfig}
           loading={wellnessLoading}
         />
+      </div>
+
+      {/* Integrations Section */}
+      <div className="animate-fade-in rounded-2xl border border-border/50 bg-card p-6 shadow-card" style={{ animationDelay: '290ms' }}>
+        <h3 className="mb-4 flex items-center gap-2 font-semibold text-foreground">
+          <Link className="h-5 w-5 text-primary" />
+          Integrações
+        </h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Conecte suas contas para sincronização automática
+        </p>
+        <GoogleCalendarSettings />
       </div>
 
       {/* LLM Configuration Section */}
