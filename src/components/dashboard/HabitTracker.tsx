@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
-import { format } from "date-fns";
-import { Plus, Target, Flame, Info } from "lucide-react";
+import { format, isToday, isSameDay, subDays, addDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Plus, Target, Flame, Info, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useHabits } from "@/hooks/useHabits";
@@ -16,7 +17,6 @@ export function HabitTracker() {
   const { 
     habits,
     archivedHabits,
-    habitsWithStats, 
     loading, 
     toggleHabit, 
     addHabit, 
@@ -26,21 +26,37 @@ export function HabitTracker() {
     restoreHabit,
     getHabitStats,
     getArchivedHabitStats,
+    getHabitsForDate,
     canAddHabit,
     remainingHabits,
     MAX_HABITS
   } = useHabits();
   
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | undefined>(undefined);
   const [archivingHabit, setArchivingHabit] = useState<Habit | null>(null);
 
-  // Get stats
+  // Get habits for the selected date
+  const visibleHabits = useMemo(() => {
+    return getHabitsForDate(selectedDate);
+  }, [getHabitsForDate, selectedDate]);
+
+  // Get stats (always for today/overall context)
   const stats = useMemo(() => getHabitStats(), [getHabitStats]);
 
-  // Handle toggle for today
+  // Handle toggle for selected date
   const handleToggle = async (habitId: string) => {
-    await toggleHabit(habitId, new Date());
+    await toggleHabit(habitId, selectedDate);
+  };
+
+  // Date navigation
+  const navigateDay = (direction: 'prev' | 'next') => {
+    setSelectedDate(prev => direction === 'prev' ? subDays(prev, 1) : addDays(prev, 1));
+  };
+
+  const resetToToday = () => {
+    setSelectedDate(new Date());
   };
 
   // Handle edit
@@ -99,6 +115,8 @@ export function HabitTracker() {
     );
   }
 
+  const isSelectedToday = isToday(selectedDate);
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -115,6 +133,35 @@ export function HabitTracker() {
         <Button onClick={() => setIsFormModalOpen(true)} disabled={!canAddHabit}>
           <Plus className="mr-2 h-4 w-4" />
           Novo Hábito
+        </Button>
+      </div>
+
+      {/* Date Navigation */}
+      <div className="flex items-center justify-between bg-muted/20 p-2 rounded-xl border border-border/40">
+        <Button variant="ghost" size="icon" onClick={() => navigateDay('prev')}>
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+        
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-primary" />
+          <span className="font-semibold text-sm md:text-base capitalize">
+            {isSelectedToday ? "Hoje," : ""} {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+          </span>
+          {!isSelectedToday && (
+            <Button variant="ghost" size="sm" onClick={resetToToday} className="h-6 text-xs px-2 ml-2 bg-primary/10 text-primary hover:bg-primary/20">
+              Voltar para Hoje
+            </Button>
+          )}
+        </div>
+
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => navigateDay('next')}
+          disabled={isSelectedToday} // Future handling could be enabled if needed, but usually limited to today
+          className={cn(isSelectedToday && "invisible")}
+        >
+          <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
 
@@ -139,7 +186,7 @@ export function HabitTracker() {
       )}
 
       {/* Empty state */}
-      {habitsWithStats.length === 0 ? (
+      {visibleHabits.length === 0 && habits.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border/50 bg-card/50 p-12 text-center">
           <Target className="mx-auto h-12 w-12 text-muted-foreground/30 mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">
@@ -155,34 +202,48 @@ export function HabitTracker() {
         </div>
       ) : (
         <>
-          {/* Stats */}
+          {/* Stats - Only show on Today view for clarity, or keep always? Keeping always for motivation. */}
           <HabitStats stats={stats} />
 
           {/* Habit Cards */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">
-              Hábitos de Hoje
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              {isSelectedToday ? "Hábitos de Hoje" : `Hábitos de ${format(selectedDate, "dd/MM", { locale: ptBR })}`}
+              {!isSelectedToday && (
+                <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                  Visualização Retroativa
+                </span>
+              )}
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {habitsWithStats.map((habit) => (
-                <HabitCard
-                  key={habit.id}
-                  habit={habit}
-                  onToggle={handleToggle}
-                  onEdit={handleEdit}
-                  onDelete={() => handleArchive(habit)}
-                />
-              ))}
-            </div>
+            
+            {visibleHabits.length === 0 ? (
+               <div className="text-center py-8 text-muted-foreground text-sm">
+                 Nenhum hábito ativo nesta data.
+               </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {visibleHabits.map((habit) => (
+                  <HabitCard
+                    key={habit.id}
+                    habit={habit}
+                    onToggle={handleToggle}
+                    onEdit={handleEdit}
+                    onDelete={() => handleArchive(habit)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Contribution Graph */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">
-              Histórico de Contribuições
-            </h2>
-            <HabitContributionGraph habits={habits} period="90days" />
-          </div>
+          {isSelectedToday && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-foreground">
+                Histórico de Contribuições
+              </h2>
+              <HabitContributionGraph habits={habits} period="90days" />
+            </div>
+          )}
         </>
       )}
 

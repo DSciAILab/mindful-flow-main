@@ -682,7 +682,19 @@ export default function Index() {
                            </div>
                         ) : (
                           <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <ReactMarkdown>{item.content}</ReactMarkdown>
+                            <ReactMarkdown
+                              components={{
+                                img: ({node, ...props}) => (
+                                  <img 
+                                    {...props} 
+                                    className="rounded-lg max-h-60 w-full object-cover cursor-pointer hover:opacity-90 transition-opacity my-2 border border-border" 
+                                    onClick={() => props.src && window.open(props.src, '_blank')} 
+                                  />
+                                )
+                              }}
+                            >
+                              {item.content}
+                            </ReactMarkdown>
                           </div>
                         )}
                         

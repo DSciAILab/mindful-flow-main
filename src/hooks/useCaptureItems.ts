@@ -24,6 +24,7 @@ export const useCaptureItems = () => {
         .select('*')
         .eq('user_id', user.id)
         .is('deleted_at', null)
+        .eq('processed', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

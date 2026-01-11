@@ -230,6 +230,66 @@ export const useHabits = () => {
       });
   }, [habits, streaks, user, calculateStreak, calculateCompletionRate]);
 
+  // Get habits with stats for a specific date
+  const getHabitsForDate = useCallback((date: Date): HabitWithStats[] => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const dayOfWeek = date.getDay();
+    
+    return habits
+      .filter(h => {
+        // Filter out habits created after the selected date
+        // Use start of day for comparison to be safe
+        const habitDate = new Date(h.createdAt);
+        habitDate.setHours(0,0,0,0);
+        const targetDate = new Date(date);
+        targetDate.setHours(0,0,0,0);
+        
+        if (habitDate > targetDate) return false;
+
+        // Filter out habits that were archived before the selected date
+        if (h.archivedAt) {
+          const archiveDate = new Date(h.archivedAt);
+          archiveDate.setHours(0,0,0,0);
+          if (archiveDate <= targetDate) return false;
+        }
+
+        return h.isActive || (h.archivedAt && new Date(h.archivedAt) > date);
+      })
+      .map(habit => {
+        // Calculate dynamic streak for past dates would be complex/expensive
+        // For now, we'll show the current streak data but maybe mark it?
+        // Or better, just don't calculate streak completely accurately for past dates
+        // to avoid recursion hell, or keep using the main streak data.
+        // Users mostly care about "Is it done on that day?"
+        const dbStreak = streaks[habit.id];
+        const calculatedStreak = calculateStreak(habit);
+
+        // Calculate if habit is due on THAT date
+        let isDueOnDate = true;
+        if (habit.frequency === 'weekly') {
+          isDueOnDate = habit.daysOfWeek?.includes(dayOfWeek) ?? true;
+        } else if (habit.frequency === 'specific_days') {
+          isDueOnDate = habit.specificDays?.includes(dayOfWeek) ?? false;
+        }
+        
+        return {
+          ...habit,
+          streak: dbStreak || {
+            id: '',
+            habitId: habit.id,
+            userId: user?.id || '',
+            currentStreak: calculatedStreak,
+            longestStreak: calculatedStreak,
+            lastCompletedAt: undefined,
+            updatedAt: new Date(),
+          },
+          completedToday: !!habit.completedDays[dateStr],
+          completionRate: calculateCompletionRate(habit),
+          isDueToday: isDueOnDate, // Reusing this field name for dynamic date
+        };
+      });
+  }, [habits, streaks, user, calculateStreak, calculateCompletionRate]);
+
   // Add new habit
   const addHabit = async (habitData: Partial<Habit>) => {
     if (!user) return null;
@@ -697,6 +757,7 @@ export const useHabits = () => {
     refetch: fetchHabits,
     getHabitStats,
     getArchivedHabitStats,
+    getHabitsForDate,
     canAddHabit,
     remainingHabits,
     MAX_HABITS,
