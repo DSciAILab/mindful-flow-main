@@ -1,45 +1,18 @@
 import { useState, useCallback, useEffect } from "react";
-import { DndContext, DragEndEvent, useSensor, useSensors, MouseSensor, TouchSensor } from "@dnd-kit/core";
+import { useSensors, useSensor, MouseSensor, TouchSensor, DragEndEvent } from "@dnd-kit/core";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { QuickCapture } from "@/components/dashboard/QuickCapture";
-import { TimerWidget } from "@/components/dashboard/TimerWidget";
-import { FocusTimer } from "@/components/dashboard/FocusTimer";
-import { TaskList } from "@/components/dashboard/TaskList";
-import { DailyProgress } from "@/components/dashboard/DailyProgress";
-import { PanicModeModal } from "@/components/dashboard/PanicModeModal";
-import { DailyReflection } from "@/components/dashboard/DailyReflection";
-import { InboxPreview } from "@/components/dashboard/InboxPreview";
-import { TaskEditModal } from "@/components/dashboard/TaskEditModal";
-import { TaskCreateModal } from "@/components/dashboard/TaskCreateModal";
-import { ProcessInboxModal } from "@/components/dashboard/ProcessInboxModal";
 import { HabitTracker } from "@/components/dashboard/HabitTracker";
-import { HabitWidget } from "@/components/dashboard/HabitWidget";
 import { FloatingCoach } from "@/components/dashboard/FloatingCoach";
-import { FocusMode } from "@/components/dashboard/FocusMode";
-import { TimerDashboard } from "@/components/dashboard/TimerDashboard";
-// FullPagePomodoro removido pois agora é acessado via Header/FocusMode
-import { QuoteDisplay } from "@/components/dashboard/QuoteDisplay";
-import { Big3Widget } from "@/components/dashboard/Big3Widget";
-import { TaskPriorityCompareModal } from "@/components/dashboard/TaskPriorityCompareModal";
-import { MorningCheckinModal, DailyMissionCard } from "@/components/daily-mission";
+import { FocusTimer } from "@/components/dashboard/FocusTimer";
+import { MorningCheckinModal } from "@/components/daily-mission";
 import { WellnessReminderToast, StretchGuide, EyeRestTimer } from "@/components/wellness";
 import { ProjectCreateModal } from "@/components/projects/ProjectCreateModal";
-import { ProjectList } from "@/components/projects/ProjectCard";
-import { WheelOfLife } from "@/components/planning/WheelOfLife";
-import { YearAtGlance } from "@/components/planning/YearAtGlance";
-import { MonthAtGlance } from "@/components/planning/MonthAtGlance";
-import { WeekAtGlance } from "@/components/planning/WeekAtGlance";
-import { Settings } from "@/components/settings/Settings";
-import { KanbanBoard } from "@/components/projects/KanbanBoard";
-import { JournalEditor } from "@/components/journal/JournalEditor";
-import { JournalList } from "@/components/journal/JournalList";
 import { NotesPage } from "@/pages/Notes";
 import { SketchPage } from "@/components/canvas/SketchPage";
 import { TaskSelectorDialog } from "@/components/dashboard/TaskSelectorDialog";
 import { TaskCompleteDialog } from "@/components/dashboard/TaskCompleteDialog";
 import { WelcomeDialog } from "@/components/onboarding/WelcomeDialog";
-import { Button } from "@/components/ui/button";
 import { useTimer } from "@/hooks/useTimer";
 import { useUserStats } from "@/hooks/useUserStats";
 import { useToast } from "@/hooks/use-toast";
@@ -55,41 +28,32 @@ import { useDailyMission } from "@/hooks/useDailyMission";
 import { useHabits } from "@/hooks/useHabits";
 import { useWellnessReminders } from "@/hooks/useWellnessReminders";
 import { useDistractions } from '@/hooks/useDistractions';
-import { GamificationProvider, useGamification } from '@/hooks/useGamification';
+import { useGamification } from '@/hooks/useGamification';
 import { DistractionReviewModal } from '@/components/distractions/DistractionReviewModal';
 import { 
   AchievementUnlockedModal, 
-  LevelUpModal, 
-  GamificationDashboard 
+  LevelUpModal
 } from '@/components/gamification';
 import { cn } from "@/lib/utils";
-import { 
-  Sparkles, 
-  Target, 
-  Calendar, 
-  Inbox, 
-  CheckSquare, 
-  FolderKanban, 
-  BookOpen, 
-  Brain, 
-  Lightbulb, 
-  BarChart3,
-  Plus,
-  Trash2,
-  ListTodo,
-  Pencil,
-  Save,
-  X,
-  Type,
-  Mic,
-  Camera,
-  Clock,
-  Scale,
-  Trophy
-} from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import { Textarea } from "@/components/ui/textarea";
 import type { Task, CaptureItem, JournalEntry, Project } from "@/types";
+
+// Page Components
+import { DashboardPage } from "./DashboardPage";
+import { InboxPage } from "./InboxPage";
+import { TasksPage } from "./TasksPage";
+import { ProjectsPage } from "./ProjectsPage";
+import { GoalsPage } from "./GoalsPage";
+import { CalendarPage } from "./CalendarPage";
+import { JournalPage } from "./JournalPage";
+import { ReflectionPage } from "./ReflectionPage";
+import { ReportsPage } from "./ReportsPage";
+import { AchievementsPage } from "./AchievementsPage";
+import { IdeasPage } from "./IdeasPage";
+import { Settings } from "@/components/settings/Settings";
+import { TaskEditModal } from "@/components/dashboard/TaskEditModal";
+import { TaskCreateModal } from "@/components/dashboard/TaskCreateModal";
+import { ProcessInboxModal } from "@/components/dashboard/ProcessInboxModal";
+import { PanicModeModal } from "@/components/dashboard/PanicModeModal";
 
 export default function Index() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -635,187 +599,47 @@ export default function Index() {
     switch (activeView) {
       case 'inbox':
         return (
-          <div className="space-y-6">
-            <div className="animate-fade-in">
-              <h1 className="mb-2 flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
-                <Inbox className="h-8 w-8 text-primary" />
-                Inbox
-              </h1>
-              <p className="text-muted-foreground">
-                Capture tudo aqui, processe depois
-              </p>
-            </div>
-            <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <QuickCapture onCapture={handleCapture} />
-            </div>
-            <div className="animate-fade-in rounded-2xl border border-border/50 bg-card p-6 shadow-card" style={{ animationDelay: '200ms' }}>
-              <h3 className="mb-4 font-semibold text-foreground">Itens para processar</h3>
-              {inboxItems.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">Inbox vazio! 🎉</p>
-              ) : (
-                <div className="grid gap-3 md:grid-cols-2">
-                  {inboxItems.map((item) => (
-                    <div 
-                      key={item.id}
-                      className={cn(
-                        "flex items-start gap-3 rounded-xl p-4 transition-all",
-                        item.processed ? "bg-muted/30 opacity-60" : "bg-muted/50"
-                      )}
-                    >
-                      <div className="flex-1 min-w-0">
-                        {editingInboxId === item.id ? (
-                           <div className="space-y-2">
-                              <Textarea 
-                                value={editInboxContent}
-                                onChange={(e) => setEditInboxContent(e.target.value)}
-                                className="min-h-[100px] bg-background"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={() => handleSaveEditInbox(item.id)} className="h-7 px-2">
-                                  <Save className="mr-1 h-3 w-3" /> Salvar
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={handleCancelEditInbox} className="h-7 px-2">
-                                  <X className="mr-1 h-3 w-3" /> Cancelar
-                                </Button>
-                              </div>
-                           </div>
-                        ) : (
-                          <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <ReactMarkdown
-                              components={{
-                                img: ({node, ...props}) => (
-                                  <img 
-                                    {...props} 
-                                    className="rounded-lg max-h-60 w-full object-cover cursor-pointer hover:opacity-90 transition-opacity my-2 border border-border" 
-                                    onClick={() => props.src && window.open(props.src, '_blank')} 
-                                  />
-                                )
-                              }}
-                            >
-                              {item.content}
-                            </ReactMarkdown>
-                          </div>
-                        )}
-                        
-                        {item.audioUrl && (
-                          <div className="mt-2">
-                             <audio src={item.audioUrl} controls className="h-8 w-full max-w-[200px]" />
-                          </div>
-                        )}
-                        <p className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {item.createdAt.toLocaleDateString('pt-BR')} às {item.createdAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {!item.processed && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setProcessingInboxItem(item)}
-                              title="Processar"
-                            >
-                              <Sparkles className="h-4 w-4 text-primary" />
-                            </Button>
-                            {!editingInboxId && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleStartEditInbox(item)}
-                                title="Editar"
-                              >
-                                <Pencil className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                              </Button>
-                            )}
-                          </>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDeleteInboxItem(item.id)}
-                          className="text-muted-foreground hover:text-destructive"
-                          title="Excluir"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <InboxPage 
+            inboxItems={inboxItems}
+            handleCapture={handleCapture}
+            editingInboxId={editingInboxId}
+            editInboxContent={editInboxContent}
+            setEditInboxContent={setEditInboxContent}
+            handleSaveEditInbox={handleSaveEditInbox}
+            handleCancelEditInbox={handleCancelEditInbox}
+            setProcessingInboxItem={setProcessingInboxItem}
+            handleStartEditInbox={handleStartEditInbox}
+            handleDeleteInboxItem={handleDeleteInboxItem}
+          />
         );
 
       case 'tasks':
         return (
-          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <div className="space-y-6">
-            <div className="animate-fade-in flex items-start justify-between">
-              <div>
-                <h1 className="mb-2 flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
-                  <CheckSquare className="h-8 w-8 text-primary" />
-                  Tarefas
-                </h1>
-                <p className="text-muted-foreground">
-                  Gerencie suas tarefas e subtarefas
-                </p>
-              </div>
-              {tasks.filter(t => !t.completedAt).length >= 2 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsPriorityCompareOpen(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Scale className="h-4 w-4" />
-                  Priorizar
-                </Button>
-              )}
-            </div>
-            
-            {/* Big 3 Widget - espelho do dashboard */}
-            <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <Big3Widget 
-                big3Tasks={big3Tasks} 
-                onSelectTask={handleSelectTask}
-                onToggleBig3={toggleBig3}
-                onAddBig3={() => {
-                  setIsSelectingForBig3(true);
-                  setIsTaskSelectorOpen(true);
-                }}
-              />
-            </div>
-            
-            <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
-              <TaskList 
-                tasks={visibleTasks}
-                showCompleted={showCompletedTasks}
-                onToggleCompleted={handleToggleCompletedTasks}
-                selectedTaskId={selectedTask?.id || null}
-                onComplete={handleTaskComplete}
-                onSelectTask={handleSelectTask}
-                onAddTask={() => setIsCreateModalOpen(true)}
-                onDeleteTask={handleDeleteTask}
-                onSplitTask={handleSplitTask}
-                onConvertSubtask={handleConvertSubtask}
-                onEditTask={handleEditTask}
-                isSplitting={isSplitting}
-                subtasks={subtasks}
-              />
-            </div>
-
-            {/* Priority Compare Modal */}
-            <TaskPriorityCompareModal
-              isOpen={isPriorityCompareOpen}
-              onClose={() => setIsPriorityCompareOpen(false)}
-              tasks={tasks.filter(t => !t.completedAt)}
-              onComplete={reorderTasksByPriority}
-            />
-          </div>
-          </DndContext>
+          <TasksPage 
+            sensors={sensors}
+            handleDragEnd={handleDragEnd}
+            tasks={tasks}
+            visibleTasks={visibleTasks}
+            showCompletedTasks={showCompletedTasks}
+            handleToggleCompletedTasks={handleToggleCompletedTasks}
+            selectedTask={selectedTask}
+            handleTaskComplete={handleTaskComplete}
+            handleSelectTask={handleSelectTask}
+            setIsCreateModalOpen={setIsCreateModalOpen}
+            handleDeleteTask={handleDeleteTask}
+            handleSplitTask={handleSplitTask}
+            handleConvertSubtask={handleConvertSubtask}
+            handleEditTask={handleEditTask}
+            isSplitting={isSplitting}
+            subtasks={subtasks}
+            isPriorityCompareOpen={isPriorityCompareOpen}
+            setIsPriorityCompareOpen={setIsPriorityCompareOpen}
+            big3Tasks={big3Tasks}
+            toggleBig3={toggleBig3}
+            setIsSelectingForBig3={setIsSelectingForBig3}
+            setIsTaskSelectorOpen={setIsTaskSelectorOpen}
+            reorderTasksByPriority={reorderTasksByPriority}
+          />
         );
 
       case 'habits':
@@ -827,132 +651,30 @@ export default function Index() {
 
       case 'projects':
         return (
-          <div className="space-y-6">
-            <div className="animate-fade-in">
-              <h1 className="mb-2 flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
-                <FolderKanban className="h-8 w-8 text-primary" />
-                Projetos & Tarefas
-              </h1>
-              <p className="text-muted-foreground">
-                Gerencie seus projetos e acompanhe o progresso das tarefas
-              </p>
-            </div>
-            
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-lg font-semibold">Seus Projetos</h2>
-              <div className="flex items-center gap-2">
-                {/* View mode toggle - single icon */}
-                <button
-                  onClick={() => setProjectViewMode(projectViewMode === 'minimal' ? 'cards' : 'minimal')}
-                  className="p-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                  title={projectViewMode === 'minimal' ? 'Visualizar cards' : 'Visualizar lista'}
-                >
-                  {projectViewMode === 'minimal' ? (
-                    <FolderKanban className="h-4 w-4" />
-                  ) : (
-                    <ListTodo className="h-4 w-4" />
-                  )}
-                </button>
-                <Button onClick={() => setIsProjectModalOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Novo Projeto
-                </Button>
-              </div>
-            </div>
-
-            <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <ProjectList
-                projects={projects}
-                tasks={tasks}
-                selectedProjectId={selectedProjectId}
-                onSelectProject={setSelectedProjectId}
-                onEditProject={handleEditProject}
-                onDeleteProject={deleteProject}
-                onEditTask={(task) => {
-                  setEditingTask(task);
-                  setIsEditModalOpen(true);
-                }}
-                onAddTask={(projectId) => {
-                  setCreateTaskProjectId(projectId);
-                  setIsCreateModalOpen(true);
-                }}
-                viewMode={projectViewMode}
-              />
-            </div>
-
-            <div className="animate-fade-in space-y-4" style={{ animationDelay: '200ms' }}>
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">
-                  {selectedProjectId 
-                    ? `Tarefas: ${projects.find(p => p.id === selectedProjectId)?.name}`
-                    : "Todas as Tarefas"
-                  }
-                </h2>
-              </div>
-              
-              <KanbanBoard 
-                tasks={selectedProjectId ? tasks.filter(t => t.projectId === selectedProjectId) : tasks}
-                onTaskMove={async (taskId, newStatus) => {
-                  const success = await updateTask(taskId, { status: newStatus as Task['status'] });
-                  if (success) {
-                    toast({
-                      title: "Tarefa movida!",
-                      description: `Status atualizado com sucesso`,
-                    });
-                  }
-                }}
-                onTaskClick={(task) => handleSelectTask(task)}
-              />
-            </div>
-          </div>
+          <ProjectsPage 
+            projects={projects}
+            tasks={tasks}
+            selectedProjectId={selectedProjectId}
+            setSelectedProjectId={setSelectedProjectId}
+            handleEditProject={handleEditProject}
+            deleteProject={deleteProject}
+            setEditingTask={setEditingTask}
+            setIsEditModalOpen={setIsEditModalOpen}
+            setCreateTaskProjectId={setCreateTaskProjectId}
+            setIsCreateModalOpen={setIsCreateModalOpen}
+            projectViewMode={projectViewMode}
+            setProjectViewMode={setProjectViewMode}
+            updateTask={updateTask}
+            handleSelectTask={handleSelectTask}
+            setIsProjectModalOpen={setIsProjectModalOpen}
+          />
         );
 
       case 'goals':
-        return (
-          <div className="space-y-6">
-            <div className="animate-fade-in">
-              <h1 className="mb-2 flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
-                <Target className="h-8 w-8 text-primary" />
-                Objetivos & Planejamento
-              </h1>
-              <p className="text-muted-foreground">
-                Visualize e planeje sua vida com clareza
-              </p>
-            </div>
-            <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <WheelOfLife onSave={() => toast({ title: "Roda da Vida salva!" })} />
-            </div>
-            <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
-              <YearAtGlance />
-            </div>
-          </div>
-        );
+        return <GoalsPage />;
       
       case 'calendar':
-        return (
-          <div className="space-y-6">
-            <div className="animate-fade-in">
-              <h1 className="mb-2 flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
-                <Calendar className="h-8 w-8 text-primary" />
-                Agenda & Planejamento
-              </h1>
-              <p className="text-muted-foreground">
-                Visualize seu tempo em diferentes perspectivas
-              </p>
-            </div>
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="animate-fade-in lg:col-span-2" style={{ animationDelay: '100ms' }}>
-                <WeekAtGlance />
-              </div>
-              <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
-                <MonthAtGlance />
-              </div>
-              <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
-                <YearAtGlance />
-              </div>
-            </div>
-          </div>
-        );
+        return <CalendarPage />;
 
       case 'notes':
         return (
@@ -970,246 +692,72 @@ export default function Index() {
 
       case 'journal':
         return (
-          <div className="space-y-6">
-            <div className="animate-fade-in">
-              <h1 className="mb-2 flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
-                <BookOpen className="h-8 w-8 text-primary" />
-                Diário
-              </h1>
-              <p className="text-muted-foreground">
-                Registre seus pensamentos e experiências
-              </p>
-            </div>
-            <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-              {isJournalEditing ? (
-                <JournalEditor
-                  entry={editingJournalEntry}
-                  onSave={handleSaveJournalEntry}
-                  onCancel={() => {
-                    setIsJournalEditing(false);
-                    setEditingJournalEntry(null);
-                  }}
-                />
-              ) : (
-                <JournalList
-                  entries={journalEntries}
-                  loading={journalLoading}
-                  onCreateNew={() => {
-                    setEditingJournalEntry(null);
-                    setIsJournalEditing(true);
-                  }}
-                  onEdit={(entry) => {
-                    setEditingJournalEntry(entry);
-                    setIsJournalEditing(true);
-                  }}
-                  onDelete={handleDeleteJournalEntry}
-                />
-              )}
-            </div>
-          </div>
+          <JournalPage 
+            isJournalEditing={isJournalEditing}
+            editingJournalEntry={editingJournalEntry}
+            handleSaveJournalEntry={handleSaveJournalEntry}
+            setIsJournalEditing={setIsJournalEditing}
+            setEditingJournalEntry={setEditingJournalEntry}
+            journalEntries={journalEntries}
+            journalLoading={journalLoading}
+            handleDeleteJournalEntry={handleDeleteJournalEntry}
+          />
         );
 
       case 'reflection':
-        return (
-          <div className="space-y-6">
-            <div className="animate-fade-in">
-              <h1 className="mb-2 flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
-                <Brain className="h-8 w-8 text-primary" />
-                Reflexões
-              </h1>
-              <p className="text-muted-foreground">
-                Momento de autocuidado e autoconhecimento
-              </p>
-            </div>
-            <div className="mx-auto max-w-lg animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <DailyReflection onComplete={handleReflectionComplete} />
-            </div>
-          </div>
-        );
+        return <ReflectionPage handleReflectionComplete={handleReflectionComplete} />;
 
       case 'ideas':
-        return (
-          <div className="space-y-6">
-            <div className="animate-fade-in">
-              <h1 className="mb-2 flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
-                <Lightbulb className="h-8 w-8 text-primary" />
-                Ideias
-              </h1>
-              <p className="text-muted-foreground">
-                Capture e organize suas ideias criativas
-              </p>
-            </div>
-            <div className="animate-fade-in rounded-2xl border border-border/50 bg-card p-8 text-center shadow-card" style={{ animationDelay: '100ms' }}>
-              <Lightbulb className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 font-semibold text-foreground">Em breve</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                O banco de ideias estará disponível em breve
-              </p>
-            </div>
-          </div>
-        );
+        return <IdeasPage />;
 
       case 'reports':
-        return (
-          <div className="space-y-6">
-            <div className="animate-fade-in">
-              <h1 className="mb-2 flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
-                <BarChart3 className="h-8 w-8 text-primary" />
-                Estatísticas de Foco
-              </h1>
-              <p className="text-muted-foreground">
-                Acompanhe seu progresso e produtividade
-              </p>
-            </div>
-            <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <TimerDashboard />
-            </div>
-          </div>
-        );
+        return <ReportsPage />;
 
       case 'achievements':
-        return (
-          <div className="space-y-6">
-            <div className="animate-fade-in">
-              <GamificationDashboard 
-                stats={{
-                  tasksCompleted: stats.tasksCompletedToday + (completedTasks?.length || 0),
-                  focusMinutesTotal: stats.focusMinutesToday,
-                  currentStreak: stats.currentStreak,
-                  longestStreak: stats.longestStreak,
-                  habitsCompletedStreak: 0, // TODO: Get from habits hook
-                  hasPanicModeSurvived: false,
-                  hasEarlyBirdTask: false,
-                  hasNightOwlTask: false,
-                }}
-              />
-            </div>
-          </div>
-        );
+        return <AchievementsPage stats={stats} completedTasks={completedTasks} />;
 
       case 'settings':
+        // @ts-ignore
         return <Settings onThemeChange={() => toast({ title: "Tema atualizado!" })} />;
 
       case 'dashboard':
       default:
         return (
-          <>
-            {/* Welcome section */}
-            <div className="mb-6 animate-fade-in">
-              <h1 className="flex items-center gap-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
-                <Sparkles className="h-8 w-8 text-primary" />
-                {greetingName 
-                  ? `Olá, ${greetingName}! Vamos conquistar o dia?`
-                  : 'Olá! Vamos conquistar o dia?'
-                }
-              </h1>
-              <p className="text-muted-foreground">
-                {new Date().toLocaleDateString('pt-BR', { 
-                  weekday: 'long', 
-                  day: 'numeric', 
-                  month: 'long' 
-                })}
-              </p>
-            </div>
-
-            {/* Main grid */}
-            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-            <div className="grid gap-4 lg:grid-cols-3">
-              {/* Left column */}
-              <div className="space-y-4 lg:col-span-2">
-                {/* Daily Mission Card - shows at top if enabled */}
-                {missionConfig?.showOnStartup && (
-                  <div className="animate-fade-in" style={{ animationDelay: '50ms' }}>
-                    <DailyMissionCard
-                      mission={dailyMission}
-                      onTaskComplete={handleTaskComplete}
-                      onHabitComplete={(habitId) => toggleHabit(habitId, new Date())}
-                      onViewAll={() => setActiveView('tasks')}
-                      onSelectTask={handleSelectTask}
-                    />
-                  </div>
-                )}
-                
-                <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-                  <QuickCapture onCapture={handleCapture} />
-                </div>
-                
-                <div className="animate-fade-in" style={{ animationDelay: '150ms' }}>
-                  <Big3Widget 
-                    big3Tasks={big3Tasks} 
-                    onSelectTask={handleSelectTask}
-                    onToggleBig3={toggleBig3}
-                    onAddBig3={() => {
-                      setIsSelectingForBig3(true);
-                      setIsTaskSelectorOpen(true);
-                    }}
-                  />
-                </div>
-
-                <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
-                  <TaskList 
-                    tasks={tasks}
-                    selectedTaskId={selectedTask?.id || null}
-                    onComplete={handleTaskComplete}
-                    onSelectTask={handleSelectTask}
-                    onAddTask={() => setIsCreateModalOpen(true)}
-                    onDeleteTask={handleDeleteTask}
-                    onSplitTask={handleSplitTask}
-                    onConvertSubtask={handleConvertSubtask}
-                    onEditTask={handleEditTask}
-                    onToggleBig3={toggleBig3}
-                    isSplitting={isSplitting}
-                    subtasks={subtasks}
-                  />
-                </div>
-
-                <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
-                  <InboxPreview 
-                    items={inboxItems}
-                    onViewAll={() => setActiveView('inbox')}
-                    onProcess={(item) => setProcessingInboxItem(item)}
-                    onDelete={handleDeleteInboxItem}
-                    onUpdate={(id, content) => updateCaptureItem && updateCaptureItem(id, content)}
-                  />
-                </div>
-              </div>
-
-              {/* Right column */}
-              <div className="space-y-4">
-                <div className="animate-fade-in" style={{ animationDelay: '150ms' }}>
-                  <TimerWidget 
-                    formattedTime={timer.formattedTime}
-                    progress={timer.progress}
-                    isRunning={timer.isRunning}
-                    isPaused={timer.isPaused}
-                    type={timer.type}
-                    sessionsCompleted={timer.sessionsCompleted}
-                    totalBreakTime={timer.totalBreakTime}
-                    selectedTask={selectedTask}
-                    onStart={timer.start}
-                    onPause={timer.pause}
-                    onDone={handleTaskDone}
-                    onBreak={timer.goToBreak}
-                    onClearTask={handleClearTask}
-                    onRequestTaskSelection={() => setIsTaskSelectorOpen(true)}
-                  />
-                </div>
-
-                <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
-                  <HabitWidget />
-                </div>
-
-                <div className="animate-fade-in" style={{ animationDelay: '250ms' }}>
-                  <DailyProgress stats={stats} dailyGoals={dailyGoals} />
-                </div>
-
-                <div className="animate-fade-in" style={{ animationDelay: '350ms' }}>
-                  <DailyReflection onComplete={handleReflectionComplete} />
-                </div>
-              </div>
-            </div>
-            </DndContext>
-          </>
+          <DashboardPage 
+            greetingName={greetingName}
+            missionConfig={missionConfig}
+            dailyMission={dailyMission}
+            handleTaskComplete={handleTaskComplete}
+            toggleHabit={toggleHabit}
+            setActiveView={setActiveView}
+            handleSelectTask={handleSelectTask}
+            handleCapture={handleCapture}
+            big3Tasks={big3Tasks}
+            toggleBig3={toggleBig3}
+            setIsSelectingForBig3={setIsSelectingForBig3}
+            setIsTaskSelectorOpen={setIsTaskSelectorOpen}
+            tasks={tasks}
+            selectedTask={selectedTask}
+            setIsCreateModalOpen={setIsCreateModalOpen}
+            handleDeleteTask={handleDeleteTask}
+            handleSplitTask={handleSplitTask}
+            handleConvertSubtask={handleConvertSubtask}
+            handleEditTask={handleEditTask}
+            isSplitting={isSplitting}
+            subtasks={subtasks}
+            inboxItems={inboxItems}
+            setProcessingInboxItem={setProcessingInboxItem}
+            handleDeleteInboxItem={handleDeleteInboxItem}
+            updateCaptureItem={updateCaptureItem}
+            timer={timer}
+            handleTaskDone={handleTaskDone}
+            handleClearTask={handleClearTask}
+            stats={stats}
+            dailyGoals={dailyGoals}
+            handleReflectionComplete={handleReflectionComplete}
+            sensors={sensors}
+            handleDragEnd={handleDragEnd}
+          />
         );
     }
   };
@@ -1414,22 +962,6 @@ export default function Index() {
         sessionsCompleted={timer.sessionsCompleted}
       />
 
-      {/* FocusMode Fullscreen */}
-      <FocusMode
-        isOpen={isFocusModeOpen}
-        onClose={() => setIsFocusModeOpen(false)}
-        formattedTime={timer.formattedTime}
-        progress={timer.progress}
-        isRunning={timer.isRunning}
-        isPaused={timer.isPaused}
-        type={timer.type}
-        sessionsCompleted={timer.sessionsCompleted}
-        selectedTask={selectedTask}
-        onStart={timer.start}
-        onPause={timer.pause}
-        onDone={handleTaskDone}
-        onBreak={timer.goToBreak}
-      />
 
       {/* Wellness Reminder Toast */}
       {activeReminder && (
