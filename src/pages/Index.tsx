@@ -215,17 +215,17 @@ export default function Index() {
     updateItem: updateCaptureItem,
   } = useCaptureItems();
   
-  // Daily Mission hook
+  // Habits hook - needs to be before useDailyMission
+  const { toggleHabit, habitsWithStats } = useHabits();
+
+  // Daily Mission hook - receives tasks and habits to avoid duplicate state
   const {
     config: missionConfig,
     dailyMission,
     shouldShowCheckinModal,
     saveMorningCheckin,
     updateConfig: updateMissionConfig,
-  } = useDailyMission();
-  
-  // Habits hook for habit completion in daily mission
-  const { toggleHabit } = useHabits();
+  } = useDailyMission({ tasks, habits: habitsWithStats });
 
   // Distractions hook for Parking Lot feature
   const {

@@ -2,8 +2,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
-import { useTasks } from './useTasks';
-import { useHabits } from './useHabits';
 import type { Task, HabitWithStats } from '@/types';
 import type { 
   DailyMissionConfig, 
@@ -25,15 +23,22 @@ const DEFAULT_CONFIG: Omit<DailyMissionConfig, 'id' | 'userId' | 'createdAt' | '
   morningCheckinEnabled: true,
 };
 
-export const useDailyMission = () => {
+interface UseDailyMissionOptions {
+  tasks: Task[];
+  habits: HabitWithStats[];
+}
+
+export const useDailyMission = (options?: UseDailyMissionOptions) => {
+  // Use provided tasks/habits or empty arrays
+  const tasks = options?.tasks ?? [];
+  const habits = options?.habits ?? [];
+  
   const [config, setConfig] = useState<DailyMissionConfig | null>(null);
   const [todayCheckin, setTodayCheckin] = useState<MorningCheckin | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkinLoading, setCheckinLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { tasks, big3Tasks } = useTasks();
-  const { habits } = useHabits();
 
   // Get today's date string
   const getTodayString = () => format(new Date(), 'yyyy-MM-dd');
