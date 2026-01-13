@@ -32,7 +32,6 @@ interface SidebarProps {
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'pomodoro', label: 'Pomodoro', icon: Timer },
   { id: 'inbox', label: 'Inbox', icon: Inbox, badge: 5 },
   { id: 'tasks', label: 'Tarefas', icon: CheckSquare },
   { id: 'habits', label: 'Hábitos', icon: Flame },

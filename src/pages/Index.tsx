@@ -18,7 +18,7 @@ import { HabitWidget } from "@/components/dashboard/HabitWidget";
 import { FloatingCoach } from "@/components/dashboard/FloatingCoach";
 import { FocusMode } from "@/components/dashboard/FocusMode";
 import { TimerDashboard } from "@/components/dashboard/TimerDashboard";
-import { FullPagePomodoro } from "@/components/dashboard/FullPagePomodoro";
+// FullPagePomodoro removido pois agora é acessado via Header/FocusMode
 import { QuoteDisplay } from "@/components/dashboard/QuoteDisplay";
 import { Big3Widget } from "@/components/dashboard/Big3Widget";
 import { TaskPriorityCompareModal } from "@/components/dashboard/TaskPriorityCompareModal";
@@ -1067,13 +1067,6 @@ export default function Index() {
           </div>
         );
 
-      case 'pomodoro':
-        return (
-          <FullPagePomodoro 
-            onExit={() => setActiveView('dashboard')}
-          />
-        );
-
       case 'achievements':
         return (
           <div className="space-y-6">
@@ -1227,6 +1220,7 @@ export default function Index() {
         stats={stats} 
         onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         onPanicMode={() => setPanicModeOpen(true)}
+        onFocusMode={() => setIsFocusModeOpen(true)}
       />
       
       <Sidebar 

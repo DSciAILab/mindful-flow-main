@@ -32,13 +32,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { priorityConfig, energyConfig } from "@/lib/design-tokens";
 import type { Task, Priority, Project, EnergyLevel, TaskContext } from "@/types";
 import { LifeAreaBadge } from "@/components/ui/LifeAreaBadge";
 
 interface TaskCardProps {
   task: Task;
   projects: Project[];
-  priorityConfig: Record<Priority, { color: string; label: string; bgColor: string; icon: React.ElementType }>;
+  // priorityConfig removido
   isSelected: boolean;
   isCompleting: boolean;
   isCompleted: boolean;
@@ -59,7 +60,7 @@ interface TaskCardProps {
 export function TaskCard({
   task,
   projects,
-  priorityConfig,
+  // priorityConfig removido
   isSelected,
   isCompleting,
   isCompleted,
@@ -95,11 +96,7 @@ export function TaskCard({
     task.big3Date.toISOString().split('T')[0] === todayStr;
 
   // Energy and Context configs
-  const energyConfig: Record<EnergyLevel, { icon: typeof Battery; color: string; label: string }> = {
-    low: { icon: Battery, color: 'text-amber-500', label: 'Baixa' },
-    medium: { icon: BatteryMedium, color: 'text-blue-500', label: 'Média' },
-    high: { icon: BatteryFull, color: 'text-emerald-500', label: 'Alta' },
-  };
+  // energyConfig removido - usando importado
 
   const contextIcons: Record<TaskContext, typeof Home> = {
     '@home': Home,
@@ -141,26 +138,19 @@ export function TaskCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative flex items-start gap-3 rounded-2xl p-3 pl-4 transition-all duration-300 overflow-hidden",
+        "group relative flex items-start gap-3 rounded-2xl border-l-4 border-y border-r border-border/50 p-3 transition-all duration-300",
         isCompleted 
           ? "bg-muted/40 border-transparent" 
-          : "bg-card border-border/50 hover:border-border border",
+          : cn(
+              "bg-card hover:border-y-border hover:border-r-border", 
+              priority.borderColor
+            ),
         isCompleting && "scale-95 opacity-50",
         isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
         isBig3Today && !isCompleted && "ring-2 ring-amber-500 ring-offset-1 shadow-[0_0_15px_rgba(245,158,11,0.15)]",
         isDragging && "opacity-50 z-50 shadow-xl scale-105 rotate-2 cursor-grabbing"
       )}
     >
-      {/* Priority Indicator Stripe */}
-      {!isCompleted && (
-        <div 
-          className={cn(
-            "absolute inset-y-0 left-0 w-1.5",
-            // Map text colors to background colors for the stripe
-            priority.color.replace('text-', 'bg-')
-          )} 
-        />
-      )}
       {/* Drag Handle */}
       <div 
         {...attributes} 

@@ -39,7 +39,7 @@ export const TaskSuggestionCard = ({
 }: TaskSuggestionCardProps) => {
   if (!suggestedTask) {
     return (
-      <div className="bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 rounded-xl p-6 text-center">
+      <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-6 text-center">
         <div className="flex flex-col items-center gap-3">
           <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center">
             <Sparkles className="h-6 w-6 text-muted-foreground" />
@@ -58,7 +58,7 @@ export const TaskSuggestionCard = ({
   const energyLevel = suggestedTask.energyRequired || 'medium';
 
   return (
-    <div className="bg-gradient-to-br from-primary/5 via-card/80 to-card/40 backdrop-blur-sm border border-primary/20 rounded-xl p-5 space-y-4">
+    <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card/80 to-card/40 backdrop-blur-sm p-6 space-y-4">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-2">

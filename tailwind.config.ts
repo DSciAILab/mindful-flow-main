@@ -79,6 +79,14 @@ export default {
           completed: "hsl(var(--status-completed))",
         },
       },
+      borderColor: {
+        priority: {
+          urgent: "hsl(var(--priority-urgent))",
+          high: "hsl(var(--priority-high))",
+          medium: "hsl(var(--priority-medium))",
+          low: "hsl(var(--priority-low))",
+        },
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

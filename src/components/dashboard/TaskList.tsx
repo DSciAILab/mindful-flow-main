@@ -38,6 +38,7 @@ import type { Task, Priority, Project } from "@/types";
 import { useProjects } from "@/hooks/useProjects";
 import { LifeAreaBadge } from "@/components/ui/LifeAreaBadge";
 import { TaskCard } from "./TaskCard";
+import { priorityConfig } from "@/lib/design-tokens";
 
 interface TaskListProps {
   tasks: Task[];
@@ -55,13 +56,7 @@ interface TaskListProps {
   showCompleted?: boolean;
   onToggleCompleted?: () => void;
 }
-
-const priorityConfig: Record<Priority, { color: string; label: string; bgColor: string; icon: React.ElementType }> = {
-  urgent: { color: 'text-priority-urgent', label: 'Urgente', bgColor: 'bg-priority-urgent/10', icon: AlertCircle },
-  high: { color: 'text-priority-high', label: 'Alta', bgColor: 'bg-priority-high/10', icon: Zap },
-  medium: { color: 'text-priority-medium', label: 'Média', bgColor: 'bg-priority-medium/10', icon: Flag },
-  low: { color: 'text-priority-low', label: 'Baixa', bgColor: 'bg-priority-low/10', icon: Leaf },
-};
+// Definition of priorityConfig removed. Using imported one.
 
 type GroupMode = 'list' | 'project' | 'priority' | 'date';
 
@@ -266,7 +261,7 @@ export function TaskList({
                 key={task.id}
                 task={task}
                 projects={projects}
-                priorityConfig={priorityConfig}
+                // priorityConfig removido - TaskCard usa design-tokens interno
                 isSelected={selectedTaskId === task.id}
                 isCompleting={completingId === task.id}
                 isCompleted={task.status === 'done' || !!task.completedAt}

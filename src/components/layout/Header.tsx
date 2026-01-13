@@ -7,7 +7,8 @@ import {
   Bell,
   Sparkles,
   AlertTriangle,
-  LogOut
+  LogOut,
+  Timer
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -24,9 +25,10 @@ interface HeaderProps {
   stats: UserStats;
   onMenuToggle: () => void;
   onPanicMode: () => void;
+  onFocusMode: () => void;
 }
 
-export function Header({ stats, onMenuToggle, onPanicMode }: HeaderProps) {
+export function Header({ stats, onMenuToggle, onPanicMode, onFocusMode }: HeaderProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -89,6 +91,16 @@ export function Header({ stats, onMenuToggle, onPanicMode }: HeaderProps) {
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
             <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-priority-urgent" />
+          </Button>
+
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={onFocusMode}
+            className="hidden sm:flex"
+            title="Modo Foco"
+          >
+            <Timer className="h-5 w-5" />
           </Button>
 
           <Button 

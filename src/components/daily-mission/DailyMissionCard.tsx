@@ -9,7 +9,17 @@ import {
   ChevronRight, 
   Sparkles,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Heart,
+  Droplet,
+  Dumbbell,
+  BookOpen,
+  Pill,
+  Star,
+  Sun,
+  Moon,
+  Flame,
+  Briefcase
 } from "lucide-react";
 import type { Task, Habit } from "@/types";
 import type { DailyMission, MorningCheckin } from "@/types/dailyMission";
@@ -23,10 +33,32 @@ interface DailyMissionCardProps {
 }
 
 const priorityColors: Record<string, string> = {
-  urgent: "border-l-red-500",
-  high: "border-l-orange-500",
-  medium: "border-l-yellow-500",
-  low: "border-l-green-500",
+  urgent: "border-l-priority-urgent",
+  high: "border-l-priority-high",
+  low: "border-l-priority-low",
+};
+
+const getHabitIcon = (iconName?: string) => {
+  const map: Record<string, React.ElementType> = {
+    heart: Heart,
+    droplet: Droplet,
+    water: Droplet,
+    dumbbell: Dumbbell,
+    gym: Dumbbell,
+    book: BookOpen,
+    pill: Pill,
+    medication: Pill,
+    star: Star,
+    sun: Sun,
+    moon: Moon,
+    flame: Flame,
+    fire: Flame,
+    work: Briefcase,
+    check: CheckCircle2,
+  };
+
+  const Icon = map[iconName?.toLowerCase() || 'check'] || CheckCircle2;
+  return <Icon className="h-4 w-4" />;
 };
 
 export function DailyMissionCard({
@@ -195,7 +227,9 @@ export function DailyMissionCard({
                       : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <span>{habit.icon || "✓"}</span>
+                  <span className={cn(isCompleted ? "text-green-600" : "text-muted-foreground")}>
+                    {getHabitIcon(habit.icon)}
+                  </span>
                   <span>{habit.title}</span>
                   {isCompleted && <CheckCircle2 className="h-4 w-4" />}
                 </button>
