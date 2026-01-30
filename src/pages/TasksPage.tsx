@@ -1,3 +1,4 @@
+import { TaskStats } from "@/components/dashboard/TaskStats";
 import { DndContext } from "@dnd-kit/core";
 import { CheckSquare, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,11 @@ interface TasksPageProps {
   setIsSelectingForBig3: (val: boolean) => void;
   setIsTaskSelectorOpen: (val: boolean) => void;
   reorderTasksByPriority: (sortedTaskIds: string[]) => void;
+  stats: {
+    pending: number;
+    completedToday: number;
+    totalCompleted: number;
+  };
 }
 
 export function TasksPage({
@@ -56,6 +62,7 @@ export function TasksPage({
   setIsSelectingForBig3,
   setIsTaskSelectorOpen,
   reorderTasksByPriority,
+  stats,
 }: TasksPageProps) {
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
@@ -82,6 +89,8 @@ export function TasksPage({
             </Button>
           )}
         </div>
+
+        <TaskStats stats={stats} />
         
         {/* Big 3 Widget - espelho do dashboard */}
         <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>

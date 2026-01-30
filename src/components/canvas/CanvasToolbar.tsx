@@ -35,7 +35,8 @@ import {
   FileImage,
   FileText,
   Shapes,
-  PaintBucket
+  PaintBucket,
+  Hand
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -63,6 +64,8 @@ interface CanvasToolbarProps {
   canUndo?: boolean;
   canRedo?: boolean;
   isSaving?: boolean;
+  onlyPenMode?: boolean;
+  onToggleOnlyPenMode?: () => void;
 }
 
 const STROKE_COLORS = [
@@ -113,6 +116,8 @@ export function CanvasToolbar({
   canUndo = true,
   canRedo = false,
   isSaving = false,
+  onlyPenMode = false,
+  onToggleOnlyPenMode,
 }: CanvasToolbarProps) {
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/50 bg-card/80 p-2 backdrop-blur-sm">
@@ -145,6 +150,25 @@ export function CanvasToolbar({
           </TooltipTrigger>
           <TooltipContent>Borracha</TooltipContent>
         </Tooltip>
+        
+        {/* Palm Rejection Toggle */}
+        {onToggleOnlyPenMode && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={onlyPenMode ? 'default' : 'ghost'}
+                size="icon"
+                onClick={onToggleOnlyPenMode}
+                className={cn("h-9 w-9", onlyPenMode && "bg-blue-600 hover:bg-blue-700")}
+              >
+                <Hand className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {onlyPenMode ? 'Modo Apenas Caneta (Rejeição de Palma Ativa)' : 'Ativar Rejeição de Palma'}
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
 
       {/* Shape Tools */}

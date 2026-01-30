@@ -335,9 +335,14 @@ export function FullPagePomodoro({
             )}
           >
             <button
-              onClick={
-                timer.type === "focus" ? timer.goToBreak : timer.skipToFocus
-              }
+              onClick={() => {
+                if (timer.type === "focus") {
+                  timer.goToBreak();
+                } else {
+                  timer.skipToFocus();
+                  timer.start();
+                }
+              }}
               className="flex flex-col items-center gap-3 group"
             >
               <div
@@ -401,6 +406,7 @@ export function FullPagePomodoro({
               onClick={() => {
                 timer.completeTask();
                 onDone?.();
+                timer.start();
               }}
               className="flex flex-col items-center gap-3 group"
             >

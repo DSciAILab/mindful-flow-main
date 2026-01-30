@@ -1,9 +1,9 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  CheckCircle2, 
-  Flag, 
-  FileText, 
+import {
+  CheckCircle2,
+  Flag,
+  FileText,
   X,
   Sparkles,
   FolderPlus,
@@ -11,8 +11,12 @@ import {
   Mic,
   Square,
   Loader2,
+  PenTool,
   Image as ImageIcon
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CanvasToolbar } from "@/components/canvas/CanvasToolbar";
+import { DrawingCanvas } from "@/components/canvas/DrawingCanvas";
 import { cn } from "@/lib/utils";
 import { useProjects } from "@/hooks/useProjects";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
@@ -52,6 +56,16 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
     uploadAudio 
   } = useAudioRecorder();
 
+  // Canvas state
+  const [isSketchOpen, setIsSketchOpen] = useState(false);
+  const canvasRef = useRef<any>(null);
+  const [tool, setTool] = useState<any>('pen');
+  const [strokeColor, setStrokeColor] = useState('#ffffff');
+  const [strokeWidth, setStrokeWidth] = useState(3);
+  const [backgroundColor, setBackgroundColor] = useState('#1a1a2e');
+  const [fillMode, setFillMode] = useState(false);
+  const [onlyPenMode, setOnlyPenMode] = useState(false);
+
   const selectedProject = projects.find(p => p.id === selectedProjectId);
 
   const formatTime = (seconds: number) => {
@@ -67,7 +81,7 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
 
     for (const file of imageFiles) {
       try {
-        const fileExt = file.name.split('.').pop();
+        const fileExt = file.name.split('.').pop() || 'png';
         const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         
         const { error } = await supabase.storage
@@ -150,21 +164,57 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
-      setImageFiles(prev => [...prev, ...files]);
-      
-      // Generate previews
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (typeof reader.result === 'string') {
-             setImagePreviews(prev => [...prev, reader.result as string]);
-          }
-        };
-        reader.readAsDataURL(file);
-      });
+      addFiles(files);
     }
-    // Reset input so same files can be selected again if needed (though unlikely)
     if (imageInputRef.current) imageInputRef.current.value = '';
+  };
+
+  const addFiles = (files: File[]) => {
+    setImageFiles(prev => [...prev, ...files]);
+    
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+           setImagePreviews(prev => [...prev, reader.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData.items;
+    const files: File[] = [];
+    
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          files.push(file);
+        }
+      }
+    }
+    
+    if (files.length > 0) {
+      addFiles(files);
+    }
+  };
+
+  const handleSaveSketch = async () => {
+    if (!canvasRef.current) return;
+    
+    try {
+      const dataUrl = canvasRef.current.getCanvasData();
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], `sketch-${Date.now()}.png`, { type: 'image/png' });
+      
+      addFiles([file]);
+      setIsSketchOpen(false);
+    } catch (err) {
+      console.error("Failed to save sketch", err);
+    }
   };
 
   const removeImage = (index: number) => {
@@ -269,7 +319,8 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
               <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="What's on your mind? Type your thought, idea, or to-do here..."
+                onPaste={handlePaste}
+                placeholder="What's on your mind? Type your thought, idea, or to-do here... (Paste images supported)"
                 className="w-full min-h-[140px] p-6 bg-transparent border-0 resize-none text-lg placeholder:text-muted-foreground/50 focus:ring-0 focus:outline-none rounded-t-2xl"
               />
             </div>
@@ -376,6 +427,19 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
                 </>
               )}
 
+              {/* Sketch button */}
+              {!isRecording && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsSketchOpen(true)}
+                  className="h-8 text-xs font-medium rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
+                >
+                  <PenTool className="mr-1.5 h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Canvas</span>
+                </Button>
+              )}
+
               {permissionDenied && (
                 <div className="text-xs text-destructive flex items-center bg-destructive/10 px-3 py-1.5 rounded-full border border-destructive/20">
                    <span className="font-semibold mr-1">Microfone bloqueado!</span> Clique no cadeado da URL para liberar.
@@ -444,6 +508,60 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
           </div>
         )}
       </div>
+
+      {/* Sketch Modal */}
+      <Dialog open={isSketchOpen} onOpenChange={setIsSketchOpen}>
+        <DialogContent className="max-w-[90vw] w-[800px] h-[80vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-4 py-3 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <PenTool className="h-4 w-4" />
+              Quick Sketch
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 w-full bg-[#1a1a2e] relative overflow-hidden flex flex-col">
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-background/90 backdrop-blur rounded-lg border shadow-sm p-1">
+               <CanvasToolbar
+                  tool={tool}
+                  onToolChange={setTool}
+                  strokeColor={strokeColor}
+                  onColorChange={setStrokeColor}
+                  strokeWidth={strokeWidth}
+                  onWidthChange={setStrokeWidth}
+                  backgroundColor={backgroundColor}
+                  onBackgroundColorChange={setBackgroundColor}
+                  fillMode={fillMode}
+                  onFillModeChange={setFillMode}
+                  isFullscreen={false}
+                  onToggleFullscreen={() => {}}
+                  onUndo={() => canvasRef.current?.undo()}
+                  onRedo={() => canvasRef.current?.redo()}
+                  onClear={() => canvasRef.current?.clear()}
+                  onSave={handleSaveSketch}
+                  onExportPNG={() => {}}
+                  onExportPDF={() => {}}
+                   isSaving={false}
+                   onlyPenMode={onlyPenMode}
+                   onToggleOnlyPenMode={() => setOnlyPenMode(!onlyPenMode)}
+               />
+            </div>
+            <DrawingCanvas
+              ref={canvasRef}
+              tool={tool}
+              strokeColor={strokeColor}
+              strokeWidth={strokeWidth}
+              backgroundColor={backgroundColor}
+              fillMode={fillMode}
+              onlyPenMode={onlyPenMode}
+              className="w-full h-full"
+            />
+          </div>
+          <div className="p-4 border-t bg-background flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setIsSketchOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveSketch}>Save Sketch</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -42,8 +42,42 @@ export function HabitTracker() {
     return getHabitsForDate(selectedDate);
   }, [getHabitsForDate, selectedDate]);
 
-  // Get stats (always for today/overall context)
-  const stats = useMemo(() => getHabitStats(), [getHabitStats]);
+
+  // Calculate stats for the selected date based on visible habits
+  const dailyStats = useMemo(() => {
+    if (!visibleHabits.length) {
+      return {
+        totalHabits: 0,
+        completedToday: 0,
+        averageCompletionRate: 0,
+        longestCurrentStreak: 0,
+        longestOverallStreak: 0,
+        perfectDays: 0,
+        mostConsistentHabit: null,
+      };
+    }
+
+    const completedCount = visibleHabits.filter(h => h.completedToday).length;
+    const avgRate = Math.round(
+      visibleHabits.reduce((sum, h) => sum + h.completionRate, 0) / visibleHabits.length
+    );
+    const maxStreak = Math.max(...visibleHabits.map(h => h.streak.currentStreak));
+    const maxOverallStreak = Math.max(...visibleHabits.map(h => h.streak.longestStreak));
+    
+    // Sort by rate for most consistent
+    const sortedByRate = [...visibleHabits].sort((a, b) => b.completionRate - a.completionRate);
+
+    // Reuse global stats for things that are harder to calculate locally or are global context
+    return {
+      totalHabits: visibleHabits.length,
+      completedToday: completedCount, // This is now "Completed on Selected Date"
+      averageCompletionRate: avgRate,
+      longestCurrentStreak: maxStreak,
+      longestOverallStreak: maxOverallStreak,
+      perfectDays: stats.perfectDays, // Keep global context
+      mostConsistentHabit: sortedByRate[0] || null,
+    };
+  }, [visibleHabits, stats.perfectDays]);
 
   // Handle toggle for selected date
   const handleToggle = async (habitId: string) => {
@@ -145,7 +179,7 @@ export function HabitTracker() {
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-primary" />
           <span className="font-semibold text-sm md:text-base capitalize">
-            {isSelectedToday ? "Hoje," : ""} {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+            {isSelectedToday ? "Hoje, " : ""} {format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
           </span>
           {!isSelectedToday && (
             <Button variant="ghost" size="sm" onClick={resetToToday} className="h-6 text-xs px-2 ml-2 bg-primary/10 text-primary hover:bg-primary/20">
@@ -203,7 +237,7 @@ export function HabitTracker() {
       ) : (
         <>
           {/* Stats - Only show on Today view for clarity, or keep always? Keeping always for motivation. */}
-          <HabitStats stats={stats} />
+          <HabitStats stats={dailyStats} customLabel={!isSelectedToday ? "Neste Dia" : undefined} />
 
           {/* Habit Cards */}
           <div className="space-y-4">

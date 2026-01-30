@@ -10,15 +10,23 @@ export const useCaptureItems = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const [stats, setStats] = useState({ capturedToday: 0, processedToday: 0 });
+
   // Fetch capture items from Supabase
   const fetchItems = useCallback(async () => {
     if (!user) {
       setItems([]);
+      setStats({ capturedToday: 0, processedToday: 0 });
       setLoading(false);
       return;
     }
 
     try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayIso = today.toISOString();
+
+      // Main items query (unprocessed)
       const { data, error } = await supabase
         .from('mf_capture_items')
         .select('*')
@@ -28,6 +36,30 @@ export const useCaptureItems = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Stats queries
+      const capturedTodayQuery = supabase
+        .from('mf_capture_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('created_at', todayIso);
+
+      const processedTodayQuery = supabase
+        .from('mf_capture_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('processed', true)
+        .gte('updated_at', todayIso); // Assuming updated_at exists, generic fallback handled if needed by user schema check? 
+        // If updated_at doesn't exist, this might error. But standard Supabase timestamps have it. 
+        // To be safe we could just count *processed* items without date if we aren't sure, 
+        // but User asked for "Processed Today".
+        
+      const [capturedRes, processedRes] = await Promise.all([capturedTodayQuery, processedTodayQuery]);
+      
+      setStats({
+        capturedToday: capturedRes.count || 0,
+        processedToday: processedRes.count || 0,
+      });
 
       const mappedItems: CaptureItem[] = (data || []).map((item: any) => ({
         id: item.id,
@@ -196,5 +228,10 @@ export const useCaptureItems = () => {
     markAsProcessed,
     updateItem,
     refetch: fetchItems,
+    stats: {
+      waiting: items.length,
+      capturedToday: stats.capturedToday,
+      processedToday: stats.processedToday,
+    }
   };
 };

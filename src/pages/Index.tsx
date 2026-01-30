@@ -213,6 +213,7 @@ export default function Index() {
     deleteItem: deleteCaptureItem,
     markAsProcessed,
     updateItem: updateCaptureItem,
+    stats: inboxStats,
   } = useCaptureItems();
   
   // Habits hook - needs to be before useDailyMission
@@ -439,7 +440,7 @@ export default function Index() {
       const newNote = await addNote({
         title: cleanTitle || `Nota - ${new Date().toLocaleString()}`,
         content: audioUrl ? `Áudio anexado: ${audioUrl}` : undefined,
-        area_id: "personal",
+        // area_id: "personal", // REMOVED: Let it be inferred or null, don't hardcode
         audio_url: audioUrl,
         project_id: projectId,
       });
@@ -610,10 +611,25 @@ export default function Index() {
             setProcessingInboxItem={setProcessingInboxItem}
             handleStartEditInbox={handleStartEditInbox}
             handleDeleteInboxItem={handleDeleteInboxItem}
+            stats={inboxStats}
           />
         );
 
       case 'tasks':
+        // Calculate task stats
+        const taskStats = {
+            pending: tasks.filter(t => !t.completedAt).length,
+            completedToday: tasks.filter(t => {
+                if (!t.completedAt) return false;
+                const completedDate = new Date(t.completedAt);
+                const today = new Date();
+                return completedDate.getDate() === today.getDate() &&
+                       completedDate.getMonth() === today.getMonth() &&
+                       completedDate.getFullYear() === today.getFullYear();
+            }).length,
+            totalCompleted: tasks.filter(t => t.completedAt).length
+        };
+
         return (
           <TasksPage 
             sensors={sensors}
@@ -639,6 +655,7 @@ export default function Index() {
             setIsSelectingForBig3={setIsSelectingForBig3}
             setIsTaskSelectorOpen={setIsTaskSelectorOpen}
             reorderTasksByPriority={reorderTasksByPriority}
+            stats={taskStats}
           />
         );
 

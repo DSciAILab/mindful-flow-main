@@ -38,10 +38,11 @@ interface DrawingCanvasProps {
   tool?: DrawingTool;
   fillMode?: boolean;
   onDrawingChange?: () => void;
+  onlyPenMode?: boolean;
 }
 
 export const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
-  ({ className, strokeColor = '#ffffff', strokeWidth = 3, backgroundColor = '#1a1a2e', tool = 'pen', fillMode = false, onDrawingChange }, ref) => {
+  ({ className, strokeColor = '#ffffff', strokeWidth = 3, backgroundColor = '#1a1a2e', tool = 'pen', fillMode = false, onDrawingChange, onlyPenMode = false }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const contextRef = useRef<CanvasRenderingContext2D | null>(null);
     const [isDrawing, setIsDrawing] = useState(false);
@@ -107,8 +108,8 @@ export const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
         drawStroke(ctx, stroke, backgroundColor);
       });
 
-      // Draw current stroke preview for shapes
-      if (currentStroke && currentStroke.startPoint && currentStroke.endPoint) {
+      // Draw current stroke preview (both shapes and freehand)
+      if (currentStroke) {
         drawStroke(ctx, currentStroke, backgroundColor);
       }
     }, [strokes, backgroundColor, currentStroke, hasLoadedImage]);
@@ -208,6 +209,12 @@ export const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
 
     const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
       e.preventDefault();
+      
+      // Palm Rejection / Pen Only Mode
+      if (onlyPenMode && e.pointerType === 'touch') {
+        return;
+      }
+
       const canvas = canvasRef.current;
       if (!canvas) return;
 

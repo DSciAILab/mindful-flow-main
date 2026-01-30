@@ -100,11 +100,19 @@ export function useNotes(areaId?: string) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      // Build insert object with only essential columns
-      const insertData: Record<string, any> = {
+      // Build insert object with all columns
+        const insertData: Record<string, any> = {
         user_id: user.id,
         title: note.title,
         content: note.content || null,
+        audio_url: note.audio_url || null,
+        image_urls: note.image_urls || null,
+        goal_id: note.goal_id || null,
+        project_id: note.project_id || null, // Ensure empty string becomes null
+        habit_id: note.habit_id || null,
+        task_id: note.task_id || null,
+        area_id: note.area_id || null,
+        tags: note.tags || [],
       };
 
       // Try to add optional fields - they will be ignored if columns don't exist

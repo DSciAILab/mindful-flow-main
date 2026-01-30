@@ -12,9 +12,10 @@ interface HabitStatsProps {
     perfectDays: number;
     mostConsistentHabit: HabitWithStats | null;
   };
+  customLabel?: string;
 }
 
-export function HabitStats({ stats }: HabitStatsProps) {
+export function HabitStats({ stats, customLabel }: HabitStatsProps) {
   if (stats.totalHabits === 0) {
     return null;
   }
@@ -30,7 +31,7 @@ export function HabitStats({ stats }: HabitStatsProps) {
             </div>
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Hoje
+                {customLabel || "Hoje"}
               </p>
               <p className="text-2xl font-bold">
                 {stats.completedToday}/{stats.totalHabits}

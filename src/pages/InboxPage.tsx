@@ -2,6 +2,7 @@ import { Inbox, Sparkles, Pencil, Trash2, Save, X, Clock } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { QuickCapture } from "@/components/dashboard/QuickCapture";
+import { InboxStats } from "@/components/dashboard/InboxStats";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { CaptureItem } from "@/types";
@@ -17,6 +18,11 @@ interface InboxPageProps {
   setProcessingInboxItem: (item: CaptureItem) => void;
   handleStartEditInbox: (item: CaptureItem) => void;
   handleDeleteInboxItem: (id: string) => void;
+  stats: {
+    waiting: number;
+    capturedToday: number;
+    processedToday: number;
+  };
 }
 
 export function InboxPage({
@@ -30,6 +36,7 @@ export function InboxPage({
   setProcessingInboxItem,
   handleStartEditInbox,
   handleDeleteInboxItem,
+  stats,
 }: InboxPageProps) {
   return (
     <div className="space-y-6">
@@ -43,6 +50,7 @@ export function InboxPage({
         </p>
       </div>
       <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
+        <InboxStats stats={stats} />
         <QuickCapture onCapture={handleCapture} />
       </div>
       <div className="animate-fade-in rounded-2xl border border-border/50 bg-card p-6 shadow-card" style={{ animationDelay: '200ms' }}>
